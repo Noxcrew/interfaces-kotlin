@@ -217,7 +217,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
             // We defer drawing of any elements in the player inventory itself
             // for later unless the inventory is already open.
             val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
-            if ((isPlayerInventory && drawNormalInventory) || (!isPlayerInventory && drawPlayerInventory)) return@forEach
+            if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) return@forEach
 
             currentInventory.set(row, column, element.itemStack.apply { this?.let { backing.itemPostProcessor?.invoke(it) } })
             madeChanges = true
