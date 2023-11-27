@@ -44,13 +44,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     protected var firstPaint: Boolean = true
     internal var isProcessingClick = false
 
-    /**
-     * Tracks whether this menu should be opened or not. This does not actually represent
-     * whether the menu is open currently, it represents whether the code wants it to be
-     * open. This does not get set to false if the menu is closed by the player, it gets
-     * set to false if the code calls close() which is a manual request to make sure this
-     * menu doesn't do anything anymore!
-     */
     private val shouldBeOpened = AtomicBoolean(false)
     private val openIfClosed = AtomicBoolean(false)
 
@@ -61,6 +54,16 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     internal lateinit var pane: CompletedPane
 
     protected lateinit var currentInventory: I
+
+    /**
+     * Tracks whether this menu should be opened or not. This does not actually represent
+     * whether the menu is open currently, it represents whether the code wants it to be
+     * open. This does not get set to false if the menu is closed by the player, it gets
+     * set to false if the code calls close() which is a manual request to make sure this
+     * menu doesn't do anything anymore!
+     */
+    public val shouldStillBeOpened: Boolean
+        get() = shouldBeOpened.get()
 
     private fun setup() {
         // Determine for each trigger what transforms it updates
