@@ -18,7 +18,9 @@ import org.incendo.interfaces.next.transform.AppliedTransform
 import org.incendo.interfaces.next.utilities.CollapsablePaneMap
 import org.incendo.interfaces.next.utilities.runSync
 import org.slf4j.LoggerFactory
+import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.Exception
 import kotlin.time.Duration.Companion.seconds
@@ -37,9 +39,20 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     private val semaphore = Semaphore(1)
     private val queue = AtomicInteger(0)
 
+    private val children = WeakHashMap<AbstractInterfaceView<*, *>, Unit>()
+
     protected var firstPaint: Boolean = true
     internal var isProcessingClick = false
-    private var openIfClosed = false
+
+    /**
+     * Tracks whether this menu should be opened or not. This does not actually represent
+     * whether the menu is open currently, it represents whether the code wants it to be
+     * open. This does not get set to false if the menu is closed by the player, it gets
+     * set to false if the code calls close() which is a manual request to make sure this
+     * menu doesn't do anything anymore!
+     */
+    private val shouldBeOpened = AtomicBoolean(false)
+    private val openIfClosed = AtomicBoolean(false)
 
     private val pendingTransforms = ConcurrentHashMap.newKeySet<AppliedTransform<P>>()
     private val debouncedTransforms = ConcurrentHashMap.newKeySet<AppliedTransform<P>>()
@@ -80,7 +93,14 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
 
     override suspend fun open() {
         // Indicate that the menu should be opened after the next time rendering completes
-        openIfClosed = true
+        // and that it should be open right now
+        openIfClosed.set(true)
+        shouldBeOpened.set(true)
+
+        // Indicate to the parent that this child exists
+        if (parent is AbstractInterfaceView<*, *>) {
+            parent.children[this] = Unit
+        }
 
         // If this menu overlaps the player inventory we always
         // need to do a brand new first paint every time!
@@ -93,10 +113,25 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     }
 
     override fun close() {
+        // Ensure that the menu does not open
+        openIfClosed.set(false)
+        shouldBeOpened.set(false)
+
         if (isOpen(player)) {
             // Ensure we always close on the main thread!
             runSync {
                 player.closeInventory()
+            }
+        }
+
+        // Close any children, this is a bit of a lossy system,
+        // we don't particularly care if this happens nicely we
+        // just want to make sure the ones that need closing get
+        // closed. The hashmap is weak so children can get GC'd
+        // properly.
+        for ((child) in children) {
+            if (child.shouldBeOpened.get()) {
+                child.close()
             }
         }
     }
@@ -121,7 +156,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
 
     internal suspend fun renderAndOpen() {
         // Don't update if closed
-        if (!openIfClosed && !isOpen(player)) return
+        if (!openIfClosed.get() && !isOpen(player)) return
 
         // If there is already queue of 2 renders we don't bother!
         if (queue.get() >= 2) return
@@ -239,6 +274,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     protected open fun requiresPlayerUpdate(): Boolean = false
 
     protected open suspend fun renderToInventory(callback: (Boolean) -> Unit) {
+        // If the menu has since been requested to close we ignore all this
+        if (!shouldBeOpened.get()) return
+
         // If a new inventory is required we create one
         // and mark that the current one is not to be used!
         val createdInventory = if (requiresNewInventory()) {
@@ -252,6 +290,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         // we don't want it to happen in between ticks and show
         // a half-finished inventory.
         runSync {
+            // If the menu has since been requested to close we ignore all this
+            if (!shouldBeOpened.get()) return@runSync
+
             // Determine if the inventory is currently open or being opened immediately,
             // otherwise we never draw to player inventories. This ensures lingering
             // updates on menus that have closed do not affect future menus that actually
@@ -260,9 +301,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
             drawPaneToInventory(drawNormalInventory = true, drawPlayerInventory = isOpen)
             callback(createdInventory)
 
-            if ((openIfClosed && !isOpen) || createdInventory) {
+            if ((openIfClosed.get() && !isOpen) || createdInventory) {
                 openInventory()
-                openIfClosed = false
+                openIfClosed.set(false)
                 firstPaint = false
             }
         }
