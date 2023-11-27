@@ -112,17 +112,13 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         }
     }
 
-    override fun close() {
+    /**
+     * Marks this menu as closed and processes it.
+     */
+    protected fun markClosed() {
         // Ensure that the menu does not open
         openIfClosed.set(false)
         shouldBeOpened.set(false)
-
-        if (isOpen(player)) {
-            // Ensure we always close on the main thread!
-            runSync {
-                player.closeInventory()
-            }
-        }
 
         // Close any children, this is a bit of a lossy system,
         // we don't particularly care if this happens nicely we
@@ -132,6 +128,17 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         for ((child) in children) {
             if (child.shouldBeOpened.get()) {
                 child.close()
+            }
+        }
+    }
+
+    override fun close() {
+        markClosed()
+
+        if (isOpen(player)) {
+            // Ensure we always close on the main thread!
+            runSync {
+                player.closeInventory()
             }
         }
     }
