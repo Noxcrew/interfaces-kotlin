@@ -76,8 +76,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         .build()
 
     /** Returns the currently open interface for [playerId]. */
-    public fun getOpenInterface(playerId: UUID): PlayerInterfaceView? =
-        openPlayerInterfaceViews.getIfPresent(playerId)
+    public fun getOpenInterface(playerId: UUID): PlayerInterfaceView? {
+        // Check if the menu is definitely still meant to be open
+        val result = openPlayerInterfaceViews.getIfPresent(playerId) ?: return null
+        if (result.shouldStillBeOpened) {
+            return result
+        }
+        openPlayerInterfaceViews.invalidate(playerId)
+        return null
+    }
 
     /** Updates the currently open interface for [playerId] to [view]. */
     public fun setOpenInterface(playerId: UUID, view: PlayerInterfaceView?) {
