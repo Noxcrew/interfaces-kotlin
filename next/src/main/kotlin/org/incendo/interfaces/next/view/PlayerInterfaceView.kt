@@ -8,6 +8,7 @@ import org.incendo.interfaces.next.interfaces.PlayerInterface
 import org.incendo.interfaces.next.inventory.PlayerInterfacesInventory
 import org.incendo.interfaces.next.pane.PlayerPane
 import org.incendo.interfaces.next.utilities.runSync
+import kotlin.time.Duration
 
 public class PlayerInterfaceView internal constructor(
     player: Player,
@@ -15,7 +16,6 @@ public class PlayerInterfaceView internal constructor(
 ) : AbstractInterfaceView<PlayerInterfacesInventory, PlayerPane>(
     player,
     backing,
-    // todo(josh): should player interface views hold a parent?
     null
 ) {
 
@@ -23,12 +23,16 @@ public class PlayerInterfaceView internal constructor(
         error("PlayerInventoryView's cannot have a title")
     }
 
+    override fun runChatQuery(timeout: Duration, onCancel: () -> Unit, onComplete: (Component) -> Unit) {
+        error("PlayerInventoryView does not support chat queries")
+    }
+
     override fun createInventory(): PlayerInterfacesInventory = PlayerInterfacesInventory(player)
 
     override fun openInventory() {
         // Close whatever inventory the player has open so they can look at their normal inventory!
         // This will only continue if the menu hasn't been closed yet.
-        if (!isOpen(player)) {
+        if (!isOpen()) {
             // First we close then we set the interface so we don't double open!
             InterfacesListeners.INSTANCE.setOpenInterface(player.uniqueId, null)
             player.closeInventory()
@@ -36,7 +40,7 @@ public class PlayerInterfaceView internal constructor(
         }
 
         // Double-check that this inventory is open now!
-        if (isOpen(player)) {
+        if (isOpen()) {
             // Clear the player's inventory!
             player.inventory.clear()
             if (player.openInventory.topInventory.type == InventoryType.CRAFTING) {
@@ -60,7 +64,7 @@ public class PlayerInterfaceView internal constructor(
         }
     }
 
-    override fun isOpen(player: Player): Boolean =
+    override fun isOpen(): Boolean =
         player.openInventory.type == InventoryType.CRAFTING &&
             InterfacesListeners.INSTANCE.getOpenInterface(player.uniqueId) == this
 }

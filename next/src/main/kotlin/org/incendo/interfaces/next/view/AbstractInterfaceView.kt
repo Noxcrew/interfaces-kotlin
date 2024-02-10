@@ -4,9 +4,11 @@ import com.google.common.collect.HashMultimap
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withTimeout
+import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.incendo.interfaces.next.Constants.SCOPE
+import org.incendo.interfaces.next.InterfacesListeners
 import org.incendo.interfaces.next.event.DrawPaneEvent
 import org.incendo.interfaces.next.interfaces.Interface
 import org.incendo.interfaces.next.inventory.InterfacesInventory
@@ -23,10 +25,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.Exception
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
-    public val player: Player,
+    override val player: Player,
     public val backing: Interface<P>,
     private val parent: InterfaceView?
 ) : InterfaceView {
@@ -55,14 +58,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
 
     protected lateinit var currentInventory: I
 
-    /**
-     * Tracks whether this menu should be opened or not. This does not actually represent
-     * whether the menu is open currently, it represents whether the code wants it to be
-     * open. This does not get set to false if the menu is closed by the player, it gets
-     * set to false if the code calls close() which is a manual request to make sure this
-     * menu doesn't do anything anymore!
-     */
-    public val shouldStillBeOpened: Boolean
+    override val shouldStillBeOpened: Boolean
         get() = shouldBeOpened.get()
 
     private fun setup() {
@@ -87,10 +83,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         redrawComplete()
     }
 
-    /**
-     * Redraws all transforms in this view.
-     */
-    public fun redrawComplete() {
+    override fun redrawComplete() {
         applyTransforms(backing.transforms)
     }
 
@@ -119,6 +112,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
      * Marks this menu as closed and processes it.
      */
     protected fun markClosed() {
+        // End a possible chat query with the listener
+        InterfacesListeners.INSTANCE.abortQuery(player.uniqueId, this)
+
         // Ensure that the menu does not open
         openIfClosed.set(false)
         shouldBeOpened.set(false)
@@ -138,7 +134,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     override fun close() {
         markClosed()
 
-        if (isOpen(player)) {
+        if (isOpen()) {
             // Ensure we always close on the main thread!
             runSync {
                 player.closeInventory()
@@ -162,11 +158,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
 
     public abstract fun openInventory()
 
-    public abstract fun isOpen(player: Player): Boolean
-
     internal suspend fun renderAndOpen() {
         // Don't update if closed
-        if (!openIfClosed.get() && !isOpen(player)) return
+        if (!openIfClosed.get() && !isOpen()) return
 
         // If there is already queue of 2 renders we don't bother!
         if (queue.get() >= 2) return
@@ -307,7 +301,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
             // otherwise we never draw to player inventories. This ensures lingering
             // updates on menus that have closed do not affect future menus that actually
             // ended up being opened.
-            val isOpen = isOpen(player)
+            val isOpen = isOpen()
             drawPaneToInventory(drawNormalInventory = true, drawPlayerInventory = isOpen)
             callback(createdInventory)
 
@@ -317,5 +311,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
                 firstPaint = false
             }
         }
+    }
+
+    override fun runChatQuery(timeout: Duration, onCancel: () -> Unit, onComplete: (Component) -> Unit) {
+        InterfacesListeners.INSTANCE.startChatQuery(this, timeout, onCancel, onComplete)
     }
 }

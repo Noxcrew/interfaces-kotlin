@@ -42,7 +42,7 @@ public class CombinedInterfaceView internal constructor(
 
     override fun getInventory(): Inventory = currentInventory.chestInventory
 
-    override fun isOpen(player: Player): Boolean {
+    override fun isOpen(): Boolean {
         return player.openInventory.topInventory.holder == this
     }
 }
