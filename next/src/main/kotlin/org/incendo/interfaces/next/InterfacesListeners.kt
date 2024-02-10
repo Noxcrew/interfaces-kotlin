@@ -28,6 +28,7 @@ import org.incendo.interfaces.next.click.ClickHandler
 import org.incendo.interfaces.next.click.CompletableClickHandler
 import org.incendo.interfaces.next.grid.GridPoint
 import org.incendo.interfaces.next.pane.PlayerPane
+import org.incendo.interfaces.next.utilities.runSync
 import org.incendo.interfaces.next.view.AbstractInterfaceView
 import org.incendo.interfaces.next.view.InterfaceView
 import org.incendo.interfaces.next.view.PlayerInterfaceView
@@ -337,11 +338,13 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val open = openPlayerInterfaceViews.getIfPresent(playerId)
         openPlayerInterfaceViews.invalidate(playerId)
 
-        // Close the current inventory to open another to avoid close reasons
-        view.player.closeInventory(Reason.OPEN_NEW)
+        runSync {
+            // Close the current inventory to open another to avoid close reasons
+            view.player.closeInventory(Reason.OPEN_NEW)
 
-        // Clear the inventory
-        view.player.inventory.clear()
+            // Clear the inventory
+            view.player.inventory.clear()
+        }
 
         // Set up the query
         val id = UUID.randomUUID()
