@@ -10,6 +10,7 @@ import org.bukkit.entity.HumanEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.Cancellable
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.inventory.ClickType
@@ -51,6 +52,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             require(!::INSTANCE.isInitialized) { "Already installed!" }
             INSTANCE = InterfacesListeners(plugin)
             Bukkit.getPluginManager().registerEvents(INSTANCE, plugin)
+            println("Installed interfaces listeners")
         }
 
         private val VALID_REASON = EnumSet.of(
@@ -189,7 +191,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         handleClick(view, clickedPoint, click, event)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     public fun onChat(event: AsyncChatEvent) {
         val player = event.player
 
@@ -202,6 +204,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         SCOPE.launch {
             query.view.open()
         }
+
+        // Prevent the message from sending
+        event.isCancelled = true
     }
 
     /** Extracts the clicked point from an inventory click event. */
