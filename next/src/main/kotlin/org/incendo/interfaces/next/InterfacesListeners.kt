@@ -162,7 +162,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val holder = event.inventory.holder
         val view = convertHolderToInterfaceView(holder) ?: return
         val clickedPoint = clickedPoint(event) ?: return
-        handleClick(view, clickedPoint, event.click, event)
+        handleClick(view, clickedPoint, event.click, event, event.hotbarButton)
     }
 
     @EventHandler
@@ -188,7 +188,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         val click = convertAction(event.action, player.isSneaking)
 
-        handleClick(view, clickedPoint, click, event)
+        handleClick(view, clickedPoint, click, event, -1)
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -262,7 +262,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         view: AbstractInterfaceView<*, *>,
         clickedPoint: GridPoint,
         click: ClickType,
-        event: Cancellable
+        event: Cancellable,
+        slot: Int
     ) {
         if (view.isProcessingClick || shouldThrottle(view.player)) {
             event.isCancelled = true
@@ -271,7 +272,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         view.isProcessingClick = true
 
-        val clickContext = ClickContext(view.player, view, click)
+        val clickContext = ClickContext(view.player, view, click, slot)
 
         view.backing.clickPreprocessors
             .forEach { handler -> ClickHandler.process(handler, clickContext) }
