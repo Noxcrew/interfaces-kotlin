@@ -4,6 +4,7 @@ import com.noxcrew.interfaces.element.Element
 import com.noxcrew.interfaces.grid.GridMap
 import com.noxcrew.interfaces.grid.HashGridMap
 
+/** A grid map of elements. */
 public open class Pane : GridMap<Element> {
 
     // This has to be manual redirecting instead of using the by
@@ -16,7 +17,7 @@ public open class Pane : GridMap<Element> {
         gridMap.set(row, column, value)
 
     override fun get(row: Int, column: Int): Element? =
-        gridMap.get(row, column)
+        gridMap[row, column]
 
     override fun has(row: Int, column: Int): Boolean =
         gridMap.has(row, column)

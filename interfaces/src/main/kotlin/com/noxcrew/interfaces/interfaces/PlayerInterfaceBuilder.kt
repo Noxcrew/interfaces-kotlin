@@ -2,8 +2,8 @@ package com.noxcrew.interfaces.interfaces
 
 import com.noxcrew.interfaces.pane.PlayerPane
 
-public class PlayerInterfaceBuilder :
-    AbstractInterfaceBuilder<PlayerPane, PlayerInterface>() {
+/** Assists in building a [PlayerInterface]. */
+public class PlayerInterfaceBuilder : AbstractInterfaceBuilder<PlayerPane, PlayerInterface>() {
 
     override fun build(): PlayerInterface = PlayerInterface(
         closeHandlers,

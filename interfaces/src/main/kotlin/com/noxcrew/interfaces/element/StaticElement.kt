@@ -3,7 +3,8 @@ package com.noxcrew.interfaces.element
 import com.noxcrew.interfaces.click.ClickHandler
 import com.noxcrew.interfaces.drawable.Drawable
 
-public class StaticElement public constructor(
+/** A static element that uses [drawable] and a set [clickHandler]. */
+public class StaticElement(
     private val drawable: Drawable,
     private val clickHandler: ClickHandler = ClickHandler.EMPTY
 ) : Element {

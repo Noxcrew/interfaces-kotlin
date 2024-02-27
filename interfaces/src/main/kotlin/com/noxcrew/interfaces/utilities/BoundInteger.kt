@@ -5,7 +5,7 @@ import com.noxcrew.interfaces.properties.Trigger
 import kotlin.properties.ObservableProperty
 import kotlin.reflect.KProperty
 
-// todo(josh): recalculate value when max/min changed?
+/** A changeable integer that cannot go below [min] or above [max]. */
 public class BoundInteger(
     initial: Int,
     public var min: Int,
@@ -43,11 +43,13 @@ public class BoundInteger(
         delegateTrigger.addListener(reference, listener)
     }
 
+    /** Returns whether there is some value above the current value that is not above max. */
     public fun hasSucceeding(): Boolean {
         val value by this
         return value < max
     }
 
+    /** Returns whether there is some value below the current value that is not below min. */
     public fun hasPreceeding(): Boolean {
         val value by this
         return value > min

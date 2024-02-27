@@ -10,6 +10,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryType
 import kotlin.time.Duration
 
+/** Implements a player interface view. */
 public class PlayerInterfaceView internal constructor(
     player: Player,
     backing: PlayerInterface

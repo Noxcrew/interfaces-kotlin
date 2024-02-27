@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 internal object Constants {
 
+    /** The [CoroutineScope] for any suspending operations performed by interfaces. */
     internal val SCOPE = CoroutineScope(
         CoroutineName("interfaces") +
             SupervisorJob() +

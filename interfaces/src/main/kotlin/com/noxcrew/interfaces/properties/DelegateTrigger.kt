@@ -3,6 +3,7 @@ package com.noxcrew.interfaces.properties
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
 
+/** A trigger that delegates triggers to its listeners. */
 public open class DelegateTrigger : Trigger {
 
     private val updateListeners = ConcurrentHashMap.newKeySet<Pair<WeakReference<Any>, Any.() -> Unit>>()

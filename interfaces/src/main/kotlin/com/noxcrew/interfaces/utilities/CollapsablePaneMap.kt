@@ -4,6 +4,7 @@ import com.noxcrew.interfaces.pane.CompletedPane
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.pane.convertToEmptyCompletedPaneAndFill
 
+/** A collection of completed panes that can be collapsed to create a new merged [CompletedPane]. */
 internal class CollapsablePaneMap private constructor(
     private val rows: Int,
     // pass in a pane from the view so that we can persist
@@ -15,6 +16,7 @@ internal class CollapsablePaneMap private constructor(
 ) : MutableMap<Int, CompletedPane> by internal {
 
     internal companion object {
+        /** Creates a new collapsable map with [rows] rows and a [basePane]. */
         internal fun create(rows: Int, basePane: Pane) = CollapsablePaneMap(
             rows,
             basePane,
@@ -35,7 +37,6 @@ internal class CollapsablePaneMap private constructor(
         }
 
         val pane = basePane.convertToEmptyCompletedPaneAndFill(rows)
-
         val current = internal.toMap().values
 
         current.forEach { layer ->

@@ -34,12 +34,14 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.plugin.Plugin
 import org.slf4j.LoggerFactory
-import java.lang.ref.WeakReference
 import java.util.EnumSet
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
+/**
+ * Listens to bukkit events and manages the current state of all interfaces accordingly.
+ */
 public class InterfacesListeners private constructor(private val plugin: Plugin) : Listener {
 
     public companion object {
@@ -55,12 +57,14 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             println("Installed interfaces listeners")
         }
 
+        /** All valid closing reasons that should re-open the opened player inventory. */
         private val VALID_REASON = EnumSet.of(
             Reason.PLAYER,
             Reason.UNKNOWN,
             Reason.PLUGIN
         )
 
+        /** All valid interaction types. */
         private val VALID_INTERACT = EnumSet.of(
             Action.LEFT_CLICK_AIR,
             Action.LEFT_CLICK_BLOCK,
@@ -68,26 +72,20 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             Action.RIGHT_CLICK_BLOCK
         )
 
+        /** The possible valid slot range inside the player inventory. */
         private val PLAYER_INVENTORY_RANGE = 0..40
+
+        /** The slot index used to indicate a click was outside the UI. */
         private const val OUTSIDE_CHEST_INDEX = -999
     }
 
     /** Stores data for a single chat query. */
     private data class ChatQuery(
-        private val playerReference: WeakReference<Player>,
-        private val openViewReference: WeakReference<PlayerInterfaceView>?,
         val view: InterfaceView,
         val onCancel: () -> Unit,
         val onComplete: (Component) -> Unit,
         val id: UUID
-    ) {
-
-        val player: Player?
-            get() = playerReference.get()
-
-        val openView: PlayerInterfaceView?
-            get() = openViewReference?.get()
-    }
+    )
 
     private val logger = LoggerFactory.getLogger(InterfacesListeners::class.java)
 
@@ -341,7 +339,6 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Store the current open inventory and remove it from the cache so it does
         // not interfere and we can have the player be itemless
         val playerId = view.player.uniqueId
-        val open = openPlayerInterfaceViews.getIfPresent(playerId)
         openPlayerInterfaceViews.invalidate(playerId)
 
         runSync {
@@ -357,8 +354,6 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         queries.put(
             playerId,
             ChatQuery(
-                WeakReference(view.player),
-                open?.let { WeakReference(it) },
                 view,
                 onCancel,
                 onComplete,

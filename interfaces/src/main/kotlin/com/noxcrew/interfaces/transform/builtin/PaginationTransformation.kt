@@ -8,6 +8,7 @@ import com.noxcrew.interfaces.view.InterfaceView
 import kotlin.math.ceil
 import kotlin.properties.Delegates
 
+/** A [PagedTransformation] where the positions of the elements are determined by [positionGenerator]. */
 public open class PaginationTransformation<P : Pane>(
     private val positionGenerator: GridPositionGenerator,
     default: Collection<Element>,

@@ -8,7 +8,9 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.PlayerInventory
 
+/** A wrapper around an [Inventory] for a chest and a [PlayerInventory]. */
 public class CombinedInterfacesInventory(
     holder: InventoryHolder,
     player: Player,
@@ -17,8 +19,9 @@ public class CombinedInterfacesInventory(
 ) : CachedInterfacesInventory() {
 
     private val chestSlots = rows * COLUMNS_IN_CHEST
-
     private val playerInventory = player.inventory
+
+    /** The [chestInventory] being used to place items in. */
     public val chestInventory: Inventory = createBukkitInventory(holder, rows, title)
 
     override fun get(row: Int, column: Int): ItemStack? {

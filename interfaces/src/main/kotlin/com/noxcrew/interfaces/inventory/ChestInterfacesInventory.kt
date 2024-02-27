@@ -7,12 +7,14 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 
+/** A wrapper around an [Inventory] for a chest. */
 public class ChestInterfacesInventory(
     holder: InventoryHolder,
     title: Component?,
     rows: Int
 ) : CachedInterfacesInventory() {
 
+    /** The [chestInventory] being used to place items in. */
     public val chestInventory: Inventory = createBukkitInventory(holder, rows, title)
 
     override fun get(row: Int, column: Int): ItemStack? {

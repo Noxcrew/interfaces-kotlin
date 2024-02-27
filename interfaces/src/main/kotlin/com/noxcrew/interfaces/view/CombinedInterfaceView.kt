@@ -9,6 +9,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 
+/** Implements a combined view. */
 public class CombinedInterfaceView internal constructor(
     player: Player,
     backing: CombinedInterface,
@@ -19,6 +20,7 @@ public class CombinedInterfaceView internal constructor(
     parent
 ),
     InventoryHolder {
+
     private val titleState = TitleState(backing.initialTitle)
 
     override fun title(value: Component) {
@@ -42,7 +44,5 @@ public class CombinedInterfaceView internal constructor(
 
     override fun getInventory(): Inventory = currentInventory.chestInventory
 
-    override fun isOpen(): Boolean {
-        return player.openInventory.topInventory.holder == this
-    }
+    override fun isOpen(): Boolean = player.openInventory.topInventory.holder == this
 }

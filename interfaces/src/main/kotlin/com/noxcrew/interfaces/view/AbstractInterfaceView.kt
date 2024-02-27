@@ -28,13 +28,16 @@ import kotlin.Exception
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+/** The basis for the implementation of an interface view. */
 public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     override val player: Player,
+    /** The interface backing this view. */
     public val backing: Interface<P>,
     private val parent: InterfaceView?
 ) : InterfaceView {
 
     public companion object {
+        /** The amount of columns a chest inventory has. */
         public const val COLUMNS_IN_CHEST: Int = 9
     }
 
@@ -44,8 +47,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
 
     private val children = WeakHashMap<AbstractInterfaceView<*, *>, Unit>()
 
+    /** Whether the view is being painted for the first time. */
     protected var firstPaint: Boolean = true
-    internal var isProcessingClick = false
+
+    /** Whether a click is being processed. */
+    public var isProcessingClick: Boolean = false
 
     private val shouldBeOpened = AtomicBoolean(false)
     private val openIfClosed = AtomicBoolean(false)
@@ -60,6 +66,33 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
 
     override val shouldStillBeOpened: Boolean
         get() = shouldBeOpened.get()
+
+    /** Creates a new inventory GUI. */
+    public abstract fun createInventory(): I
+
+    /** Opens the inventory GUI for the viewer. */
+    public abstract fun openInventory()
+
+    /** Marks this menu as closed and processes it. */
+    protected fun markClosed() {
+        // End a possible chat query with the listener
+        InterfacesListeners.INSTANCE.abortQuery(player.uniqueId, this)
+
+        // Ensure that the menu does not open
+        openIfClosed.set(false)
+        shouldBeOpened.set(false)
+
+        // Close any children, this is a bit of a lossy system,
+        // we don't particularly care if this happens nicely we
+        // just want to make sure the ones that need closing get
+        // closed. The hashmap is weak so children can get GC'd
+        // properly.
+        for ((child) in children) {
+            if (child.shouldBeOpened.get()) {
+                child.close()
+            }
+        }
+    }
 
     private fun setup() {
         // Determine for each trigger what transforms it updates
@@ -108,29 +141,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         }
     }
 
-    /**
-     * Marks this menu as closed and processes it.
-     */
-    protected fun markClosed() {
-        // End a possible chat query with the listener
-        InterfacesListeners.INSTANCE.abortQuery(player.uniqueId, this)
-
-        // Ensure that the menu does not open
-        openIfClosed.set(false)
-        shouldBeOpened.set(false)
-
-        // Close any children, this is a bit of a lossy system,
-        // we don't particularly care if this happens nicely we
-        // just want to make sure the ones that need closing get
-        // closed. The hashmap is weak so children can get GC'd
-        // properly.
-        for ((child) in children) {
-            if (child.shouldBeOpened.get()) {
-                child.close()
-            }
-        }
-    }
-
     override fun close() {
         markClosed()
 
@@ -142,9 +152,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         }
     }
 
-    override fun parent(): InterfaceView? {
-        return parent
-    }
+    override fun parent(): InterfaceView? = parent
 
     override suspend fun back() {
         if (parent == null) {
@@ -154,11 +162,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         }
     }
 
-    public abstract fun createInventory(): I
-
-    public abstract fun openInventory()
-
-    internal suspend fun renderAndOpen() {
+    private suspend fun renderAndOpen() {
         // Don't update if closed
         if (!openIfClosed.get() && !isOpen()) return
 
@@ -184,7 +188,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         }
     }
 
-    internal fun applyTransforms(transforms: Collection<AppliedTransform<P>>): Boolean {
+    private fun applyTransforms(transforms: Collection<AppliedTransform<P>>): Boolean {
         // Remove all these from the debounced transforms so we can try running
         // them again!
         debouncedTransforms -= transforms.toSet()

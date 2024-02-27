@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.properties
 
+/** A trigger that does nothing. */
 public object EmptyTrigger : Trigger {
 
     override fun trigger() {

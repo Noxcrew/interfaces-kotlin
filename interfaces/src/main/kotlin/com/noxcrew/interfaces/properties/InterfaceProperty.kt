@@ -3,6 +3,7 @@ package com.noxcrew.interfaces.properties
 import kotlin.properties.ObservableProperty
 import kotlin.reflect.KProperty
 
+/** An observable property that is triggered when its value changes. */
 public class InterfaceProperty<T>(
     defaultValue: T
 ) : ObservableProperty<T>(defaultValue), Trigger by DelegateTrigger() {

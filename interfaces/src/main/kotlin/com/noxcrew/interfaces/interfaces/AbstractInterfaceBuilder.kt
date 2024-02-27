@@ -10,10 +10,11 @@ import com.noxcrew.interfaces.utilities.IncrementingInteger
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
 
-public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> internal constructor() :
-    InterfaceBuilder<P, I>() {
+/** Assists in creating a new interface. */
+public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> internal constructor() : InterfaceBuilder<P, I>() {
 
     private companion object {
+        /** All default reasons used for a new close handler. */
         private val DEFAULT_REASONS = InventoryCloseEvent.Reason.values().toList().minus(InventoryCloseEvent.Reason.PLUGIN)
     }
 
@@ -23,16 +24,20 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
     protected val transforms: MutableCollection<AppliedTransform<P>> = mutableListOf()
     protected val clickPreprocessors: MutableCollection<ClickHandler> = mutableListOf()
 
+    /** Sets an item post processor to apply to every item in the interface. */
     public var itemPostProcessor: ((ItemStack) -> Unit)? = null
 
+    /** Adds a new transform to the interface that updates whenever [triggers] change. */
     public fun withTransform(vararg triggers: Trigger, transform: Transform<P>) {
-        transforms.add(AppliedTransform(transformCounter, triggers.toSet(), transform))
+        transforms += AppliedTransform(transformCounter, triggers.toSet(), transform)
     }
 
+    /** Adds a new reactive transform to the interface. */
     public fun addTransform(reactiveTransform: ReactiveTransform<P>) {
-        transforms.add(AppliedTransform(transformCounter, reactiveTransform.triggers.toSet(), reactiveTransform))
+        transforms += AppliedTransform(transformCounter, reactiveTransform.triggers.toSet(), reactiveTransform)
     }
 
+    /** Adds a new close handler [closeHandler] that triggers whenever the inventory is closed for any of the given [reasons]. */
     public fun withCloseHandler(
         reasons: Collection<InventoryCloseEvent.Reason> = DEFAULT_REASONS,
         closeHandler: CloseHandler
@@ -42,6 +47,7 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
         }
     }
 
+    /** Adds a new pre-processor to this menu which will run [handler] before every click without blocking. */
     public fun withPreprocessor(handler: ClickHandler) {
         clickPreprocessors += handler
     }

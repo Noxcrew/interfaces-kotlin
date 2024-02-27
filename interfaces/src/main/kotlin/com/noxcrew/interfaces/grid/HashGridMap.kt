@@ -1,10 +1,13 @@
 package com.noxcrew.interfaces.grid
 
-public class HashGridMap<V> : GridMap<V> {
-    private val backing: MutableMap<Int, MutableMap<Int, V>> = HashMap()
+/** An implementation of [GridMap] based by a nested [MutableMap]. */
+public class HashGridMap<V>(
+    private val backing: MutableMap<Int, MutableMap<Int, V>> = mutableMapOf(),
+    private val innerConstructor: () -> MutableMap<Int, V> = { mutableMapOf() }
+) : GridMap<V> {
 
     override fun set(row: Int, column: Int, value: V) {
-        val rowView = backing.computeIfAbsent(row) { HashMap() }
+        val rowView = backing.computeIfAbsent(row) { innerConstructor() }
         rowView[column] = value
     }
 
@@ -22,7 +25,6 @@ public class HashGridMap<V> : GridMap<V> {
         forEachInternal(consumer)
     }
 
-    // todo(josh): investigate, workaround for kotlin suspend usage being terrible.
     override suspend fun forEachSuspending(consumer: suspend (Int, Int, V) -> Unit) {
         forEachInternal { row, column, value -> consumer(row, column, value) }
     }

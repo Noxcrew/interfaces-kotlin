@@ -10,18 +10,22 @@ import com.noxcrew.interfaces.utilities.forEachInGrid
 import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
 import org.bukkit.entity.Player
 
+/** A grid map of completed elements. */
 internal open class CompletedPane : GridMap<CompletedElement> by HashGridMap() {
     internal open fun getRaw(vector: GridPoint): CompletedElement? = get(vector)
 }
 
+/** A completed pane with an ordering. */
 internal class CompletedOrderedPane(
     private val ordering: List<Int>
 ) : CompletedPane() {
+
     override fun getRaw(vector: GridPoint): CompletedElement? {
         return get(ordering[vector.x], vector.y)
     }
 }
 
+/** Completes a pane for [player] by drawing each element while suspending. */
 internal suspend fun Pane.complete(player: Player): CompletedPane {
     val pane = convertToEmptyCompletedPane()
 
@@ -32,6 +36,7 @@ internal suspend fun Pane.complete(player: Player): CompletedPane {
     return pane
 }
 
+/** Fills up a completed pane with empty elements. */
 internal fun Pane.convertToEmptyCompletedPaneAndFill(rows: Int): CompletedPane {
     val pane = convertToEmptyCompletedPane()
     val airElement = CompletedElement(null, ClickHandler.EMPTY)
@@ -43,10 +48,10 @@ internal fun Pane.convertToEmptyCompletedPaneAndFill(rows: Int): CompletedPane {
     return pane
 }
 
+/** Converts this pane to either a [CompletedPane] or [CompletedOrderedPane] based on its type. */
 internal fun Pane.convertToEmptyCompletedPane(): CompletedPane {
     if (this is OrderedPane) {
         return CompletedOrderedPane(ordering)
     }
-
     return CompletedPane()
 }

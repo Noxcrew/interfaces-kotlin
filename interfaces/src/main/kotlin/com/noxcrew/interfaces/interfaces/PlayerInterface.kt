@@ -9,6 +9,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
 
+/** An interface that uses the entire player inventory. */
 public class PlayerInterface internal constructor(
     override val closeHandlers: MutableMap<InventoryCloseEvent.Reason, CloseHandler>,
     override val transforms: Collection<AppliedTransform<PlayerPane>>,
@@ -17,7 +18,8 @@ public class PlayerInterface internal constructor(
 ) : Interface<PlayerPane> {
 
     public companion object {
-        public const val NUMBER_OF_COLUMNS: Int = 9
+        /** The maximum number of rows for a player interface. */
+        public const val MAX_NUMBER_OF_ROWS: Int = 9
     }
 
     override val rows: Int = 4
@@ -27,7 +29,6 @@ public class PlayerInterface internal constructor(
     override suspend fun open(player: Player, parent: InterfaceView?): PlayerInterfaceView {
         val view = PlayerInterfaceView(player, this)
         view.open()
-
         return view
     }
 }

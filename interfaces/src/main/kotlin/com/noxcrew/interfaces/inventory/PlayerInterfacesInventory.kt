@@ -3,9 +3,11 @@ package com.noxcrew.interfaces.inventory
 import com.noxcrew.interfaces.utilities.gridPointToBukkitIndex
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.PlayerInventory
 
+/** A wrapper around a [PlayerInventory]. */
 public class PlayerInterfacesInventory(
-    private val player: Player
+    player: Player
 ) : CachedInterfacesInventory() {
 
     private val playerInventory = player.inventory
