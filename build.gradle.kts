@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "com.noxcrew.interfaces"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
 
 description = "A Kotlin Minecraft user-interface library."
 
