@@ -1,8 +1,9 @@
-# `interfaces`
+# `interfaces-kotlin`
 
 _Building interfaces in Kotlin since 2022._
 
-`interfaces` is a builder-style user interface library designed to make creation of flexible user interfaces as easy as possible.
+`interfaces-kotlin` is a builder-style user interface library designed to make creation of flexible user interfaces as easy as 
+possible.
 
 This is a forked version of the [original interfaces by Incendo](https://github.com/Incendo/interfaces). Specifically, this 
 repository contains a Kotlin version of interfaces v2 (or interfaces-next). The entire library is written in Kotlin and uses 
