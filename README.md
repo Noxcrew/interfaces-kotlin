@@ -109,7 +109,7 @@ chestInterface.open(player)
 ```
 </details>
 
-Further examples can be found here: https://github.com/Noxcrew/interfaces/tree/main/examples
+Further examples can be found here: https://github.com/Noxcrew/interfaces-kotlin/tree/main/examples
 
 ## Credits
 
