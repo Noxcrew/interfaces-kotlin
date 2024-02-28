@@ -1,14 +1,10 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessPlugin
 import java.io.ByteArrayOutputStream
-import net.kyori.indra.IndraPlugin
-import net.kyori.indra.IndraPublishingPlugin
 import xyz.jpenilla.runpaper.task.RunServer
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    alias(libs.plugins.indra)
-    alias(libs.plugins.indra.publishing) apply false
     alias(libs.plugins.run.paper) apply false
 
     // Kotlin plugin prefers to be applied to parent when it's used in multiple sub-modules.
@@ -16,73 +12,25 @@ plugins {
     alias(libs.plugins.spotless)
 }
 
-group = "com.noxcrew.interfaces"
-version = "1.0.0"
-
-description = "A Kotlin Minecraft user-interface library."
-
-val noxcrewRepository: String = "https://maven.noxcrew.com/public"
 val javaVersion: Int = 17
+
+allprojects {
+    group = "com.noxcrew.interfaces"
+    version = "1.0.0"
+
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = javaVersion.toString()
+        targetCompatibility = javaVersion.toString()
+    }
+}
 
 subprojects {
     apply(plugin = "kotlin")
-    apply<IndraPlugin>()
     apply<SpotlessPlugin>()
-
-    // Don't publish examples
-    if (name != "examples") {
-        apply<IndraPublishingPlugin>()
-
-        configure<PublishingExtension> {
-            repositories {
-                maven {
-                    name = "noxcrew-public"
-                    url = uri(noxcrewRepository)
-                    credentials {
-                        username = System.getenv("NOXCREW_MAVEN_PUBLIC_USERNAME")
-                        password = System.getenv("NOXCREW_MAVEN_PUBLIC_PASSWORD")
-                    }
-                    authentication {
-                        create<BasicAuthentication>("basic")
-                    }
-                }
-            }
-        }
-    }
 
     repositories {
         mavenCentral()
         maven("https://papermc.io/repo/repository/maven-public/")
-    }
-
-    dependencies {
-        compileOnlyApi(rootProject.libs.checker.qual)
-    }
-
-    indra {
-        mitLicense()
-
-        javaVersions {
-            minimumToolchain(javaVersion)
-            target(javaVersion)
-        }
-
-        publishAllTo("noxcrew-public", noxcrewRepository)
-
-        github("noxcrew", "interfaces-kotlin") {
-            ci(true)
-        }
-
-        configurePublications {
-            pom {
-                developers {
-                    developer {
-                        id.set("noxcrew")
-                        email.set("contact@noxcrew.com")
-                    }
-                }
-            }
-        }
     }
 
     configure<SpotlessExtension> {
