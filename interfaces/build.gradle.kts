@@ -18,6 +18,11 @@ dependencies {
 
 val noxcrewRepository: String = "https://maven.noxcrew.com/public"
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 publishing {
     repositories {
         maven {
