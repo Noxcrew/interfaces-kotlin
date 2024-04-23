@@ -13,8 +13,8 @@ public open class DelegateTrigger : Trigger {
         .asMap()
 
     override fun trigger() {
-        updateListeners.forEach { (_, listeners) ->
-            listeners.forEach { it() }
+        updateListeners.forEach { (obj, listeners) ->
+            listeners.forEach { obj.apply(it) }
         }
     }
 
