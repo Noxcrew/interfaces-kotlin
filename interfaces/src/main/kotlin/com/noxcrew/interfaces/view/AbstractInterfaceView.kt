@@ -13,6 +13,7 @@ import com.noxcrew.interfaces.pane.complete
 import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.utilities.CollapsablePaneMap
+import com.noxcrew.interfaces.utilities.forEachInGrid
 import com.noxcrew.interfaces.utilities.runSync
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
@@ -266,6 +267,12 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     }
 
     protected open fun drawPaneToInventory(drawNormalInventory: Boolean, drawPlayerInventory: Boolean) {
+        // Determine all slots we need to clear if unused
+        val leftovers = mutableListOf<Pair<Int, Int>>()
+        forEachInGrid(backing.rows, COLUMNS_IN_CHEST) { row, column ->
+            leftovers += row to column
+        }
+
         var madeChanges = false
         pane.forEach { row, column, element ->
             // We defer drawing of any elements in the player inventory itself
@@ -278,19 +285,33 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
                 column,
                 element.itemStack.apply { this?.let { backing.properties.itemPostProcessor?.invoke(it) } }
             )
+            leftovers -= row to column
             madeChanges = true
         }
 
         // Apply the overlay of persistent items on top
         if (backing.properties.persistAddedItems) {
             for ((point, item) in addedItems) {
+                val row = point.x
+                val column = point.y
+                val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
+                if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
+
                 currentInventory.set(
-                    point.x,
-                    point.y,
+                    row,
+                    column,
                     item
                 )
+                leftovers -= row to column
                 madeChanges = true
             }
+        }
+
+        // Empty any slots that are not otherwise edited
+        for ((row, column) in leftovers) {
+            val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
+            if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
+            currentInventory.set(row, column, ItemStack(Material.AIR))
         }
 
         if (madeChanges) {
