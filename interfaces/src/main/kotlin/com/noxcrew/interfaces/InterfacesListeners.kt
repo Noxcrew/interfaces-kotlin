@@ -10,6 +10,7 @@ import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.runSync
 import com.noxcrew.interfaces.view.AbstractInterfaceView
+import com.noxcrew.interfaces.view.ChestInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
 import com.noxcrew.interfaces.view.PlayerInterfaceView
 import io.papermc.paper.event.player.AsyncChatEvent
@@ -24,13 +25,16 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
+import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryCloseEvent.Reason
 import org.bukkit.event.inventory.InventoryOpenEvent
+import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.event.player.PlayerRespawnEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.plugin.Plugin
@@ -62,14 +66,6 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             Reason.PLAYER,
             Reason.UNKNOWN,
             Reason.PLUGIN
-        )
-
-        /** All valid interaction types. */
-        private val VALID_INTERACT = EnumSet.of(
-            Action.LEFT_CLICK_AIR,
-            Action.LEFT_CLICK_BLOCK,
-            Action.RIGHT_CLICK_AIR,
-            Action.RIGHT_CLICK_BLOCK
         )
 
         /** The possible valid slot range inside the player inventory. */
@@ -136,7 +132,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     @EventHandler
     public fun onClose(event: InventoryCloseEvent) {
         val holder = event.inventory.holder
-        val view = convertHolderToInterfaceView(holder) ?: return
+        val view = holder as? AbstractInterfaceView<*, *> ?: return
         val reason = event.reason
 
         SCOPE.launch {
@@ -144,7 +140,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             view.markClosed(reason)
 
             // Try to open back up a previous interface
-            if (reason in REOPEN_REASONS) {
+            if (reason in REOPEN_REASONS && !event.player.isDead) {
                 getOpenInterface(event.player.uniqueId)?.open()
             }
         }
@@ -166,17 +162,81 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler(priority = EventPriority.LOW)
     public fun onInteract(event: PlayerInteractEvent) {
-        if (event.action !in VALID_INTERACT) return
-        if (event.hand != EquipmentSlot.HAND) return
+        if (event.action == Action.PHYSICAL) return
         if (event.useItemInHand() == Event.Result.DENY) return
 
         val player = event.player
         val view = getOpenInterface(player.uniqueId) ?: return
-        val slot = player.inventory.heldItemSlot
-        val clickedPoint = GridPoint.at(3, slot)
+
+        val clickedPoint = if (event.hand == EquipmentSlot.HAND) {
+            GridPoint.at(3, player.inventory.heldItemSlot)
+        } else {
+            PlayerPane.OFF_HAND_SLOT
+        }
         val click = convertAction(event.action, player.isSneaking)
 
+        // Check if the action is prevented if this slot is not freely
+        // movable
+        if (!canFreelyMove(view, clickedPoint) &&
+            event.action in view.backing.properties.preventedInteractions
+        ) {
+            event.isCancelled = true
+            return
+        }
+
         handleClick(view, clickedPoint, click, event, -1)
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public fun onDropItem(event: PlayerDropItemEvent) {
+        val player = event.player
+        val view = getOpenInterface(player.uniqueId) ?: return
+        val slot = player.inventory.heldItemSlot
+        val droppedSlot = GridPoint.at(3, slot)
+
+        // Don't allow dropping items that cannot be freely edited
+        if (!canFreelyMove(view, droppedSlot)) {
+            event.isCancelled = true
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public fun onDeath(event: PlayerDeathEvent) {
+        // Determine the holder of the top inventory being shown (can be open player inventory)
+        val view = convertHolderToInterfaceView(event.player.openInventory.topInventory.holder) ?: return
+
+        // Ignore chest inventories!
+        if (view is ChestInterfaceView) return
+
+        // Tally up all items that the player cannot modify and remove them from the drops
+        for (index in PLAYER_INVENTORY_RANGE) {
+            val stack = event.player.inventory.getItem(index) ?: continue
+            val x = index / 9
+            val adjustedX = PlayerPane.PANE_ORDERING.indexOf(x)
+            val point = GridPoint(adjustedX, index % 9)
+            if (!canFreelyMove(view, point)) {
+                var removed = false
+
+                // Remove the first item in drops that is similar, drops will be a list
+                // of exactly what was in the inventory, without merging any stacks. So
+                // we do not need to do anything fancy to match the amounts.
+                event.drops.removeIf {
+                    if (!removed && it.isSimilar(stack)) {
+                        removed = true
+                        return@removeIf true
+                    } else {
+                        return@removeIf false
+                    }
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public fun onRespawn(event: PlayerRespawnEvent) {
+        SCOPE.launch {
+            getOpenInterface(event.player.uniqueId)?.open()
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -232,6 +292,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         return null
     }
 
+    /** Returns whether [clickedPoint] in [view] can be freely moved. */
+    private fun canFreelyMove(
+        view: AbstractInterfaceView<*, *>,
+        clickedPoint: GridPoint,
+    ): Boolean = view.pane.getRaw(clickedPoint)?.clickHandler == null && !view.backing.properties.preventClickingEmptySlots
+
     /** Handles a [view] being clicked at [clickedPoint] through some [event]. */
     private fun handleClick(
         view: AbstractInterfaceView<*, *>,
@@ -241,7 +307,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         slot: Int
     ) {
         // Determine the type of click, if nothing was clicked we allow it
-        val clickHandler = view.pane.getRaw(clickedPoint)?.clickHandler ?: return
+        val clickHandler = view.pane.getRaw(clickedPoint)?.clickHandler
+
+        // Optionally cancel clicking on other slots
+        if (clickHandler == null) {
+            if (view.backing.properties.preventClickingEmptySlots) {
+                event.isCancelled = true
+            }
+            return
+        }
 
         // Automatically cancel if throttling or already processing
         if (view.isProcessingClick || shouldThrottle(view.player)) {

@@ -2,7 +2,7 @@ package com.noxcrew.interfaces.utilities
 
 import com.noxcrew.interfaces.pane.CompletedPane
 import com.noxcrew.interfaces.pane.Pane
-import com.noxcrew.interfaces.pane.convertToEmptyCompletedPaneAndFill
+import com.noxcrew.interfaces.pane.convertToEmptyCompletedPane
 
 /** A collection of completed panes that can be collapsed to create a new merged [CompletedPane]. */
 internal class CollapsablePaneMap private constructor(
@@ -36,7 +36,7 @@ internal class CollapsablePaneMap private constructor(
             return pane
         }
 
-        val pane = basePane.convertToEmptyCompletedPaneAndFill(rows)
+        val pane = basePane.convertToEmptyCompletedPane()
         val current = internal.toMap().values
 
         current.forEach { layer ->

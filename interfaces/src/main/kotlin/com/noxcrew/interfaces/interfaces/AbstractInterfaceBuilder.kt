@@ -7,6 +7,7 @@ import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.transform.ReactiveTransform
 import com.noxcrew.interfaces.transform.Transform
 import com.noxcrew.interfaces.utilities.IncrementingInteger
+import org.bukkit.event.block.Action
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
 
@@ -23,9 +24,13 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
     protected val closeHandlers: MutableMap<InventoryCloseEvent.Reason, CloseHandler> = mutableMapOf()
     protected val transforms: MutableCollection<AppliedTransform<P>> = mutableListOf()
     protected val clickPreprocessors: MutableCollection<ClickHandler> = mutableListOf()
+    protected val preventedInteractions: MutableCollection<Action> = mutableListOf()
 
     /** Sets an item post processor to apply to every item in the interface. */
     public var itemPostProcessor: ((ItemStack) -> Unit)? = null
+
+    /** Whether clicking on empty slots should be cancelled. */
+    public var preventClickingEmptySlots: Boolean = false
 
     /** The properties object to use for the created interface. */
     public val properties: InterfaceProperties<P>
@@ -33,7 +38,9 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
             closeHandlers,
             transforms,
             clickPreprocessors,
-            itemPostProcessor
+            itemPostProcessor,
+            preventClickingEmptySlots,
+            preventedInteractions,
         )
 
     /** Adds a new transform to the interface that updates whenever [triggers] change. */
@@ -59,5 +66,10 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
     /** Adds a new pre-processor to this menu which will run [handler] before every click without blocking. */
     public fun withPreprocessor(handler: ClickHandler) {
         clickPreprocessors += handler
+    }
+
+    /** Adds [action] to be cancelled without triggering any click handlers on valid items in this pane. */
+    public fun withPreventedAction(action: Action) {
+        preventedInteractions += action
     }
 }

@@ -3,6 +3,7 @@ package com.noxcrew.interfaces.interfaces
 import com.noxcrew.interfaces.click.ClickHandler
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.transform.AppliedTransform
+import org.bukkit.event.block.Action
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
 
@@ -16,4 +17,8 @@ public data class InterfaceProperties<P : Pane>(
     public val clickPreprocessors: Collection<ClickHandler> = emptySet(),
     /** A post-processor applied to all items placed in the inventory. */
     public val itemPostProcessor: ((ItemStack) -> Unit)? = {},
+    /** Whether clicking on empty slots should be cancelled. */
+    public val preventClickingEmptySlots: Boolean = false,
+    /** All interactions that will be ignored on this view and cancelled on pane items without calling the handler. */
+    public val preventedInteractions: Collection<Action> = emptySet(),
 )

@@ -5,12 +5,13 @@ import com.noxcrew.interfaces.grid.GridPoint
 
 /** An ordered pane that wraps the player inventory. */
 public class PlayerPane : OrderedPane(PANE_ORDERING) {
+
     internal companion object {
         /** The base ordering of the player inventory to go from logical rows to Bukkit rows. */
         internal val PANE_ORDERING = listOf(1, 2, 3, 0, 4)
 
         /** The location of the off-hand slot. */
-        private val OFF_HAND_SLOT = GridPoint.at(4, 4)
+        internal val OFF_HAND_SLOT = GridPoint.at(4, 4)
     }
 
     /** The hotbar of the player inventory. */

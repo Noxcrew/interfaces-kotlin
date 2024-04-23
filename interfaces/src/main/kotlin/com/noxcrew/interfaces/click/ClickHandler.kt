@@ -18,6 +18,7 @@ public fun interface ClickHandler {
          * An empty click handler that does not cancel the click event. This allows the item
          * to be removed from the inventory.
          */
+        @Deprecated("Will be replaced with a property of the item in a future version")
         public val ALLOW: ClickHandler = ClickHandler { cancelled = false }
 
         /** Runs a [CompletableClickHandler] with [clickHandler] and [context]. */
@@ -40,6 +41,7 @@ public class CompletableClickHandler {
         get() = deferred.isCancelled || deferred.isCompleted
 
     /** Whether the base click event should be cancelled. */
+    @Deprecated("Will be replaced with a property of the item in a future version")
     public var cancelled: Boolean = true
 
     /**
