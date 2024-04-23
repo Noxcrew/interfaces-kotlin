@@ -32,6 +32,13 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
     /** Whether clicking on empty slots should be cancelled. */
     public var preventClickingEmptySlots: Boolean = false
 
+    /**
+     * Persists items added to this pane in a previous instance.
+     * Particularly useful for player inventories, this allows the non-interface items
+     * to function as normal inventory items and be normally added/removed.
+     */
+    public var persistAddedItems: Boolean = false
+
     /** The properties object to use for the created interface. */
     public val properties: InterfaceProperties<P>
         get() = InterfaceProperties(
@@ -41,6 +48,7 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
             itemPostProcessor,
             preventClickingEmptySlots,
             preventedInteractions,
+            persistAddedItems
         )
 
     /** Adds a new transform to the interface that updates whenever [triggers] change. */

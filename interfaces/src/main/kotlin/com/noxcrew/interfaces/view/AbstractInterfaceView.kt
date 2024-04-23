@@ -4,6 +4,7 @@ import com.google.common.collect.HashMultimap
 import com.noxcrew.interfaces.Constants.SCOPE
 import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.event.DrawPaneEvent
+import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.interfaces.Interface
 import com.noxcrew.interfaces.inventory.InterfacesInventory
 import com.noxcrew.interfaces.pane.CompletedPane
@@ -18,8 +19,11 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withTimeout
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryCloseEvent
+import org.bukkit.inventory.Inventory
+import org.bukkit.inventory.ItemStack
 import org.slf4j.LoggerFactory
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
@@ -46,6 +50,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     private val queue = AtomicInteger(0)
 
     private val children = WeakHashMap<AbstractInterfaceView<*, *>, Unit>()
+
+    /** Added persistent items added when this interface was last closed. */
+    private val addedItems = mutableMapOf<GridPoint, ItemStack>()
 
     /** Whether the view is being painted for the first time. */
     protected var firstPaint: Boolean = true
@@ -273,8 +280,43 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
             )
             madeChanges = true
         }
+
+        // Apply the overlay of persistent items on top
+        if (backing.properties.persistAddedItems) {
+            for ((point, item) in addedItems) {
+                currentInventory.set(
+                    point.x,
+                    point.y,
+                    item
+                )
+                madeChanges = true
+            }
+        }
+
         if (madeChanges) {
-            Bukkit.getPluginManager().callEvent(DrawPaneEvent(player))
+            Bukkit.getPluginManager().callEvent(DrawPaneEvent(player, this, drawNormalInventory, drawPlayerInventory))
+        }
+    }
+
+    /** Saves any persistent items based on [inventory]. */
+    public fun savePersistentItems(inventory: Inventory) {
+        if (!backing.properties.persistAddedItems) return
+
+        addedItems.clear()
+        val contents = inventory.contents
+        for (index in contents.indices) {
+            // Ignore empty slots
+            val stack = contents[index] ?: continue
+            if (stack.type == Material.AIR) continue
+
+            // Find the slot that this item is in
+            val point = GridPoint.fromBukkitChestSlot(index) ?: continue
+
+            // Ignore any items that are in the pane itself
+            if (pane.getRawUnordered(point) != null) continue
+
+            // Store this item
+            addedItems[point] = stack
         }
     }
 

@@ -10,6 +10,8 @@ import org.bukkit.entity.Player
 /** A grid map of completed elements. */
 internal open class CompletedPane : GridMap<CompletedElement> by HashGridMap() {
     internal open fun getRaw(vector: GridPoint): CompletedElement? = get(vector)
+
+    internal open fun getRawUnordered(vector: GridPoint): CompletedElement? = get(vector)
 }
 
 /** A completed pane with an ordering. */
@@ -17,9 +19,8 @@ internal class CompletedOrderedPane(
     private val ordering: List<Int>
 ) : CompletedPane() {
 
-    override fun getRaw(vector: GridPoint): CompletedElement? {
-        return get(ordering[vector.x], vector.y)
-    }
+    override fun getRaw(vector: GridPoint): CompletedElement? =
+        get(ordering[vector.x], vector.y)
 }
 
 /** Completes a pane for [player] by drawing each element while suspending. */

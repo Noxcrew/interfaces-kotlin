@@ -21,4 +21,6 @@ public data class InterfaceProperties<P : Pane>(
     public val preventClickingEmptySlots: Boolean = false,
     /** All interactions that will be ignored on this view and cancelled on pane items without calling the handler. */
     public val preventedInteractions: Collection<Action> = emptySet(),
+    /** Persists items added to this pane in a previous instance. */
+    public val persistAddedItems: Boolean = false
 )

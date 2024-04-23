@@ -67,12 +67,6 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             Reason.UNKNOWN,
             Reason.PLUGIN
         )
-
-        /** The possible valid slot range inside the player inventory. */
-        private val PLAYER_INVENTORY_RANGE = 0..40
-
-        /** The slot index used to indicate a click was outside the UI. */
-        private const val OUTSIDE_CHEST_INDEX = -999
     }
 
     /** Stores data for a single chat query. */
@@ -111,6 +105,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     /** Updates the currently open interface for [playerId] to [view]. */
     public fun setOpenInterface(playerId: UUID, view: PlayerInterfaceView?) {
+        // Save the contents of their currently shown inventory
+        val bukkitPlayer = Bukkit.getPlayer(playerId)
+        if (bukkitPlayer != null) {
+            saveInventoryContentsIfOpened(bukkitPlayer)
+        }
+
         if (view == null) {
             openPlayerInterfaceViews.invalidate(playerId)
         } else {
@@ -119,8 +119,24 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         }
     }
 
+    /**
+     * Saves any persistent items in the regular inventory of [player] if
+     * we are keeping persistent items intact.
+     */
+    public fun saveInventoryContentsIfOpened(player: HumanEntity) {
+        // Saves any persistent items stored in the main inventory whenever we are currently
+        // showing a combined or player inventory before we draw the new one over-top
+        val currentlyShown = convertHolderToInterfaceView(player.openInventory.topInventory.holder)
+        if (currentlyShown != null && currentlyShown !is ChestInterfaceView) {
+            currentlyShown.savePersistentItems(player.inventory)
+        }
+    }
+
     @EventHandler
     public fun onOpen(event: InventoryOpenEvent) {
+        // Save previous inventory contents before we open the new one
+        saveInventoryContentsIfOpened(event.player)
+
         val holder = event.inventory.holder
         val view = convertHolderToInterfaceView(holder) ?: return
 
@@ -134,6 +150,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val holder = event.inventory.holder
         val view = holder as? AbstractInterfaceView<*, *> ?: return
         val reason = event.reason
+
+        // Saves any persistent items stored in the given inventory before we close it
+        view.savePersistentItems(event.inventory)
 
         SCOPE.launch {
             // Mark the current view as closed properly
@@ -209,11 +228,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         if (view is ChestInterfaceView) return
 
         // Tally up all items that the player cannot modify and remove them from the drops
-        for (index in PLAYER_INVENTORY_RANGE) {
+        for (index in GridPoint.PLAYER_INVENTORY_RANGE) {
             val stack = event.player.inventory.getItem(index) ?: continue
-            val x = index / 9
-            val adjustedX = PlayerPane.PANE_ORDERING.indexOf(x)
-            val point = GridPoint(adjustedX, index % 9)
+            val point = GridPoint.fromBukkitPlayerSlot(index) ?: continue
             if (!canFreelyMove(view, point)) {
                 var removed = false
 
@@ -259,21 +276,10 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     /** Extracts the clicked point from an inventory click event. */
     private fun clickedPoint(event: InventoryClickEvent): GridPoint? {
-        // not really sure why this special handling is required,
-        // the ordered pane system should solve this but this is the only
-        // place where it's become an issue.
         if (event.inventory.holder is Player) {
-            val index = event.slot
-            if (index !in PLAYER_INVENTORY_RANGE) return null
-
-            val x = index / 9
-            val adjustedX = PlayerPane.PANE_ORDERING.indexOf(x)
-            return GridPoint(adjustedX, index % 9)
+            return GridPoint.fromBukkitPlayerSlot(event.slot)
         }
-
-        val index = event.rawSlot
-        if (index == OUTSIDE_CHEST_INDEX) return null
-        return GridPoint.at(index / 9, index % 9)
+        return GridPoint.fromBukkitChestSlot(event.slot)
     }
 
     /**
@@ -295,8 +301,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     /** Returns whether [clickedPoint] in [view] can be freely moved. */
     private fun canFreelyMove(
         view: AbstractInterfaceView<*, *>,
-        clickedPoint: GridPoint,
-    ): Boolean = view.pane.getRaw(clickedPoint)?.clickHandler == null && !view.backing.properties.preventClickingEmptySlots
+        clickedPoint: GridPoint
+    ): Boolean = view.pane.getRaw(clickedPoint) == null && !view.backing.properties.preventClickingEmptySlots
 
     /** Handles a [view] being clicked at [clickedPoint] through some [event]. */
     private fun handleClick(
@@ -307,10 +313,10 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         slot: Int
     ) {
         // Determine the type of click, if nothing was clicked we allow it
-        val clickHandler = view.pane.getRaw(clickedPoint)?.clickHandler
+        val raw = view.pane.getRaw(clickedPoint)
 
         // Optionally cancel clicking on other slots
-        if (clickHandler == null) {
+        if (raw == null) {
             if (view.backing.properties.preventClickingEmptySlots) {
                 event.isCancelled = true
             }
@@ -332,7 +338,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             .forEach { handler -> ClickHandler.process(handler, clickContext) }
 
         // Run the click handler and deal with its result
-        val completedClickHandler = clickHandler
+        val completedClickHandler = raw.clickHandler
             .run { CompletableClickHandler().apply { handle(clickContext) } }
             .onComplete { ex ->
                 if (ex != null) {
