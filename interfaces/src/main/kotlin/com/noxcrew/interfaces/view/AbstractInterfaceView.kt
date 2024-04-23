@@ -266,8 +266,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
             val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
             if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) return@forEach
 
-            currentInventory.set(row, column, element.itemStack.apply { this?.let { backing.properties.itemPostProcessor?.invoke
-                (it) } })
+            currentInventory.set(
+                row,
+                column,
+                element.itemStack.apply { this?.let { backing.properties.itemPostProcessor?.invoke(it) } }
+            )
             madeChanges = true
         }
         if (madeChanges) {

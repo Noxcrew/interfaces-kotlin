@@ -1,21 +1,16 @@
 package com.noxcrew.interfaces.interfaces
 
-import com.noxcrew.interfaces.click.ClickHandler
 import com.noxcrew.interfaces.pane.CombinedPane
-import com.noxcrew.interfaces.pane.Pane
-import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.view.CombinedInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
-import org.bukkit.event.inventory.InventoryCloseEvent
-import org.bukkit.inventory.ItemStack
 
 /** An interface that uses a chest GUI and the player's inventory below. */
 public class CombinedInterface internal constructor(
     override val rows: Int,
     override val initialTitle: Component?,
-    override val properties: InterfaceProperties<CombinedPane>,
+    override val properties: InterfaceProperties<CombinedPane>
 ) : Interface<CombinedPane>, TitledInterface {
 
     public companion object {

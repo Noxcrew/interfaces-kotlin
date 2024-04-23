@@ -7,7 +7,7 @@ import org.bukkit.entity.Player
 
 /** An interface that uses the entire player inventory. */
 public class PlayerInterface internal constructor(
-    override val properties: InterfaceProperties<PlayerPane>,
+    override val properties: InterfaceProperties<PlayerPane>
 ) : Interface<PlayerPane> {
 
     public companion object {

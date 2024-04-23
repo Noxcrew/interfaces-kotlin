@@ -10,7 +10,7 @@ import org.bukkit.entity.Player
 public class ChestInterface internal constructor(
     override val rows: Int,
     override val initialTitle: Component?,
-    override val properties: InterfaceProperties<Pane>,
+    override val properties: InterfaceProperties<Pane>
 ) : Interface<Pane>, TitledInterface {
 
     public companion object {
