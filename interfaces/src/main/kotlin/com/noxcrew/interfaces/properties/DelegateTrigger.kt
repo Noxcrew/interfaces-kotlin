@@ -14,8 +14,7 @@ public open class DelegateTrigger : Trigger {
 
     override fun trigger() {
         updateListeners.forEach { (obj, listeners) ->
-            if (obj == null) return@forEach
-            listeners.forEach { obj.apply(it) }
+            listeners.forEach { obj?.apply(it) }
         }
     }
 
