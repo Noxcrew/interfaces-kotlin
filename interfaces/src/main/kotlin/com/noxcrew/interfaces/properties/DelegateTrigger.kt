@@ -1,28 +1,27 @@
 package com.noxcrew.interfaces.properties
 
-import java.lang.ref.WeakReference
-import java.util.concurrent.ConcurrentHashMap
+import com.github.benmanes.caffeine.cache.Caffeine
+import java.util.Queue
+import java.util.concurrent.ConcurrentLinkedDeque
 
 /** A trigger that delegates triggers to its listeners. */
 public open class DelegateTrigger : Trigger {
 
-    private val updateListeners = ConcurrentHashMap.newKeySet<Pair<WeakReference<Any>, Any.() -> Unit>>()
+    private val updateListeners = Caffeine.newBuilder()
+        .weakKeys()
+        .build<Any, Queue<Any.() -> Unit>>()
+        .asMap()
 
     override fun trigger() {
-        val iterator = updateListeners.iterator()
-        while (iterator.hasNext()) {
-            val (reference, consumer) = iterator.next()
-            val obj = reference.get()
-            if (obj == null) {
-                iterator.remove()
-                continue
-            }
-            obj.apply(consumer)
+        updateListeners.forEach { (_, listeners) ->
+            listeners.forEach { it() }
         }
     }
 
     override fun <T : Any> addListener(reference: T, listener: T.() -> Unit) {
-        updateListeners.removeIf { it.first.get() == null }
-        updateListeners.add(WeakReference(reference) as WeakReference<Any> to listener as (Any.() -> Unit))
+        @Suppress("UNCHECKED_CAST")
+        updateListeners.computeIfAbsent(reference) {
+            ConcurrentLinkedDeque()
+        }.add(listener as (Any.() -> Unit))
     }
 }
