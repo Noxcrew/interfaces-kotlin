@@ -52,7 +52,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     private val children = WeakHashMap<AbstractInterfaceView<*, *>, Unit>()
 
     /** Added persistent items added when this interface was last closed. */
-    private val addedItems = mutableMapOf<GridPoint, ItemStack>()
+    public val addedItems: MutableMap<GridPoint, ItemStack> = mutableMapOf()
 
     /** Whether the view is being painted for the first time. */
     protected var firstPaint: Boolean = true
