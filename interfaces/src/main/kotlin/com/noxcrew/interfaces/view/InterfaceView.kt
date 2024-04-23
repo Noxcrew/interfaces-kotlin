@@ -27,7 +27,7 @@ public interface InterfaceView {
     public suspend fun open()
 
     /** Closes this view. */
-    public fun close()
+    public suspend fun close()
 
     /** Returns whether this view is opened based on the player's current shown inventory. */
     public fun isOpen(): Boolean

@@ -55,7 +55,7 @@ public class PlayerInterfaceView internal constructor(
         }
     }
 
-    override fun close() {
+    override suspend fun close() {
         markClosed()
 
         // Ensure we update the interface state in the main thread!

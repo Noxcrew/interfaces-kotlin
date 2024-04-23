@@ -1,6 +1,5 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessPlugin
-import java.io.ByteArrayOutputStream
 import xyz.jpenilla.runpaper.task.RunServer
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -8,15 +7,15 @@ plugins {
     alias(libs.plugins.run.paper) apply false
 
     // Kotlin plugin prefers to be applied to parent when it's used in multiple sub-modules.
-    kotlin("jvm") version "1.8.21" apply false
+    kotlin("jvm") version "1.9.22" apply false
     alias(libs.plugins.spotless)
 }
 
-val javaVersion: Int = 17
+val javaVersion: Int = 21
 
 allprojects {
     group = "com.noxcrew.interfaces"
-    version = "1.0.2-SNAPSHOT"
+    version = "1.0.3-SNAPSHOT"
 
     tasks.withType<JavaCompile> {
         sourceCompatibility = javaVersion.toString()

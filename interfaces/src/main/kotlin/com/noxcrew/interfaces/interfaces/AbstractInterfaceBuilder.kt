@@ -27,6 +27,15 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
     /** Sets an item post processor to apply to every item in the interface. */
     public var itemPostProcessor: ((ItemStack) -> Unit)? = null
 
+    /** The properties object to use for the created interface. */
+    public val properties: InterfaceProperties<P>
+        get() = InterfaceProperties(
+            closeHandlers,
+            transforms,
+            clickPreprocessors,
+            itemPostProcessor
+        )
+
     /** Adds a new transform to the interface that updates whenever [triggers] change. */
     public fun withTransform(vararg triggers: Trigger, transform: Transform<P>) {
         transforms += AppliedTransform(transformCounter, triggers.toSet(), transform)

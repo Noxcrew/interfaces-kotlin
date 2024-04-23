@@ -54,11 +54,10 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             require(!::INSTANCE.isInitialized) { "Already installed!" }
             INSTANCE = InterfacesListeners(plugin)
             Bukkit.getPluginManager().registerEvents(INSTANCE, plugin)
-            println("Installed interfaces listeners")
         }
 
-        /** All valid closing reasons that should re-open the opened player inventory. */
-        private val VALID_REASON = EnumSet.of(
+        /** All valid closing reasons that should re-open the previously opened player inventory. */
+        private val REOPEN_REASONS = EnumSet.of(
             Reason.PLAYER,
             Reason.UNKNOWN,
             Reason.PLUGIN
@@ -126,32 +125,27 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     @EventHandler
     public fun onOpen(event: InventoryOpenEvent) {
         val holder = event.inventory.holder
+        val view = convertHolderToInterfaceView(holder) ?: return
 
-        if (holder !is InterfaceView) {
-            return
-        }
-
+        // Abort any previous query the player had
         abortQuery(event.player.uniqueId, null)
-        holder.onOpen()
+        view.onOpen()
     }
 
     @EventHandler
     public fun onClose(event: InventoryCloseEvent) {
         val holder = event.inventory.holder
+        val view = convertHolderToInterfaceView(holder) ?: return
         val reason = event.reason
 
-        if (holder !is InterfaceView) {
-            return
-        }
-
         SCOPE.launch {
-            val view = convertHolderToInterfaceView(holder)
-            if (view != null) {
-                view.backing.closeHandlers[reason]?.invoke(reason, view)
-            }
+            // Mark the current view as closed properly
+            view.markClosed(reason)
 
-            if (reason !in VALID_REASON) return@launch
-            getOpenInterface(event.player.uniqueId)?.open()
+            // Try to open back up a previous interface
+            if (reason in REOPEN_REASONS) {
+                getOpenInterface(event.player.uniqueId)?.open()
+            }
         }
     }
 
@@ -171,19 +165,13 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler
     public fun onInteract(event: PlayerInteractEvent) {
-        if (event.action !in VALID_INTERACT) {
-            return
-        }
-        if (event.hand != EquipmentSlot.HAND) {
-            return
-        }
+        if (event.action !in VALID_INTERACT) return
+        if (event.hand != EquipmentSlot.HAND) return
 
         val player = event.player
-        val view = getOpenInterface(player.uniqueId) as? AbstractInterfaceView<*, *> ?: return
-
+        val view = getOpenInterface(player.uniqueId) ?: return
         val slot = player.inventory.heldItemSlot
         val clickedPoint = GridPoint.at(3, slot)
-
         val click = convertAction(event.action, player.isSneaking)
 
         handleClick(view, clickedPoint, click, event, -1)
@@ -272,7 +260,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         val clickContext = ClickContext(view.player, view, click, slot)
 
-        view.backing.clickPreprocessors
+        view.backing.properties.clickPreprocessors
             .forEach { handler -> ClickHandler.process(handler, clickContext) }
 
         val clickHandler = view.pane.getRaw(clickedPoint)
@@ -391,12 +379,13 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Run the cancellation handler
         query.onCancel()
 
-        // Try to run the close handler on the view as it got closed now
-        val reason = Reason.PLAYER
-        (query.view as AbstractInterfaceView<*, *>).backing.closeHandlers[reason]?.also { handler ->
-            SCOPE.launch {
-                handler.invoke(reason, query.view)
-            }
+        // If a view is given we are already in a markClosed call
+        // and we can leave it here!
+        if (view != null) return
+
+        // Mark the view as properly closed
+        SCOPE.launch {
+            (query.view as AbstractInterfaceView<*, *>).markClosed(Reason.PLAYER)
         }
     }
 }

@@ -16,9 +16,6 @@ public class ChestInterfaceBuilder :
     override fun build(): ChestInterface = ChestInterface(
         rows,
         initialTitle,
-        closeHandlers,
-        transforms,
-        clickPreprocessors,
-        itemPostProcessor
+        properties,
     )
 }

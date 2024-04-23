@@ -2,6 +2,7 @@ package com.noxcrew.interfaces.interfaces
 
 import com.noxcrew.interfaces.click.ClickHandler
 import com.noxcrew.interfaces.pane.CombinedPane
+import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.view.CombinedInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
@@ -14,10 +15,7 @@ import org.bukkit.inventory.ItemStack
 public class CombinedInterface internal constructor(
     override val rows: Int,
     override val initialTitle: Component?,
-    override val closeHandlers: MutableMap<InventoryCloseEvent.Reason, CloseHandler>,
-    override val transforms: Collection<AppliedTransform<CombinedPane>>,
-    override val clickPreprocessors: Collection<ClickHandler>,
-    override val itemPostProcessor: ((ItemStack) -> Unit)?
+    override val properties: InterfaceProperties<CombinedPane>,
 ) : Interface<CombinedPane>, TitledInterface {
 
     public companion object {

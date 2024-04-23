@@ -19,12 +19,12 @@ import kotlinx.coroutines.withTimeout
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
+import org.bukkit.event.inventory.InventoryCloseEvent
 import org.slf4j.LoggerFactory
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.Exception
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -74,13 +74,17 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     public abstract fun openInventory()
 
     /** Marks this menu as closed and processes it. */
-    protected fun markClosed() {
+    internal suspend fun markClosed(reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN) {
         // End a possible chat query with the listener
         InterfacesListeners.INSTANCE.abortQuery(player.uniqueId, this)
 
         // Ensure that the menu does not open
         openIfClosed.set(false)
-        shouldBeOpened.set(false)
+
+        // Run a generic close handler if it's still opened
+        if (shouldBeOpened.compareAndSet(true, false)) {
+            backing.properties.closeHandlers[reason]?.invoke(reason, this)
+        }
 
         // Close any children, this is a bit of a lossy system,
         // we don't particularly care if this happens nicely we
@@ -97,7 +101,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     private fun setup() {
         // Determine for each trigger what transforms it updates
         val triggers = HashMultimap.create<Trigger, AppliedTransform<P>>()
-        for (transform in backing.transforms) {
+        for (transform in backing.properties.transforms) {
             for (trigger in transform.triggers) {
                 triggers.put(trigger, transform)
             }
@@ -117,7 +121,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     }
 
     override fun redrawComplete() {
-        applyTransforms(backing.transforms)
+        applyTransforms(backing.properties.transforms)
     }
 
     override suspend fun open() {
@@ -141,7 +145,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         }
     }
 
-    override fun close() {
+    override suspend fun close() {
         markClosed()
 
         if (isOpen()) {
@@ -262,7 +266,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
             val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
             if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) return@forEach
 
-            currentInventory.set(row, column, element.itemStack.apply { this?.let { backing.itemPostProcessor?.invoke(it) } })
+            currentInventory.set(row, column, element.itemStack.apply { this?.let { backing.properties.itemPostProcessor?.invoke
+                (it) } })
             madeChanges = true
         }
         if (madeChanges) {
