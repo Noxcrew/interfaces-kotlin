@@ -15,5 +15,5 @@ public data class InterfaceProperties<P : Pane>(
     /** A collection of click handlers that will be run before each click without blocking. */
     public val clickPreprocessors: Collection<ClickHandler> = emptySet(),
     /** A post-processor applied to all items placed in the inventory. */
-    public val itemPostProcessor: ((ItemStack) -> Unit)? = {}
+    public val itemPostProcessor: ((ItemStack) -> Unit)? = {},
 )

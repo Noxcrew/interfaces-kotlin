@@ -19,6 +19,7 @@ import org.bukkit.Bukkit
 import org.bukkit.entity.HumanEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.Cancellable
+import org.bukkit.event.Event
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -149,7 +150,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public fun onClick(event: InventoryClickEvent) {
         val holder = event.inventory.holder
         val view = convertHolderToInterfaceView(holder) ?: return
@@ -163,10 +164,11 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         setOpenInterface(event.player.uniqueId, null)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public fun onInteract(event: PlayerInteractEvent) {
         if (event.action !in VALID_INTERACT) return
         if (event.hand != EquipmentSlot.HAND) return
+        if (event.useItemInHand() == Event.Result.DENY) return
 
         val player = event.player
         val view = getOpenInterface(player.uniqueId) ?: return
@@ -202,10 +204,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // place where it's become an issue.
         if (event.inventory.holder is Player) {
             val index = event.slot
-
-            if (index !in PLAYER_INVENTORY_RANGE) {
-                return null
-            }
+            if (index !in PLAYER_INVENTORY_RANGE) return null
 
             val x = index / 9
             val adjustedX = PlayerPane.PANE_ORDERING.indexOf(x)
@@ -213,11 +212,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         }
 
         val index = event.rawSlot
-
-        if (index == OUTSIDE_CHEST_INDEX) {
-            return null
-        }
-
+        if (index == OUTSIDE_CHEST_INDEX) return null
         return GridPoint.at(index / 9, index % 9)
     }
 
@@ -226,19 +221,13 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
      * their currently open player interface is returned.
      */
     public fun convertHolderToInterfaceView(holder: InventoryHolder?): AbstractInterfaceView<*, *>? {
-        if (holder == null) {
-            return null
-        }
+        if (holder == null) return null
 
         // If it's an abstract view use that one
-        if (holder is AbstractInterfaceView<*, *>) {
-            return holder
-        }
+        if (holder is AbstractInterfaceView<*, *>) return holder
 
         // If it's the player's own inventory use the held one
-        if (holder is HumanEntity) {
-            return getOpenInterface(holder.uniqueId)
-        }
+        if (holder is HumanEntity) return getOpenInterface(holder.uniqueId)
 
         return null
     }
@@ -251,21 +240,24 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         event: Cancellable,
         slot: Int
     ) {
+        // Determine the type of click, if nothing was clicked we allow it
+        val clickHandler = view.pane.getRaw(clickedPoint)?.clickHandler ?: return
+
+        // Automatically cancel if throttling or already processing
         if (view.isProcessingClick || shouldThrottle(view.player)) {
             event.isCancelled = true
             return
         }
 
+        // Only allow one click to be processed at the same time
         view.isProcessingClick = true
 
+        // Forward this click to all pre-processors
         val clickContext = ClickContext(view.player, view, click, slot)
-
         view.backing.properties.clickPreprocessors
             .forEach { handler -> ClickHandler.process(handler, clickContext) }
 
-        val clickHandler = view.pane.getRaw(clickedPoint)
-            ?.clickHandler ?: ClickHandler.ALLOW
-
+        // Run the click handler and deal with its result
         val completedClickHandler = clickHandler
             .run { CompletableClickHandler().apply { handle(clickContext) } }
             .onComplete { ex ->
@@ -286,27 +278,22 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             )
         }
 
-        event.isCancelled = completedClickHandler.cancelled
+        // Update the cancellation state of the event
+        if (completedClickHandler.cancelled) {
+            event.isCancelled = true
+        }
     }
 
     /** Converts a bukkit [action] to a [ClickType]. */
     private fun convertAction(action: Action, sneaking: Boolean): ClickType {
         if (action.isRightClick) {
-            if (sneaking) {
-                return ClickType.SHIFT_RIGHT
-            }
-
+            if (sneaking) return ClickType.SHIFT_RIGHT
             return ClickType.RIGHT
         }
-
         if (action.isLeftClick) {
-            if (sneaking) {
-                return ClickType.SHIFT_LEFT
-            }
-
+            if (sneaking) return ClickType.SHIFT_LEFT
             return ClickType.LEFT
         }
-
         return ClickType.UNKNOWN
     }
 
