@@ -67,7 +67,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     private val pendingTransforms = ConcurrentHashMap.newKeySet<AppliedTransform<P>>()
     private val debouncedTransforms = ConcurrentHashMap.newKeySet<AppliedTransform<P>>()
 
-    private val panes = CollapsablePaneMap.create(backing.totalRows(), backing.createPane())
+    private val panes = CollapsablePaneMap.create(backing.createPane())
     internal lateinit var pane: CompletedPane
 
     protected lateinit var currentInventory: I
@@ -269,7 +269,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     protected open fun drawPaneToInventory(drawNormalInventory: Boolean, drawPlayerInventory: Boolean) {
         // Determine all slots we need to clear if unused
         val leftovers = mutableListOf<Pair<Int, Int>>()
-        forEachInGrid(backing.rows, COLUMNS_IN_CHEST) { row, column ->
+        forEachInGrid(backing.totalRows(), COLUMNS_IN_CHEST) { row, column ->
             leftovers += row to column
         }
 

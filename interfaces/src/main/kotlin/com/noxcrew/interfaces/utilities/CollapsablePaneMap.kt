@@ -6,7 +6,6 @@ import com.noxcrew.interfaces.pane.convertToEmptyCompletedPane
 
 /** A collection of completed panes that can be collapsed to create a new merged [CompletedPane]. */
 internal class CollapsablePaneMap private constructor(
-    private val rows: Int,
     // pass in a pane from the view so that we can persist
     // ordering, used in the listeners.
     private val basePane: Pane,
@@ -16,9 +15,8 @@ internal class CollapsablePaneMap private constructor(
 ) : MutableMap<Int, CompletedPane> by internal {
 
     internal companion object {
-        /** Creates a new collapsable map with [rows] rows and a [basePane]. */
-        internal fun create(rows: Int, basePane: Pane) = CollapsablePaneMap(
-            rows,
+        /** Creates a new collapsable map with [basePane]. */
+        internal fun create(basePane: Pane) = CollapsablePaneMap(
             basePane,
             sortedMapOf(Comparator.reverseOrder())
         )
