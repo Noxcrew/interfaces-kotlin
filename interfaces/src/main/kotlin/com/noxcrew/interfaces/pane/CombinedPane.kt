@@ -5,8 +5,9 @@ public class CombinedPane(
     chestRows: Int
 ) : OrderedPane(createMappings(chestRows)) {
 
-    private companion object {
-        private fun createMappings(rows: Int): List<Int> = buildList {
+    public companion object {
+        /** Creates mappings for a combined view with [rows] rows. */
+        public fun createMappings(rows: Int): List<Int> = buildList {
             IntRange(0, rows - 1).forEach(::add)
 
             // the players hotbar is row 0 in the players inventory,

@@ -30,11 +30,13 @@ import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryCloseEvent.Reason
+import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.event.inventory.InventoryOpenEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.player.PlayerRespawnEvent
+import org.bukkit.event.player.PlayerSwapHandItemsEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.plugin.Plugin
@@ -171,6 +173,36 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val view = convertHolderToInterfaceView(holder) ?: return
         val clickedPoint = clickedPoint(event) ?: return
         handleClick(view, clickedPoint, event.click, event, event.hotbarButton)
+
+        // If the event is not cancelled we add extra prevention checks if any of the involved
+        // slots are not allowed to be modified!
+        if (!event.isCancelled) {
+            // If you use a number key we check if the item you're swapping with is
+            // protected.
+            if (event.click == ClickType.NUMBER_KEY && !canFreelyMove(view, GridPoint.at(3, event.hotbarButton))) {
+                event.isCancelled = true
+                return
+            }
+
+            // If you try to swap with the off-hand we have to specifically check for that.
+            if (event.click == ClickType.SWAP_OFFHAND && !canFreelyMove(view, GridPoint.at(4, 4))) {
+                event.isCancelled = true
+                return
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public fun onDrag(event: InventoryDragEvent) {
+        val holder = event.inventory.holder
+        val view = convertHolderToInterfaceView(holder) ?: return
+        for (slot in event.rawSlots) {
+            val clickedPoint = GridPoint.fromCombinedSlot(event.view.topInventory.size / 9, slot) ?: continue
+            if (!canFreelyMove(view, clickedPoint)) {
+                event.isCancelled = true
+                return
+            }
+        }
     }
 
     @EventHandler
@@ -215,6 +247,20 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Don't allow dropping items that cannot be freely edited
         if (!canFreelyMove(view, droppedSlot)) {
+            event.isCancelled = true
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public fun onSwapHands(event: PlayerSwapHandItemsEvent) {
+        val player = event.player
+        val view = getOpenInterface(player.uniqueId) ?: return
+        val slot = player.inventory.heldItemSlot
+        val interactedSlot1 = GridPoint.at(3, slot)
+        val interactedSlot2 = GridPoint.at(4, 4)
+
+        // Don't allow swapping items that cannot be freely edited
+        if (!canFreelyMove(view, interactedSlot1) || !canFreelyMove(view, interactedSlot2)) {
             event.isCancelled = true
         }
     }
