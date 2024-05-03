@@ -1,6 +1,5 @@
 package com.noxcrew.interfaces.grid
 
-import com.noxcrew.interfaces.pane.CombinedPane
 import com.noxcrew.interfaces.pane.PlayerPane
 
 /** A 2-dimensional vector storing integer components. */
@@ -12,15 +11,6 @@ public data class GridPoint(val x: Int, val y: Int) {
 
         /** The slot index used to indicate a click was outside the UI. */
         public const val OUTSIDE_CHEST_INDEX: Int = -999
-
-        /** Returns the grid point for a [slot] in a player inventory. */
-        public fun fromCombinedSlot(rows: Int, slot: Int): GridPoint? {
-            if (slot !in PLAYER_INVENTORY_RANGE) return null
-            val x = slot / 9
-            val mappings = CombinedPane.createMappings(rows)
-            val adjustedX = mappings.indexOf(x)
-            return GridPoint(adjustedX, slot % 9)
-        }
 
         /** Returns the grid point for a [slot] in a player inventory. */
         public fun fromBukkitPlayerSlot(slot: Int): GridPoint? {

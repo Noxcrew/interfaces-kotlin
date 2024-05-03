@@ -197,7 +197,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val holder = event.inventory.holder
         val view = convertHolderToInterfaceView(holder) ?: return
         for (slot in event.rawSlots) {
-            val clickedPoint = GridPoint.fromCombinedSlot(event.view.topInventory.size / 9, slot) ?: continue
+            val clickedPoint = GridPoint.fromBukkitChestSlot(slot) ?: continue
             if (!canFreelyMove(view, clickedPoint)) {
                 event.isCancelled = true
                 return
@@ -325,7 +325,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         if (event.inventory.holder is Player) {
             return GridPoint.fromBukkitPlayerSlot(event.slot)
         }
-        return GridPoint.fromBukkitChestSlot(event.slot)
+        return GridPoint.fromBukkitChestSlot(event.rawSlot)
     }
 
     /**
