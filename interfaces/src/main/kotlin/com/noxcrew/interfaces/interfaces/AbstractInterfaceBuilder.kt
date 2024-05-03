@@ -40,7 +40,7 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
     public var persistAddedItems: Boolean = false
 
     /** Keeps items that were previously in the inventory before opening the view. */
-    public val inheritExistingItems: Boolean = false
+    public var inheritExistingItems: Boolean = false
 
     /** The properties object to use for the created interface. */
     public val properties: InterfaceProperties<P>
