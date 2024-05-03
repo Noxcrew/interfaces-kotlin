@@ -18,9 +18,11 @@ public data class InterfaceProperties<P : Pane>(
     /** A post-processor applied to all items placed in the inventory. */
     public val itemPostProcessor: ((ItemStack) -> Unit)? = {},
     /** Whether clicking on empty slots should be cancelled. */
-    public val preventClickingEmptySlots: Boolean = false,
+    public val preventClickingEmptySlots: Boolean = true,
     /** All interactions that will be ignored on this view and cancelled on pane items without calling the handler. */
     public val preventedInteractions: Collection<Action> = emptySet(),
     /** Persists items added to this pane in a previous instance. */
-    public val persistAddedItems: Boolean = false
+    public val persistAddedItems: Boolean = false,
+    /** Keeps items that were previously in the inventory before opening this. */
+    public val inheritExistingItems: Boolean = false
 )

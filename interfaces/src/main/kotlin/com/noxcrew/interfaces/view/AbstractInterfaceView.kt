@@ -307,11 +307,14 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
             }
         }
 
-        // Empty any slots that are not otherwise edited
-        for ((row, column) in leftovers) {
-            val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
-            if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
-            currentInventory.set(row, column, ItemStack(Material.AIR))
+        // If we inherit existing items we don't clear here!
+        if (!backing.properties.inheritExistingItems) {
+            // Empty any slots that are not otherwise edited
+            for ((row, column) in leftovers) {
+                val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
+                if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
+                currentInventory.set(row, column, ItemStack(Material.AIR))
+            }
         }
 
         if (madeChanges) {

@@ -30,7 +30,7 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
     public var itemPostProcessor: ((ItemStack) -> Unit)? = null
 
     /** Whether clicking on empty slots should be cancelled. */
-    public var preventClickingEmptySlots: Boolean = false
+    public var preventClickingEmptySlots: Boolean = true
 
     /**
      * Persists items added to this pane in a previous instance.
@@ -38,6 +38,9 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
      * to function as normal inventory items and be normally added/removed.
      */
     public var persistAddedItems: Boolean = false
+
+    /** Keeps items that were previously in the inventory before opening the view. */
+    public val inheritExistingItems: Boolean = false
 
     /** The properties object to use for the created interface. */
     public val properties: InterfaceProperties<P>
@@ -48,7 +51,8 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
             itemPostProcessor,
             preventClickingEmptySlots,
             preventedInteractions,
-            persistAddedItems
+            persistAddedItems,
+            inheritExistingItems
         )
 
     /** Adds a new transform to the interface that updates whenever [triggers] change. */
