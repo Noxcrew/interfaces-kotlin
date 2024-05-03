@@ -42,14 +42,16 @@ public class PlayerInterfaceView internal constructor(
 
         // Double-check that this inventory is open now!
         if (isOpen()) {
-            // Clear the player's inventory!
-            player.inventory.clear()
-            if (player.openInventory.topInventory.type == InventoryType.CRAFTING ||
-                player.openInventory.topInventory.type == InventoryType.CREATIVE
-            ) {
-                player.openInventory.topInventory.clear()
+            if (!backing.properties.inheritExistingItems) {
+                // Clear the player's inventory!
+                player.inventory.clear()
+                if (player.openInventory.topInventory.type == InventoryType.CRAFTING ||
+                    player.openInventory.topInventory.type == InventoryType.CREATIVE
+                ) {
+                    player.openInventory.topInventory.clear()
+                }
+                player.openInventory.cursor = null
             }
-            player.openInventory.cursor = null
 
             // Trigger onOpen manually because there is no real inventory being opened,
             // this will also re-draw the player inventory parts!
