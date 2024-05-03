@@ -44,7 +44,9 @@ public class PlayerInterfaceView internal constructor(
         if (isOpen()) {
             // Clear the player's inventory!
             player.inventory.clear()
-            if (player.openInventory.topInventory.type == InventoryType.CRAFTING) {
+            if (player.openInventory.topInventory.type == InventoryType.CRAFTING ||
+                player.openInventory.topInventory.type == InventoryType.CREATIVE
+            ) {
                 player.openInventory.topInventory.clear()
             }
             player.openInventory.cursor = null
@@ -66,6 +68,9 @@ public class PlayerInterfaceView internal constructor(
     }
 
     override fun isOpen(): Boolean =
-        player.openInventory.type == InventoryType.CRAFTING &&
+        (
+            player.openInventory.type == InventoryType.CRAFTING ||
+                player.openInventory.type == InventoryType.CREATIVE
+            ) &&
             InterfacesListeners.INSTANCE.getOpenInterface(player.uniqueId) == this
 }
