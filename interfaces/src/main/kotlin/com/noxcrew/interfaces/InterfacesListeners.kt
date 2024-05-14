@@ -157,12 +157,16 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         view.savePersistentItems(event.inventory)
 
         SCOPE.launch {
-            // Mark the current view as closed properly
-            view.markClosed(reason)
+            // Determine if we can re-open a previous interface
+            val openInterface = getOpenInterface(event.player.uniqueId)
+            val shouldReopen = reason in REOPEN_REASONS && !event.player.isDead && openInterface != null
 
-            // Try to open back up a previous interface
-            if (reason in REOPEN_REASONS && !event.player.isDead) {
-                getOpenInterface(event.player.uniqueId)?.open()
+            // Mark the current view as closed properly
+            view.markClosed(reason, !shouldReopen && reason != Reason.OPEN_NEW)
+
+            // If possible, open back up a previous interface
+            if (shouldReopen) {
+                requireNotNull(openInterface).open()
             }
         }
     }

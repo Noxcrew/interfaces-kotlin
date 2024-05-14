@@ -2,6 +2,7 @@ package com.noxcrew.interfaces.view
 
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
+import org.bukkit.event.inventory.InventoryCloseEvent
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -27,7 +28,10 @@ public interface InterfaceView {
     public suspend fun open()
 
     /** Closes this view. */
-    public suspend fun close()
+    public suspend fun close(
+        reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.PLUGIN,
+        closeInventory: Boolean = reason != InventoryCloseEvent.Reason.OPEN_NEW
+    )
 
     /** Returns whether this view is opened based on the player's current shown inventory. */
     public fun isOpen(): Boolean

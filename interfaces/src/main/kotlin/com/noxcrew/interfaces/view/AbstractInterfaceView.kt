@@ -82,7 +82,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     public abstract fun openInventory()
 
     /** Marks this menu as closed and processes it. */
-    internal suspend fun markClosed(reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN) {
+    internal suspend fun markClosed(
+        reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
+        closeInventory: Boolean = reason != InventoryCloseEvent.Reason.OPEN_NEW
+    ) {
         // End a possible chat query with the listener
         InterfacesListeners.INSTANCE.abortQuery(player.uniqueId, this)
 
@@ -101,7 +104,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         // properly.
         for ((child) in children) {
             if (child.shouldBeOpened.get()) {
-                child.close()
+                child.close(reason, closeInventory)
             }
         }
     }
@@ -153,10 +156,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         }
     }
 
-    override suspend fun close() {
+    override suspend fun close(reason: InventoryCloseEvent.Reason, closeInventory: Boolean) {
         markClosed()
 
-        if (isOpen()) {
+        if (isOpen() && closeInventory) {
             // Ensure we always close on the main thread!
             runSync {
                 player.closeInventory()
