@@ -157,7 +157,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     }
 
     override suspend fun close(reason: InventoryCloseEvent.Reason, closeInventory: Boolean) {
-        markClosed()
+        markClosed(reason, closeInventory)
 
         if (isOpen() && closeInventory) {
             // Ensure we always close on the main thread!

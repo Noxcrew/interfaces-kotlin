@@ -7,6 +7,7 @@ import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.runSync
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
+import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
 import kotlin.time.Duration
 
@@ -59,8 +60,8 @@ public class PlayerInterfaceView internal constructor(
         }
     }
 
-    override suspend fun close() {
-        markClosed()
+    override suspend fun close(reason: InventoryCloseEvent.Reason, closeInventory: Boolean) {
+        markClosed(reason, closeInventory)
 
         // Ensure we update the interface state in the main thread!
         // Even if the menu is not currently on the screen.
