@@ -51,7 +51,7 @@ public class PlayerInterfaceView internal constructor(
                 ) {
                     player.openInventory.topInventory.clear()
                 }
-                player.openInventory.cursor = null
+                player.openInventory.setCursor(null)
             }
 
             // Trigger onOpen manually because there is no real inventory being opened,
