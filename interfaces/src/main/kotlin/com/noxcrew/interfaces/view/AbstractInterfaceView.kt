@@ -317,6 +317,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
                 val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
                 if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
                 currentInventory.set(row, column, ItemStack(Material.AIR))
+                madeChanges = true
             }
         }
 
