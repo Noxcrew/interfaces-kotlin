@@ -21,7 +21,7 @@ public class DelayedRequestExampleInterface : RegistrableInterface {
     override val subcommand: String = "delayed"
 
     @OptIn(DelicateCoroutinesApi::class)
-    override fun create(): Interface<*> = buildCombinedInterface {
+    override fun create(): Interface<*, *> = buildCombinedInterface {
         initialTitle = text(subcommand)
         rows = 2
 

@@ -20,7 +20,7 @@ public class TabbedExampleInterface : RegistrableInterface {
 
     override val subcommand: String = "tabbed"
 
-    override fun create(): Interface<*> = first
+    override fun create(): Interface<*, *> = first
 
     private fun CombinedInterfaceBuilder.defaults() {
         rows = 6

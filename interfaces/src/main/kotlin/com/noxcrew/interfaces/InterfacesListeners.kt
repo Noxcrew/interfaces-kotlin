@@ -150,7 +150,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     @EventHandler
     public fun onClose(event: InventoryCloseEvent) {
         val holder = event.inventory.holder
-        val view = holder as? AbstractInterfaceView<*, *> ?: return
+        val view = holder as? AbstractInterfaceView<*, *, *> ?: return
         val reason = event.reason
 
         // Saves any persistent items stored in the given inventory before we close it
@@ -233,7 +233,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Check if the action is prevented if this slot is not freely
         // movable
         if (!canFreelyMove(view, clickedPoint) &&
-            event.action in view.backing.properties.preventedInteractions
+            event.action in view.builder.preventedInteractions
         ) {
             event.isCancelled = true
             return
@@ -336,11 +336,11 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
      * Converts an inventory holder to an [AbstractInterfaceView] if possible. If the holder is a player
      * their currently open player interface is returned.
      */
-    public fun convertHolderToInterfaceView(holder: InventoryHolder?): AbstractInterfaceView<*, *>? {
+    public fun convertHolderToInterfaceView(holder: InventoryHolder?): AbstractInterfaceView<*, *, *>? {
         if (holder == null) return null
 
         // If it's an abstract view use that one
-        if (holder is AbstractInterfaceView<*, *>) return holder
+        if (holder is AbstractInterfaceView<*, *, *>) return holder
 
         // If it's the player's own inventory use the held one
         if (holder is HumanEntity) return getOpenInterface(holder.uniqueId)
@@ -350,13 +350,13 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     /** Returns whether [clickedPoint] in [view] can be freely moved. */
     private fun canFreelyMove(
-        view: AbstractInterfaceView<*, *>,
+        view: AbstractInterfaceView<*, *, *>,
         clickedPoint: GridPoint
-    ): Boolean = view.pane.getRaw(clickedPoint) == null && !view.backing.properties.preventClickingEmptySlots
+    ): Boolean = view.pane.getRaw(clickedPoint) == null && !view.builder.preventClickingEmptySlots
 
     /** Handles a [view] being clicked at [clickedPoint] through some [event]. */
     private fun handleClick(
-        view: AbstractInterfaceView<*, *>,
+        view: AbstractInterfaceView<*, *, *>,
         clickedPoint: GridPoint,
         click: ClickType,
         event: Cancellable,
@@ -367,7 +367,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Optionally cancel clicking on other slots
         if (raw == null) {
-            if (view.backing.properties.preventClickingEmptySlots) {
+            if (view.builder.preventClickingEmptySlots) {
                 event.isCancelled = true
             }
             return
@@ -384,7 +384,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Forward this click to all pre-processors
         val clickContext = ClickContext(view.player, view, click, slot)
-        view.backing.properties.clickPreprocessors
+        view.builder.clickPreprocessors
             .forEach { handler -> ClickHandler.process(handler, clickContext) }
 
         // Run the click handler and deal with its result
@@ -502,7 +502,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Mark the view as properly closed
         SCOPE.launch {
-            (query.view as AbstractInterfaceView<*, *>).markClosed(Reason.PLAYER)
+            (query.view as AbstractInterfaceView<*, *, *>).markClosed(Reason.PLAYER)
         }
     }
 }

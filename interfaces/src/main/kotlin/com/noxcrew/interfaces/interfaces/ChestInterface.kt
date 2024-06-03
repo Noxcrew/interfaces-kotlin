@@ -10,8 +10,8 @@ import org.bukkit.entity.Player
 public class ChestInterface internal constructor(
     override val rows: Int,
     override val initialTitle: Component?,
-    override val properties: InterfaceProperties<Pane>
-) : Interface<Pane>, TitledInterface {
+    override val builder: ChestInterfaceBuilder
+) : Interface<ChestInterface, Pane>, TitledInterface {
 
     public companion object {
         /** The maximum number of rows for a chest GUI. */

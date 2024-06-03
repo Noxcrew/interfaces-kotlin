@@ -6,5 +6,5 @@ public interface RegistrableInterface {
 
     public val subcommand: String
 
-    public fun create(): Interface<*>
+    public fun create(): Interface<*, *>
 }

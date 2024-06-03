@@ -13,7 +13,7 @@ public class ChangingTitleExampleInterface : RegistrableInterface {
 
     override val subcommand: String = "changing-title"
 
-    override fun create(): Interface<*> = buildCombinedInterface {
+    override fun create(): Interface<*, *> = buildCombinedInterface {
         rows = 1
 
         val numberProperty = interfaceProperty(0)

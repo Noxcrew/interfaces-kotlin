@@ -15,7 +15,7 @@ import kotlin.time.Duration
 public class PlayerInterfaceView internal constructor(
     player: Player,
     backing: PlayerInterface
-) : AbstractInterfaceView<PlayerInterfacesInventory, PlayerPane>(
+) : AbstractInterfaceView<PlayerInterfacesInventory, PlayerInterface, PlayerPane>(
     player,
     backing,
     null
@@ -43,7 +43,7 @@ public class PlayerInterfaceView internal constructor(
 
         // Double-check that this inventory is open now!
         if (isOpen()) {
-            if (!backing.properties.inheritExistingItems) {
+            if (!builder.inheritExistingItems) {
                 // Clear the player's inventory!
                 player.inventory.clear()
                 if (player.openInventory.topInventory.type == InventoryType.CRAFTING ||

@@ -14,7 +14,7 @@ public class CombinedInterfaceView internal constructor(
     player: Player,
     backing: CombinedInterface,
     parent: InterfaceView?
-) : AbstractInterfaceView<CombinedInterfacesInventory, CombinedPane>(
+) : AbstractInterfaceView<CombinedInterfacesInventory, CombinedInterface, CombinedPane>(
     player,
     backing,
     parent

@@ -14,7 +14,7 @@ public class ChestInterfaceView internal constructor(
     player: Player,
     backing: ChestInterface,
     parent: InterfaceView?
-) : AbstractInterfaceView<ChestInterfacesInventory, Pane>(
+) : AbstractInterfaceView<ChestInterfacesInventory, ChestInterface, Pane>(
     player,
     backing,
     parent

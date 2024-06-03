@@ -6,6 +6,7 @@ import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.event.DrawPaneEvent
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.interfaces.Interface
+import com.noxcrew.interfaces.interfaces.InterfaceBuilder
 import com.noxcrew.interfaces.inventory.InterfacesInventory
 import com.noxcrew.interfaces.pane.CompletedPane
 import com.noxcrew.interfaces.pane.Pane
@@ -34,10 +35,10 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /** The basis for the implementation of an interface view. */
-public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
+public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interface<T, P>, P : Pane>(
     override val player: Player,
     /** The interface backing this view. */
-    public val backing: Interface<P>,
+    public val backing: T,
     private val parent: InterfaceView?
 ) : InterfaceView {
 
@@ -50,7 +51,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     private val semaphore = Semaphore(1)
     private val queue = AtomicInteger(0)
 
-    private val children = WeakHashMap<AbstractInterfaceView<*, *>, Unit>()
+    private val children = WeakHashMap<AbstractInterfaceView<*, *, *>, Unit>()
+
+    /** The builder used by this interface. */
+    public val builder: InterfaceBuilder<P, T>
+        get() = backing.builder
 
     /** Added persistent items added when this interface was last closed. */
     public val addedItems: MutableMap<GridPoint, ItemStack> = mutableMapOf()
@@ -96,8 +101,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         openIfClosed.set(false)
 
         // Run a generic close handler if it's still opened
-        if (shouldBeOpened.compareAndSet(true, false) && (!changingView || backing.properties.callCloseHandlerOnViewSwitch)) {
-            backing.properties.closeHandlers[reason]?.invoke(reason, this)
+        if (shouldBeOpened.compareAndSet(true, false) && (!changingView || builder.callCloseHandlerOnViewSwitch)) {
+            builder.closeHandlers[reason]?.invoke(reason, this)
         }
 
         // Don't close children when changing views!
@@ -118,7 +123,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     private fun setup() {
         // Determine for each trigger what transforms it updates
         val triggers = HashMultimap.create<Trigger, AppliedTransform<P>>()
-        for (transform in backing.properties.transforms) {
+        for (transform in builder.transforms) {
             for (trigger in transform.triggers) {
                 triggers.put(trigger, transform)
             }
@@ -138,7 +143,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     }
 
     override fun redrawComplete() {
-        applyTransforms(backing.properties.transforms)
+        applyTransforms(builder.transforms)
     }
 
     override suspend fun open() {
@@ -148,7 +153,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         shouldBeOpened.set(true)
 
         // Indicate to the parent that this child exists
-        if (parent is AbstractInterfaceView<*, *>) {
+        if (parent is AbstractInterfaceView<*, *, *>) {
             parent.children[this] = Unit
         }
 
@@ -293,14 +298,14 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
             currentInventory.set(
                 row,
                 column,
-                element.itemStack.apply { this?.let { backing.properties.itemPostProcessor?.invoke(it) } }
+                element.itemStack.apply { this?.let { builder.itemPostProcessor?.invoke(it) } }
             )
             leftovers -= row to column
             madeChanges = true
         }
 
         // Apply the overlay of persistent items on top
-        if (backing.properties.persistAddedItems) {
+        if (builder.persistAddedItems) {
             for ((point, item) in addedItems) {
                 val row = point.x
                 val column = point.y
@@ -318,7 +323,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         }
 
         // If we inherit existing items we don't clear here!
-        if (!backing.properties.inheritExistingItems) {
+        if (!builder.inheritExistingItems) {
             // Empty any slots that are not otherwise edited
             for ((row, column) in leftovers) {
                 val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
@@ -335,7 +340,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
 
     /** Saves any persistent items based on [inventory]. */
     public fun savePersistentItems(inventory: Inventory) {
-        if (!backing.properties.persistAddedItems) return
+        if (!builder.persistAddedItems) return
 
         addedItems.clear()
         val contents = inventory.contents

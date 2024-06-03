@@ -6,13 +6,13 @@ import com.noxcrew.interfaces.view.InterfaceView
 import org.bukkit.entity.Player
 
 /** A created interface that can be opened for a player to create a unique view. */
-public interface Interface<P : Pane> {
+public interface Interface<I : Interface<I, P>, P : Pane> {
 
     /** The amount of rows this interface contains. */
     public val rows: Int
 
-    /** The properties of this interface. */
-    public val properties: InterfaceProperties<P>
+    /** The builder that creates this interface. */
+    public val builder: InterfaceBuilder<P, I>
 
     /** Returns the total amount of rows. */
     public fun totalRows(): Int = rows

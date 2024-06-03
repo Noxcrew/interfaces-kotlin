@@ -10,8 +10,8 @@ import org.bukkit.entity.Player
 public class CombinedInterface internal constructor(
     override val rows: Int,
     override val initialTitle: Component?,
-    override val properties: InterfaceProperties<CombinedPane>
-) : Interface<CombinedPane>, TitledInterface {
+    override val builder: CombinedInterfaceBuilder
+) : Interface<CombinedInterface, CombinedPane>, TitledInterface {
 
     public companion object {
         /** The maximum number of rows for a combined interface. */

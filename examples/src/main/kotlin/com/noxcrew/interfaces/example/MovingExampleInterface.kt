@@ -10,7 +10,7 @@ import org.bukkit.Material
 public class MovingExampleInterface : RegistrableInterface {
     override val subcommand: String = "moving"
 
-    override fun create(): Interface<*> = buildCombinedInterface {
+    override fun create(): Interface<*, *> = buildCombinedInterface {
         val countProperty = BoundInteger(4, 1, 7)
         var count by countProperty
 

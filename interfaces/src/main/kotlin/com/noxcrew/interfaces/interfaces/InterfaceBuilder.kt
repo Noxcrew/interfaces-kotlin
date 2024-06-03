@@ -8,7 +8,7 @@ import com.noxcrew.interfaces.transform.Transform
 import com.noxcrew.interfaces.utilities.IncrementingInteger
 
 /** Assists in creating a new interface. */
-public abstract class InterfaceBuilder<P : Pane, I : Interface<P>> : InterfaceProperties<P>() {
+public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : InterfaceProperties<P>() {
 
     private val transformCounter by IncrementingInteger()
     private val _transforms: MutableCollection<AppliedTransform<P>> = mutableListOf()

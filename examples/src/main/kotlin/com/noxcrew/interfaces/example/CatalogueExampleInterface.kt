@@ -10,7 +10,7 @@ import org.bukkit.Material
 public class CatalogueExampleInterface : RegistrableInterface {
     override val subcommand: String = "catalogue"
 
-    override fun create(): Interface<*> = buildCombinedInterface {
+    override fun create(): Interface<*, *> = buildCombinedInterface {
         rows = 1
 
         withTransform { pane, _ ->
