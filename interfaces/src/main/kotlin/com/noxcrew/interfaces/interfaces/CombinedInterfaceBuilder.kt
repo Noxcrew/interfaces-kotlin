@@ -5,7 +5,7 @@ import net.kyori.adventure.text.Component
 
 /** Assists in building a [CombinedInterface]. */
 public class CombinedInterfaceBuilder :
-    AbstractInterfaceBuilder<CombinedPane, CombinedInterface>() {
+    InterfaceBuilder<CombinedPane, CombinedInterface>() {
 
     /** Sets the amount of rows for this interface to use. */
     public var rows: Int = 0
@@ -16,6 +16,6 @@ public class CombinedInterfaceBuilder :
     override fun build(): CombinedInterface = CombinedInterface(
         rows,
         initialTitle,
-        properties
+        this
     )
 }

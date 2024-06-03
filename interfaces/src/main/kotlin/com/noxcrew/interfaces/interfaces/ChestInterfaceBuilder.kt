@@ -5,7 +5,7 @@ import net.kyori.adventure.text.Component
 
 /** Assists in building a [ChestInterface]. */
 public class ChestInterfaceBuilder :
-    AbstractInterfaceBuilder<Pane, ChestInterface>() {
+    InterfaceBuilder<Pane, ChestInterface>() {
 
     /** Sets the amount of rows for this interface to use. */
     public var rows: Int = 0
@@ -16,6 +16,6 @@ public class ChestInterfaceBuilder :
     override fun build(): ChestInterface = ChestInterface(
         rows,
         initialTitle,
-        properties
+        this
     )
 }
