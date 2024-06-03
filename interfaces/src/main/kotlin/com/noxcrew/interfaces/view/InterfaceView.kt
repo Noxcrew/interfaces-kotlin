@@ -18,11 +18,17 @@ public interface InterfaceView {
     /**
      * Tracks whether this menu should be opened or not. This does not actually represent
      * whether the menu is open currently, it represents whether the code wants it to be
-     * open. This does not get set to false if the menu is closed by the player, it gets
-     * set to false if the code calls close() which is a manual request to make sure this
-     * menu doesn't do anything anymore!
+     * open. This gets set to `false` whenever the close handlers are called.
+     *
+     * This should be `false` whenever the menu is not on-screen.
      */
     public val shouldStillBeOpened: Boolean
+
+    /**
+     * Whether this view or any of its children are still opened. This can be used to verify whether
+     * a parent view is still valid based on whether any of its children are open.
+     */
+    public val isTreeOpened: Boolean
 
     /** Opens up this view. */
     public suspend fun open()

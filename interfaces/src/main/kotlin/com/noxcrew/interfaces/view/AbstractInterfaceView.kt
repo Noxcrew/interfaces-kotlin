@@ -75,6 +75,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     override val shouldStillBeOpened: Boolean
         get() = shouldBeOpened.get()
 
+    override val isTreeOpened: Boolean
+        get() = shouldStillBeOpened || children.keys.any { it.shouldStillBeOpened }
+
     /** Creates a new inventory GUI. */
     public abstract fun createInventory(): I
 
