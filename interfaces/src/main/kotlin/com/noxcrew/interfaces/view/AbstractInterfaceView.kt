@@ -201,7 +201,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         semaphore.acquire()
         try {
             withTimeout(6.seconds) {
-                pane = panes.collapse()
+                pane = panes.collapse(backing.totalRows(), builder.fillMenuWithAir)
                 renderToInventory { createdNewInventory ->
                     // send an update packet if necessary
                     if (!createdNewInventory && requiresPlayerUpdate()) {
