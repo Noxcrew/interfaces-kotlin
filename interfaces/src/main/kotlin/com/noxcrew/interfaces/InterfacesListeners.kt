@@ -162,7 +162,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             val shouldReopen = reason in REOPEN_REASONS && !event.player.isDead && openInterface != null
 
             // Mark the current view as closed properly
-            view.markClosed(reason, !shouldReopen && reason != Reason.OPEN_NEW)
+            view.markClosed(reason, shouldReopen || reason == Reason.OPEN_NEW)
 
             // If possible, open back up a previous interface
             if (shouldReopen) {

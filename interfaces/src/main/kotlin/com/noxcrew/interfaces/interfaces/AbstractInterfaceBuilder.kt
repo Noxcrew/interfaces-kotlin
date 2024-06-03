@@ -42,6 +42,9 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
     /** Keeps items that were previously in the inventory before opening the view. */
     public var inheritExistingItems: Boolean = false
 
+    /** Whether close handlers should be called when switching to a different view. */
+    public var callCloseHandlerOnViewSwitch: Boolean = true
+
     /** The properties object to use for the created interface. */
     public val properties: InterfaceProperties<P>
         get() = InterfaceProperties(
@@ -52,7 +55,8 @@ public abstract class AbstractInterfaceBuilder<P : Pane, I : Interface<P>> inter
             preventClickingEmptySlots,
             preventedInteractions,
             persistAddedItems,
-            inheritExistingItems
+            inheritExistingItems,
+            callCloseHandlerOnViewSwitch
         )
 
     /** Adds a new transform to the interface that updates whenever [triggers] change. */

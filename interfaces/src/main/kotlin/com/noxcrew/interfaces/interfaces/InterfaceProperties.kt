@@ -24,5 +24,7 @@ public data class InterfaceProperties<P : Pane>(
     /** Persists items added to this pane in a previous instance. */
     public val persistAddedItems: Boolean = false,
     /** Keeps items that were previously in the inventory before opening this. */
-    public val inheritExistingItems: Boolean = false
+    public val inheritExistingItems: Boolean = false,
+    /** Whether close handlers should be called when switching to a different view. */
+    public val callCloseHandlerOnViewSwitch: Boolean = true
 )

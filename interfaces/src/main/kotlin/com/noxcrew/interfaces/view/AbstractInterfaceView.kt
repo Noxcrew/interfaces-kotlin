@@ -84,7 +84,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
     /** Marks this menu as closed and processes it. */
     internal suspend fun markClosed(
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
-        closeInventory: Boolean = reason != InventoryCloseEvent.Reason.OPEN_NEW
+        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
     ) {
         // End a possible chat query with the listener
         InterfacesListeners.INSTANCE.abortQuery(player.uniqueId, this)
@@ -93,18 +93,21 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         openIfClosed.set(false)
 
         // Run a generic close handler if it's still opened
-        if (shouldBeOpened.compareAndSet(true, false)) {
+        if (shouldBeOpened.compareAndSet(true, false) && (!changingView || backing.properties.callCloseHandlerOnViewSwitch)) {
             backing.properties.closeHandlers[reason]?.invoke(reason, this)
         }
 
-        // Close any children, this is a bit of a lossy system,
-        // we don't particularly care if this happens nicely we
-        // just want to make sure the ones that need closing get
-        // closed. The hashmap is weak so children can get GC'd
-        // properly.
-        for ((child) in children) {
-            if (child.shouldBeOpened.get()) {
-                child.close(reason, closeInventory)
+        // Don't close children when changing views!
+        if (!changingView) {
+            // Close any children, this is a bit of a lossy system,
+            // we don't particularly care if this happens nicely we
+            // just want to make sure the ones that need closing get
+            // closed. The hashmap is weak so children can get GC'd
+            // properly.
+            for ((child) in children) {
+                if (child.shouldBeOpened.get()) {
+                    child.close(reason, false)
+                }
             }
         }
     }
@@ -156,11 +159,12 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, P : Pane>(
         }
     }
 
-    override suspend fun close(reason: InventoryCloseEvent.Reason, closeInventory: Boolean) {
-        markClosed(reason, closeInventory)
+    override suspend fun close(reason: InventoryCloseEvent.Reason, changingView: Boolean) {
+        markClosed(reason, changingView)
 
-        if (isOpen() && closeInventory) {
-            // Ensure we always close on the main thread!
+        // Ensure we always close on the main thread! Don't close if we are
+        // changing views though.
+        if (!changingView && isOpen()) {
             runSync {
                 player.closeInventory()
             }

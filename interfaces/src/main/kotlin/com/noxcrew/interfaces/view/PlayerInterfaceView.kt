@@ -60,8 +60,8 @@ public class PlayerInterfaceView internal constructor(
         }
     }
 
-    override suspend fun close(reason: InventoryCloseEvent.Reason, closeInventory: Boolean) {
-        markClosed(reason, closeInventory)
+    override suspend fun close(reason: InventoryCloseEvent.Reason, changingView: Boolean) {
+        markClosed(reason, changingView)
 
         // Ensure we update the interface state in the main thread!
         // Even if the menu is not currently on the screen.
