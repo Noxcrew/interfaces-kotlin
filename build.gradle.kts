@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.run.paper) apply false
 
     // Kotlin plugin prefers to be applied to parent when it's used in multiple sub-modules.
-    kotlin("jvm") version "1.9.22" apply false
+    kotlin("jvm") version "2.0.0" apply false
     alias(libs.plugins.spotless)
 }
 
@@ -15,7 +15,7 @@ val javaVersion: Int = 21
 
 allprojects {
     group = "com.noxcrew.interfaces"
-    version = "1.1.10"
+    version = "1.2.0-SNAPSHOT"
 
     tasks.withType<JavaCompile> {
         sourceCompatibility = javaVersion.toString()
@@ -40,7 +40,7 @@ subprojects {
 
     // Configure any existing RunServerTasks
     tasks.withType<RunServer> {
-        minecraftVersion("1.20.4")
+        minecraftVersion("1.20.6")
         jvmArgs("-Dio.papermc.paper.suppress.sout.nags=true")
     }
 

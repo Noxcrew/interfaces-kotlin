@@ -1,9 +1,5 @@
 package com.noxcrew.interfaces.example
 
-import cloud.commandframework.execution.AsynchronousCommandExecutionCoordinator
-import cloud.commandframework.kotlin.coroutines.extension.suspendingHandler
-import cloud.commandframework.kotlin.extension.buildAndRegister
-import cloud.commandframework.paper.PaperCommandManager
 import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.drawable.Drawable.Companion.drawable
 import com.noxcrew.interfaces.element.StaticElement
@@ -15,13 +11,16 @@ import com.noxcrew.interfaces.utilities.forEachInGrid
 import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
 import org.bukkit.Material
-import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
+import org.incendo.cloud.execution.ExecutionCoordinator
+import org.incendo.cloud.kotlin.coroutines.extension.suspendingHandler
+import org.incendo.cloud.kotlin.extension.buildAndRegister
+import org.incendo.cloud.paper.PaperCommandManager
 
 public class ExamplePlugin : JavaPlugin(), Listener {
 
@@ -39,17 +38,16 @@ public class ExamplePlugin : JavaPlugin(), Listener {
     private var counter by counterProperty
 
     override fun onEnable() {
-        val commandManager = PaperCommandManager.createNative(
-            this,
-            AsynchronousCommandExecutionCoordinator.newBuilder<CommandSender>().build()
-        )
+        val commandManager = PaperCommandManager.builder()
+            .executionCoordinator(ExecutionCoordinator.asyncCoordinator())
+            .buildOnEnable(this)
 
         commandManager.buildAndRegister("interfaces") {
             registerCopy {
                 literal("simple")
 
                 suspendingHandler {
-                    val player = it.sender as Player
+                    val player = it.sender() as Player
                     val simpleInterface = simpleInterface()
 
                     simpleInterface.open(player)
@@ -60,7 +58,7 @@ public class ExamplePlugin : JavaPlugin(), Listener {
                 literal("combined")
 
                 suspendingHandler {
-                    val player = it.sender as Player
+                    val player = it.sender() as Player
                     val combinedInterface = combinedInterface()
 
                     combinedInterface.open(player)
@@ -72,7 +70,7 @@ public class ExamplePlugin : JavaPlugin(), Listener {
                     literal(registrableInterface.subcommand)
 
                     suspendingHandler {
-                        val player = it.sender as Player
+                        val player = it.sender() as Player
                         val builtInterface = registrableInterface.create()
 
                         builtInterface.open(player)

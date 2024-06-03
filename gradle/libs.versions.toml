@@ -1,24 +1,23 @@
 [versions]
 # Plugins
 shadow = "8.1.7"
-dokka = "1.8.20"
-run-paper = "2.2.4"
+run-paper = "2.3.0"
 spotless = "6.18.0"
 
 # Tooling
-kotlin-coroutines = "1.8.0"
-guava = "33.1.0-jre"
-slf4j = "1.7.36"
+kotlin-coroutines = "1.9.0-RC"
+guava = "32.1.2-jre"
+slf4j = "2.0.9"
 caffeine = "3.1.8"
-cloud = "1.8.4"
+cloud = "2.0.0-rc.2"
+cloud-minecraft = "2.0.0-beta.8"
 
 # Misc
-adventure-core = "4.8.1"
-paper-api = "1.19.4-R0.1-SNAPSHOT"
+adventure-core = "4.17.0"
+paper-api = "1.20.6-R0.1-SNAPSHOT"
 
 [plugins]
 shadow = { id = "io.github.goooler.shadow", version.ref = "shadow" }
-dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 
@@ -28,9 +27,9 @@ kotlin-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutine
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
-cloud-paper = { group = "cloud.commandframework", name = "cloud-paper", version.ref = "cloud" }
-cloud-kotlin-extensions = { group = "cloud.commandframework", name = "cloud-kotlin-extensions", version.ref = "cloud" }
-cloud-kotlin-coroutines = { group = "cloud.commandframework", name = "cloud-kotlin-coroutines", version.ref = "cloud" }
+cloud-paper = { group = "org.incendo", name = "cloud-paper", version.ref = "cloud-minecraft" }
+cloud-kotlin-extensions = { group = "org.incendo", name = "cloud-kotlin-extensions", version.ref = "cloud" }
+cloud-kotlin-coroutines = { group = "org.incendo", name = "cloud-kotlin-coroutines", version.ref = "cloud" }
 
 # Misc
 adventure-api = { group = "net.kyori", name = "adventure-api", version.ref = "adventure-core" }
