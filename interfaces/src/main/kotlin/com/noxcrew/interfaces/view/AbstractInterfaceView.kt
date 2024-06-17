@@ -147,6 +147,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     override suspend fun open() {
+        // Don't open an interface for an offline player
+        if (!player.isConnected) return
+
         // Indicate that the menu should be opened after the next time rendering completes
         // and that it should be open right now
         openIfClosed.set(true)
@@ -174,6 +177,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // changing views though.
         if (!changingView && isOpen()) {
             runSync {
+                if (!player.isConnected) return@runSync
                 player.closeInventory()
             }
         }
@@ -282,6 +286,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     protected open fun drawPaneToInventory(drawNormalInventory: Boolean, drawPlayerInventory: Boolean) {
+        // Stop drawing if the player disconnected
+        if (!player.isConnected) return
+
         // Determine all slots we need to clear if unused
         val leftovers = mutableListOf<Pair<Int, Int>>()
         forEachInGrid(backing.totalRows(), COLUMNS_IN_CHEST) { row, column ->
@@ -400,7 +407,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             callback(createdInventory)
 
             if ((openIfClosed.get() && !isOpen) || createdInventory) {
-                openInventory()
+                if (player.isConnected) openInventory()
                 openIfClosed.set(false)
                 firstPaint = false
             }
