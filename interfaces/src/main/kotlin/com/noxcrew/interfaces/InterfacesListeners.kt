@@ -8,7 +8,6 @@ import com.noxcrew.interfaces.click.ClickHandler
 import com.noxcrew.interfaces.click.CompletableClickHandler
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.pane.PlayerPane
-import com.noxcrew.interfaces.utilities.runSync
 import com.noxcrew.interfaces.view.AbstractInterfaceView
 import com.noxcrew.interfaces.view.ChestInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
@@ -40,6 +39,7 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.plugin.Plugin
+import org.bukkit.plugin.java.PluginClassLoader
 import org.slf4j.LoggerFactory
 import java.util.EnumSet
 import java.util.UUID
@@ -504,5 +504,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         SCOPE.launch {
             (query.view as AbstractInterfaceView<*, *, *>).markClosed(Reason.PLAYER)
         }
+    }
+
+    /** Runs [function] on the main thread. */
+    internal fun runSync(function: () -> Unit) {
+        if (Bukkit.isPrimaryThread()) {
+            function()
+            return
+        }
+
+        Bukkit.getScheduler().callSyncMethod(plugin, function)
     }
 }
