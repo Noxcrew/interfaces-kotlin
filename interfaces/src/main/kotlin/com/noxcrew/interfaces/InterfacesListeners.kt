@@ -39,7 +39,6 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.plugin.Plugin
-import org.bukkit.plugin.java.PluginClassLoader
 import org.slf4j.LoggerFactory
 import java.util.EnumSet
 import java.util.UUID
