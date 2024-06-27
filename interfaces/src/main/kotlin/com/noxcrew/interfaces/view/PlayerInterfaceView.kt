@@ -4,7 +4,6 @@ import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.interfaces.PlayerInterface
 import com.noxcrew.interfaces.inventory.PlayerInterfacesInventory
 import com.noxcrew.interfaces.pane.PlayerPane
-import com.noxcrew.interfaces.utilities.runSync
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryCloseEvent
@@ -65,7 +64,7 @@ public class PlayerInterfaceView internal constructor(
 
         // Ensure we update the interface state in the main thread!
         // Even if the menu is not currently on the screen.
-        runSync {
+        InterfacesListeners.INSTANCE.runSync {
             InterfacesListeners.INSTANCE.setOpenInterface(player.uniqueId, null)
         }
     }

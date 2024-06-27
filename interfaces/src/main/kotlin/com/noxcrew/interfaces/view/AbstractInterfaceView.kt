@@ -15,7 +15,6 @@ import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.utilities.CollapsablePaneMap
 import com.noxcrew.interfaces.utilities.forEachInGrid
-import com.noxcrew.interfaces.utilities.runSync
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withTimeout
@@ -176,7 +175,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Ensure we always close on the main thread! Don't close if we are
         // changing views though.
         if (!changingView && isOpen()) {
-            runSync {
+            InterfacesListeners.INSTANCE.runSync {
                 if (!player.isConnected) return@runSync
                 player.closeInventory()
             }
@@ -394,7 +393,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Draw the contents of the inventory synchronously because
         // we don't want it to happen in between ticks and show
         // a half-finished inventory.
-        runSync {
+        InterfacesListeners.INSTANCE.runSync {
             // If the menu has since been requested to close we ignore all this
             if (!shouldBeOpened.get()) return@runSync
 

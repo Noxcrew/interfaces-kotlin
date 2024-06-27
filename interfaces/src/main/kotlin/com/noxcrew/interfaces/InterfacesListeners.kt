@@ -8,7 +8,6 @@ import com.noxcrew.interfaces.click.ClickHandler
 import com.noxcrew.interfaces.click.CompletableClickHandler
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.pane.PlayerPane
-import com.noxcrew.interfaces.utilities.runSync
 import com.noxcrew.interfaces.view.AbstractInterfaceView
 import com.noxcrew.interfaces.view.ChestInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
@@ -504,5 +503,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         SCOPE.launch {
             (query.view as AbstractInterfaceView<*, *, *>).markClosed(Reason.PLAYER)
         }
+    }
+
+    /** Runs [function] on the main thread. */
+    internal fun runSync(function: () -> Unit) {
+        if (Bukkit.isPrimaryThread()) {
+            function()
+            return
+        }
+
+        Bukkit.getScheduler().callSyncMethod(plugin, function)
     }
 }
