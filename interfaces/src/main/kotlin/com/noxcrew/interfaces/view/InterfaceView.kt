@@ -35,8 +35,8 @@ public interface InterfaceView {
 
     /** Closes this view. */
     public suspend fun close(
-        reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.PLUGIN,
-        closeInventory: Boolean = reason != InventoryCloseEvent.Reason.OPEN_NEW
+        reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
+        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
     )
 
     /** Returns whether this view is opened based on the player's current shown inventory. */
