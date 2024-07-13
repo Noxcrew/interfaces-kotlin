@@ -484,7 +484,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         )
     }
 
-    /** Aborts an ongoing query for [playerId]. */
+    /** Aborts an ongoing query for [playerId], without re-opening the original view. */
     public fun abortQuery(playerId: UUID, view: InterfaceView?) {
         val query = queries.getIfPresent(playerId) ?: return
 
