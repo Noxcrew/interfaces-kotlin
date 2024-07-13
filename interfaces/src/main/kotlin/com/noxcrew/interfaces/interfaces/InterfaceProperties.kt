@@ -47,7 +47,7 @@ public open class InterfaceProperties<P : Pane> {
     public var inheritExistingItems: Boolean = false
 
     /** Whether close handlers should be called when switching to a different view. */
-    public var callCloseHandlerOnViewSwitch: Boolean = true
+    public var callCloseHandlerOnViewSwitch: Boolean = false
 
     /** Whether to place empty air elements in all background slots. */
     public var fillMenuWithAir: Boolean = false
