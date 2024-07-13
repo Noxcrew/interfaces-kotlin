@@ -93,8 +93,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
         changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
     ) {
-        // End a possible chat query with the listener
-        InterfacesListeners.INSTANCE.abortQuery(player.uniqueId, this)
+        if (!changingView) {
+            // End a possible chat query with the listener (unless we're changing views)
+            InterfacesListeners.INSTANCE.abortQuery(player.uniqueId, this)
+        }
 
         // Ensure that the menu does not open
         openIfClosed.set(false)
