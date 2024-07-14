@@ -3,6 +3,7 @@ package com.noxcrew.interfaces.example
 import com.noxcrew.interfaces.drawable.Drawable
 import com.noxcrew.interfaces.element.StaticElement
 import com.noxcrew.interfaces.interfaces.Interface
+import com.noxcrew.interfaces.interfaces.buildChestInterface
 import com.noxcrew.interfaces.interfaces.buildCombinedInterface
 import com.noxcrew.interfaces.properties.interfaceProperty
 import net.kyori.adventure.text.Component
@@ -13,7 +14,7 @@ public class ChangingTitleExampleInterface : RegistrableInterface {
 
     override val subcommand: String = "changing-title"
 
-    override fun create(): Interface<*, *> = buildCombinedInterface {
+    override fun create(): Interface<*, *> = buildChestInterface {
         rows = 1
 
         val numberProperty = interfaceProperty(0)

@@ -3,6 +3,7 @@ package com.noxcrew.interfaces.example
 import com.noxcrew.interfaces.drawable.Drawable.Companion.drawable
 import com.noxcrew.interfaces.element.StaticElement
 import com.noxcrew.interfaces.interfaces.Interface
+import com.noxcrew.interfaces.interfaces.buildChestInterface
 import com.noxcrew.interfaces.interfaces.buildCombinedInterface
 import com.noxcrew.interfaces.utilities.BoundInteger
 import org.bukkit.Material
@@ -10,9 +11,12 @@ import org.bukkit.Material
 public class MovingExampleInterface : RegistrableInterface {
     override val subcommand: String = "moving"
 
-    override fun create(): Interface<*, *> = buildCombinedInterface {
+    override fun create(): Interface<*, *> = buildChestInterface {
         val countProperty = BoundInteger(4, 1, 7)
         var count by countProperty
+
+        // Allow clicking empty slots to allow testing various interactions with tiems and chest interfaces
+        preventClickingEmptySlots = false
 
         rows = 1
 

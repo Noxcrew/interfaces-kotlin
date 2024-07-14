@@ -399,6 +399,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             // If the menu has since been requested to close we ignore all this
             if (!shouldBeOpened.get()) return@runSync
 
+            // Save persistent items if the view is currently opened
+            if (player.openInventory.topInventory.holder == this) {
+                savePersistentItems(player.openInventory.topInventory)
+            }
+
             // Determine if the inventory is currently open or being opened immediately,
             // otherwise we never draw to player inventories. This ensures lingering
             // updates on menus that have closed do not affect future menus that actually
@@ -408,7 +413,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             callback(createdInventory)
 
             if ((openIfClosed.get() && !isOpen) || createdInventory) {
+                InterfacesListeners.INSTANCE.viewBeingOpened = this
                 if (player.isConnected) openInventory()
+                if (InterfacesListeners.INSTANCE.viewBeingOpened == this) {
+                    InterfacesListeners.INSTANCE.viewBeingOpened = null
+                }
                 openIfClosed.set(false)
                 firstPaint = false
             }

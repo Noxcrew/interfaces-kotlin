@@ -3,6 +3,7 @@ package com.noxcrew.interfaces.example
 import com.noxcrew.interfaces.drawable.Drawable
 import com.noxcrew.interfaces.element.StaticElement
 import com.noxcrew.interfaces.interfaces.Interface
+import com.noxcrew.interfaces.interfaces.buildChestInterface
 import com.noxcrew.interfaces.interfaces.buildCombinedInterface
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -21,7 +22,7 @@ public class DelayedRequestExampleInterface : RegistrableInterface {
     override val subcommand: String = "delayed"
 
     @OptIn(DelicateCoroutinesApi::class)
-    override fun create(): Interface<*, *> = buildCombinedInterface {
+    override fun create(): Interface<*, *> = buildChestInterface {
         initialTitle = text(subcommand)
         rows = 2
 

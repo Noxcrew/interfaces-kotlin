@@ -18,6 +18,8 @@ public class CombinedInterface internal constructor(
         public const val MAX_NUMBER_OF_ROWS: Int = 9
     }
 
+    override val includesPlayerInventory: Boolean = true
+
     override fun totalRows(): Int = rows + 4
 
     override fun createPane(): CombinedPane = CombinedPane(rows)

@@ -37,6 +37,19 @@ public open class InterfaceProperties<P : Pane> {
     public var preventClickingEmptySlots: Boolean = true
 
     /**
+     * Whether the player's own inventory should be editable if [preventClickingEmptySlots] is `true`. Only allowed for
+     * [ChestInterfaceBuilder].
+     */
+    public var allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented: Boolean = false
+        get() {
+            // This setting is not allowed on non-chest interfaces!
+            if (this !is ChestInterfaceBuilder) {
+                return false
+            }
+            return field
+        }
+
+    /**
      * Persists items added to this pane in a previous instance.
      * Particularly useful for player inventories, this allows the non-interface items
      * to function as normal inventory items and be normally added/removed.

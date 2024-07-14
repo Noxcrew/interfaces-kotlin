@@ -18,6 +18,8 @@ public class ChestInterface internal constructor(
         public const val MAX_NUMBER_OF_ROWS: Int = 6
     }
 
+    override val includesPlayerInventory: Boolean = false
+
     override fun createPane(): Pane = Pane()
 
     override suspend fun open(player: Player, parent: InterfaceView?): ChestInterfaceView {
