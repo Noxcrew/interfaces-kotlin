@@ -1,5 +1,7 @@
 package com.noxcrew.interfaces
 
+import com.destroystokyo.paper.MaterialSetTag
+import com.destroystokyo.paper.MaterialTags
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.noxcrew.interfaces.Constants.SCOPE
@@ -16,9 +18,11 @@ import io.papermc.paper.event.player.AsyncChatEvent
 import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.block.Block
 import org.bukkit.entity.HumanEntity
 import org.bukkit.entity.Player
-import org.bukkit.event.Cancellable
 import org.bukkit.event.Event
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -69,6 +73,60 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             Reason.UNKNOWN,
             Reason.PLUGIN
         )
+
+        /** An incomplete set of blocks that have some interaction when clicked on. */
+        private val CLICKABLE_BLOCKS: MaterialSetTag =
+            MaterialSetTag(NamespacedKey("interfaces", "clickable-blocks"))
+                .add(
+                    MaterialTags.WOODEN_DOORS,
+                    MaterialTags.WOODEN_TRAPDOORS,
+                    MaterialTags.FENCE_GATES,
+                    MaterialSetTag.BUTTONS,
+                )
+                // Add blocks with inventories
+                .add(
+                    Material.CHEST,
+                    Material.ENDER_CHEST,
+                    Material.TRAPPED_CHEST,
+                    Material.BARREL,
+                    Material.FURNACE,
+                    Material.BLAST_FURNACE,
+                    Material.SMOKER,
+                    Material.CRAFTING_TABLE,
+                    Material.LOOM,
+                    Material.CARTOGRAPHY_TABLE,
+                    Material.ENCHANTING_TABLE,
+                    Material.SMITHING_TABLE,
+                )
+                .add(Material.LEVER)
+                .add(Material.CAKE)
+                // Add copper doors & trapdoors as they do not have their own tags
+                .add(
+                    Material.COPPER_DOOR,
+                    Material.EXPOSED_COPPER_DOOR,
+                    Material.WEATHERED_COPPER_DOOR,
+                    Material.OXIDIZED_COPPER_DOOR,
+                )
+                .add(
+                    Material.WAXED_COPPER_DOOR,
+                    Material.WAXED_EXPOSED_COPPER_DOOR,
+                    Material.WAXED_WEATHERED_COPPER_DOOR,
+                    Material.WAXED_OXIDIZED_COPPER_DOOR,
+                )
+                .add(
+                    Material.COPPER_TRAPDOOR,
+                    Material.EXPOSED_COPPER_TRAPDOOR,
+                    Material.WEATHERED_COPPER_TRAPDOOR,
+                    Material.OXIDIZED_COPPER_TRAPDOOR,
+                )
+                .add(
+                    Material.WAXED_COPPER_TRAPDOOR,
+                    Material.WAXED_EXPOSED_COPPER_TRAPDOOR,
+                    Material.WAXED_WEATHERED_COPPER_TRAPDOOR,
+                    Material.WAXED_OXIDIZED_COPPER_TRAPDOOR,
+                )
+                // You can click signs to edit them
+                .add(MaterialTags.SIGNS)
     }
 
     /** Stores data for a single chat query. */
@@ -183,7 +241,11 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val view = convertHolderToInterfaceView(holder) ?: return
         val clickedPoint = clickedPoint(view, event) ?: return
         val isPlayerInventory = (event.clickedInventory ?: event.inventory).holder is Player
-        handleClick(view, clickedPoint, event.click, event, event.hotbarButton, isPlayerInventory)
+
+        // Run base click handling
+        if (handleClick(view, clickedPoint, event.click, event.hotbarButton, isPlayerInventory)) {
+            event.isCancelled = true
+        }
 
         // If the event is not cancelled we add extra prevention checks if any of the involved
         // slots are not allowed to be modified!
@@ -263,6 +325,10 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         setOpenInterface(event.player.uniqueId, null)
     }
 
+    /** Returns whether [block] will trigger some interaction if clicked with [item]. */
+    private fun hasInteraction(block: Block, item: ItemStack): Boolean =
+        CLICKABLE_BLOCKS.isTagged(block)
+
     @EventHandler(priority = EventPriority.LOW)
     public fun onInteract(event: PlayerInteractEvent) {
         if (event.action == Action.PHYSICAL) return
@@ -270,6 +336,13 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         val player = event.player
         val view = getOpenInterface(player.uniqueId) ?: return
+
+        // If we are prioritizing block interactions we assure they are not happening first
+        if (view.builder.prioritiseBlockInteractions) {
+            // This is a bit messy because Bukkit doesn't cleanly give access to the block interactions. If you are
+            // using this setting feel free to PR more logic into this method.
+            if (event.clickedBlock != null && hasInteraction(event.clickedBlock!!, event.item ?: ItemStack.empty())) return
+        }
 
         val clickedPoint = view.backing.relativizePlayerInventorySlot(
             if (event.hand == EquipmentSlot.HAND) {
@@ -289,7 +362,14 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             return
         }
 
-        handleClick(view, clickedPoint, click, event, -1, true)
+        if (handleClick(view, clickedPoint, click, -1, true)) {
+            // Support modern behavior where we don't interfere with block interactions
+            if (view.builder.onlyCancelItemInteraction) {
+                event.setUseItemInHand(Event.Result.DENY)
+            } else {
+                event.isCancelled = true
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
@@ -412,25 +492,23 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         view: AbstractInterfaceView<*, *, *>,
         clickedPoint: GridPoint,
         click: ClickType,
-        event: Cancellable,
         slot: Int,
         isPlayerInventory: Boolean
-    ) {
+    ): Boolean {
         // Determine the type of click, if nothing was clicked we allow it
         val raw = view.pane.getRaw(clickedPoint)
 
         // Optionally cancel clicking on other slots
         if (raw == null) {
             if (view.builder.preventClickingEmptySlots && !(view.builder.allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented && isPlayerInventory)) {
-                event.isCancelled = true
+                return true
             }
-            return
+            return false
         }
 
         // Automatically cancel if throttling or already processing
         if (view.isProcessingClick || shouldThrottle(view.player)) {
-            event.isCancelled = true
-            return
+            return true
         }
 
         // Only allow one click to be processed at the same time
@@ -464,8 +542,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Update the cancellation state of the event
         if (completedClickHandler.cancelled) {
-            event.isCancelled = true
+            return true
         }
+        return false
     }
 
     /** Converts a bukkit [action] to a [ClickType]. */

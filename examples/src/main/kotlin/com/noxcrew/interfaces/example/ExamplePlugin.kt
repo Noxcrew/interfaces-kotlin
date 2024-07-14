@@ -154,6 +154,13 @@ public class ExamplePlugin : JavaPlugin(), Listener {
     }
 
     private fun playerInterface() = buildPlayerInterface {
+        // Use modern logic to only cancel the item interaction and not block interactions while
+        // using this interface
+        onlyCancelItemInteraction = true
+
+        // Prioritise block interactions!
+        prioritiseBlockInteractions = true
+
         withTransform { pane, _ ->
             val item = ItemStack(Material.COMPASS).name("interfaces example")
 

@@ -33,6 +33,12 @@ public open class InterfaceProperties<P : Pane> {
     /** A post-processor applied to all items placed in the inventory. */
     public var itemPostProcessor: ((ItemStack) -> Unit)? = {}
 
+    /** Whether interaction should only cancel the item effects and not the world effects. */
+    public var onlyCancelItemInteraction: Boolean = false
+
+    /** Whether to prioritise block interactions over item interactions when right-clicking. */
+    public var prioritiseBlockInteractions: Boolean = false
+
     /** Whether clicking on empty slots should be cancelled. */
     public var preventClickingEmptySlots: Boolean = true
 
