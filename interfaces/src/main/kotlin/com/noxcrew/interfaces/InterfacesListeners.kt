@@ -73,8 +73,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     /** Stores data for a single chat query. */
     private data class ChatQuery(
         val view: InterfaceView,
-        val onCancel: () -> Unit,
-        val onComplete: (Component) -> Unit,
+        val onCancel: suspend () -> Unit,
+        val onComplete: suspend (Component) -> Unit,
         val id: UUID
     )
 
@@ -314,8 +314,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         queries.invalidate(player.uniqueId)
 
         // Complete the query and re-open the view
-        query.onComplete(event.message())
         SCOPE.launch {
+            query.onComplete(event.message())
             query.view.open()
         }
 
@@ -436,7 +436,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         }
 
     /** Starts a new chat query on [view]. */
-    public fun startChatQuery(view: InterfaceView, timeout: Duration, onCancel: () -> Unit, onComplete: (Component) -> Unit) {
+    public fun startChatQuery(
+        view: InterfaceView,
+        timeout: Duration,
+        onCancel: suspend () -> Unit,
+        onComplete: suspend (Component) -> Unit
+    ) {
         // Determine if the player has this inventory open
         if (!view.isOpen()) return
 
@@ -475,8 +480,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
                 // Remove the query, run the cancel handler, and re-open the view
                 queries.invalidate(playerId)
-                onCancel()
                 SCOPE.launch {
+                    onCancel()
                     view.open()
                 }
             },
@@ -492,15 +497,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         if (view != null && query.view != view) return
         queries.invalidate(playerId)
 
-        // Run the cancellation handler
-        query.onCancel()
-
-        // If a view is given we are already in a markClosed call
-        // and we can leave it here!
-        if (view != null) return
-
-        // Mark the view as properly closed
         SCOPE.launch {
+            // Run the cancellation handler
+            query.onCancel()
+
+            // If a view is given we are already in a markClosed call
+            // and we can leave it here!
+            if (view != null) return@launch
+
+            // Mark the view as properly closed
             (query.view as AbstractInterfaceView<*, *, *>).markClosed(Reason.PLAYER)
         }
     }

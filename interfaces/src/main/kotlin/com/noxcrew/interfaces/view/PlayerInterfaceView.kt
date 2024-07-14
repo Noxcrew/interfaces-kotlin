@@ -24,7 +24,7 @@ public class PlayerInterfaceView internal constructor(
         error("PlayerInventoryView's cannot have a title")
     }
 
-    override fun runChatQuery(timeout: Duration, onCancel: () -> Unit, onComplete: (Component) -> Unit) {
+    override fun runChatQuery(timeout: Duration, onCancel: suspend () -> Unit, onComplete: suspend (Component) -> Unit) {
         error("PlayerInventoryView does not support chat queries")
     }
 

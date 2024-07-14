@@ -415,7 +415,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
     }
 
-    override fun runChatQuery(timeout: Duration, onCancel: () -> Unit, onComplete: (Component) -> Unit) {
+    override fun runChatQuery(timeout: Duration, onCancel: suspend () -> Unit, onComplete: suspend (Component) -> Unit) {
         InterfacesListeners.INSTANCE.startChatQuery(this, timeout, onCancel, onComplete)
     }
 }

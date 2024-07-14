@@ -67,7 +67,7 @@ public interface InterfaceView {
      */
     public fun runChatQuery(
         timeout: Duration = 30.seconds,
-        onCancel: () -> Unit = {},
-        onComplete: (Component) -> Unit
+        onCancel: suspend () -> Unit = {},
+        onComplete: suspend (Component) -> Unit
     )
 }
