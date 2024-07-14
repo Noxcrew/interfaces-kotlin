@@ -269,17 +269,17 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             val topInventory = event.view.topInventory
             val bottomInventory = event.view.bottomInventory
             if (event.click == ClickType.DOUBLE_CLICK) {
-                val clickedItem = event.currentItem ?: ItemStack.empty()
+                val clickedItem = event.cursor
                 val isInPlayerInventory = holder is Player
 
                 // Don't check top inventory if we're in the player inventory!
                 if (
                     (!isInPlayerInventory && topInventory.withIndex().any { (index, it) ->
                         // Check if any item is being collected that cannot be moved!
-                        it.isSimilar(clickedItem) && !canFreelyMove(view, requireNotNull(GridPoint.fromBukkitChestSlot(index)), false)
+                        it != null && it.isSimilar(clickedItem) && !canFreelyMove(view, requireNotNull(GridPoint.fromBukkitChestSlot(index)), false)
                     }) ||
                     bottomInventory.withIndex().any { (index, it) ->
-                        it.isSimilar(clickedItem) &&
+                        it != null && it.isSimilar(clickedItem) &&
                                 // These slots are always in the player inventory and always need to be relativized!
                                 !canFreelyMove(view, view.backing.relativizePlayerInventorySlot(requireNotNull(GridPoint.fromBukkitPlayerSlot(index))), true)
                     }
