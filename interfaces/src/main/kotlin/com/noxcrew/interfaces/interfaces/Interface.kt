@@ -3,7 +3,6 @@ package com.noxcrew.interfaces.interfaces
 import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.pane.CombinedPane
-import com.noxcrew.interfaces.pane.OrderedPane
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.view.InterfaceView
 import org.bukkit.entity.Player

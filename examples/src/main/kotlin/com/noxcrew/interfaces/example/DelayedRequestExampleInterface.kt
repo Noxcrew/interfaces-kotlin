@@ -4,7 +4,6 @@ import com.noxcrew.interfaces.drawable.Drawable
 import com.noxcrew.interfaces.element.StaticElement
 import com.noxcrew.interfaces.interfaces.Interface
 import com.noxcrew.interfaces.interfaces.buildChestInterface
-import com.noxcrew.interfaces.interfaces.buildCombinedInterface
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay

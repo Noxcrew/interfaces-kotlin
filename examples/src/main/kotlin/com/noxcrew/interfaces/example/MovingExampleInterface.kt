@@ -4,7 +4,6 @@ import com.noxcrew.interfaces.drawable.Drawable.Companion.drawable
 import com.noxcrew.interfaces.element.StaticElement
 import com.noxcrew.interfaces.interfaces.Interface
 import com.noxcrew.interfaces.interfaces.buildChestInterface
-import com.noxcrew.interfaces.interfaces.buildCombinedInterface
 import com.noxcrew.interfaces.utilities.BoundInteger
 import org.bukkit.Material
 

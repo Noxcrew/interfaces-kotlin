@@ -21,7 +21,6 @@ import org.incendo.cloud.execution.ExecutionCoordinator
 import org.incendo.cloud.kotlin.coroutines.extension.suspendingHandler
 import org.incendo.cloud.kotlin.extension.buildAndRegister
 import org.incendo.cloud.paper.LegacyPaperCommandManager
-import org.incendo.cloud.paper.PaperCommandManager
 
 public class ExamplePlugin : JavaPlugin(), Listener {
 

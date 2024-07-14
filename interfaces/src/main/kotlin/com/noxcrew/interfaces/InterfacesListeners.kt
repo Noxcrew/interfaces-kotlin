@@ -81,7 +81,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     MaterialTags.WOODEN_DOORS,
                     MaterialTags.WOODEN_TRAPDOORS,
                     MaterialTags.FENCE_GATES,
-                    MaterialSetTag.BUTTONS,
+                    MaterialSetTag.BUTTONS
                 )
                 // Add blocks with inventories
                 .add(
@@ -96,7 +96,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     Material.LOOM,
                     Material.CARTOGRAPHY_TABLE,
                     Material.ENCHANTING_TABLE,
-                    Material.SMITHING_TABLE,
+                    Material.SMITHING_TABLE
                 )
                 .add(Material.LEVER)
                 .add(Material.CAKE)
@@ -105,25 +105,25 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     Material.COPPER_DOOR,
                     Material.EXPOSED_COPPER_DOOR,
                     Material.WEATHERED_COPPER_DOOR,
-                    Material.OXIDIZED_COPPER_DOOR,
+                    Material.OXIDIZED_COPPER_DOOR
                 )
                 .add(
                     Material.WAXED_COPPER_DOOR,
                     Material.WAXED_EXPOSED_COPPER_DOOR,
                     Material.WAXED_WEATHERED_COPPER_DOOR,
-                    Material.WAXED_OXIDIZED_COPPER_DOOR,
+                    Material.WAXED_OXIDIZED_COPPER_DOOR
                 )
                 .add(
                     Material.COPPER_TRAPDOOR,
                     Material.EXPOSED_COPPER_TRAPDOOR,
                     Material.WEATHERED_COPPER_TRAPDOOR,
-                    Material.OXIDIZED_COPPER_TRAPDOOR,
+                    Material.OXIDIZED_COPPER_TRAPDOOR
                 )
                 .add(
                     Material.WAXED_COPPER_TRAPDOOR,
                     Material.WAXED_EXPOSED_COPPER_TRAPDOOR,
                     Material.WAXED_WEATHERED_COPPER_TRAPDOOR,
-                    Material.WAXED_OXIDIZED_COPPER_TRAPDOOR,
+                    Material.WAXED_OXIDIZED_COPPER_TRAPDOOR
                 )
                 // You can click signs to edit them
                 .add(MaterialTags.SIGNS)
@@ -253,13 +253,23 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             if (view.backing.includesPlayerInventory) {
                 // If you use a number key we check if the item you're swapping with is
                 // protected.
-                if (event.click == ClickType.NUMBER_KEY && !canFreelyMove(view, view.backing.relativizePlayerInventorySlot(GridPoint.at(3, event.hotbarButton)), true)) {
+                if (event.click == ClickType.NUMBER_KEY && !canFreelyMove(
+                        view,
+                        view.backing.relativizePlayerInventorySlot(GridPoint.at(3, event.hotbarButton)),
+                        true
+                    )
+                ) {
                     event.isCancelled = true
                     return
                 }
 
                 // If you try to swap with the off-hand we have to specifically check for that.
-                if (event.click == ClickType.SWAP_OFFHAND && !canFreelyMove(view, view.backing.relativizePlayerInventorySlot(GridPoint.at(4, 4)), true)) {
+                if (event.click == ClickType.SWAP_OFFHAND && !canFreelyMove(
+                        view,
+                        view.backing.relativizePlayerInventorySlot(GridPoint.at(4, 4)),
+                        true
+                    )
+                ) {
                     event.isCancelled = true
                     return
                 }
@@ -274,14 +284,26 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
                 // Don't check top inventory if we're in the player inventory!
                 if (
-                    (!isInPlayerInventory && topInventory.withIndex().any { (index, it) ->
-                        // Check if any item is being collected that cannot be moved!
-                        it != null && it.isSimilar(clickedItem) && !canFreelyMove(view, requireNotNull(GridPoint.fromBukkitChestSlot(index)), false)
-                    }) ||
+                    (
+                        !isInPlayerInventory && topInventory.withIndex().any { (index, it) ->
+                            // Check if any item is being collected that cannot be moved!
+                            it != null && it.isSimilar(clickedItem) && !canFreelyMove(
+                                view,
+                                requireNotNull(GridPoint.fromBukkitChestSlot(index)),
+                                false
+                            )
+                        }
+                        ) ||
                     bottomInventory.withIndex().any { (index, it) ->
                         it != null && it.isSimilar(clickedItem) &&
-                                // These slots are always in the player inventory and always need to be relativized!
-                                !canFreelyMove(view, view.backing.relativizePlayerInventorySlot(requireNotNull(GridPoint.fromBukkitPlayerSlot(index))), true)
+                            // These slots are always in the player inventory and always need to be relativized!
+                            !canFreelyMove(
+                                view,
+                                view.backing.relativizePlayerInventorySlot(
+                                    requireNotNull(GridPoint.fromBukkitPlayerSlot(index))
+                                ),
+                                true
+                            )
                     }
                 ) {
                     event.isCancelled = true
@@ -509,7 +531,11 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         isPlayerInventory: Boolean
     ): Boolean {
         // If we don't allow clicking empty slots we never allow freely moving
-        if (view.builder.preventClickingEmptySlots && !(view.builder.allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented && isPlayerInventory)) return false
+        if (view.builder.preventClickingEmptySlots &&
+            !(view.builder.allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented && isPlayerInventory)
+        ) {
+            return false
+        }
 
         // If this inventory has no player inventory then the player inventory is always allowed to be edited
         if (!view.backing.includesPlayerInventory && isPlayerInventory) return true
@@ -531,7 +557,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Optionally cancel clicking on other slots
         if (raw == null) {
-            if (view.builder.preventClickingEmptySlots && !(view.builder.allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented && isPlayerInventory)) {
+            if (view.builder.preventClickingEmptySlots &&
+                !(view.builder.allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented && isPlayerInventory)
+            ) {
                 return true
             }
             return false
