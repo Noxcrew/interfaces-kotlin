@@ -507,7 +507,16 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         view: AbstractInterfaceView<*, *, *>,
         clickedPoint: GridPoint,
         isPlayerInventory: Boolean
-    ): Boolean = view.pane.getRaw(clickedPoint) == null && !(view.builder.preventClickingEmptySlots && !(view.builder.allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented && isPlayerInventory))
+    ): Boolean {
+        // If we don't allow clicking empty slots we never allow freely moving
+        if (view.builder.preventClickingEmptySlots && !(view.builder.allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented && isPlayerInventory)) return false
+
+        // If this inventory has no player inventory then the player inventory is always allowed to be edited
+        if (!view.backing.includesPlayerInventory && isPlayerInventory) return true
+
+        // If there is no item here we allow editing
+        return view.pane.getRaw(clickedPoint) == null
+    }
 
     /** Handles a [view] being clicked at [clickedPoint] through some [event]. */
     private fun handleClick(
