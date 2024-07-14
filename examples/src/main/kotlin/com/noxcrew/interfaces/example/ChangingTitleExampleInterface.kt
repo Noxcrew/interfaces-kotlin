@@ -32,7 +32,7 @@ public class ChangingTitleExampleInterface : RegistrableInterface {
                 number += 1
             }
 
-            pane[0, 6] = StaticElement(drawable(Material.COMPASS))
+            pane[0, 6] = StaticElement(drawable(Material.ACACIA_SIGN))
         }
     }
 }
