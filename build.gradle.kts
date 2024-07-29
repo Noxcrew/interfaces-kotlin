@@ -15,7 +15,7 @@ val javaVersion: Int = 21
 
 allprojects {
     group = "com.noxcrew.interfaces"
-    version = "1.2.0"
+    version = "1.2.1-SNAPSHOT"
 
     tasks.withType<JavaCompile> {
         sourceCompatibility = javaVersion.toString()
@@ -40,7 +40,7 @@ subprojects {
 
     // Configure any existing RunServerTasks
     tasks.withType<RunServer> {
-        minecraftVersion("1.20.6")
+        minecraftVersion("1.21")
         jvmArgs("-Dio.papermc.paper.suppress.sout.nags=true")
     }
 
