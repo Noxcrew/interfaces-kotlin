@@ -14,27 +14,27 @@ public object InterfacesConstants {
     /** The [CoroutineScope] for any suspending operations performed by interfaces. */
     public val SCOPE: CoroutineScope = CoroutineScope(
         CoroutineName("interfaces") +
-                SupervisorJob() +
-                run {
-                    val threadNumber = AtomicInteger()
-                    val factory = { runnable: Runnable ->
-                        Thread("interfaces-${threadNumber.getAndIncrement()}").apply {
-                            isDaemon = true
+            SupervisorJob() +
+            run {
+                val threadNumber = AtomicInteger()
+                val factory = { runnable: Runnable ->
+                    Thread("interfaces-${threadNumber.getAndIncrement()}").apply {
+                        isDaemon = true
+                    }
+                }
+
+                System.getProperty("com.noxcrew.interfaces.fixedPoolSize")
+                    ?.toIntOrNull()
+                    ?.coerceAtLeast(2)
+                    ?.let { size ->
+                        if (System.getProperty("com.noxcrew.interfaces.useScheduledPool").toBoolean()) {
+                            Executors.newScheduledThreadPool(size, factory)
+                        } else {
+                            Executors.newFixedThreadPool(size, factory)
                         }
                     }
-
-                    System.getProperty("com.noxcrew.interfaces.fixedPoolSize")
-                        ?.toIntOrNull()
-                        ?.coerceAtLeast(2)
-                        ?.let { size ->
-                            if (System.getProperty("com.noxcrew.interfaces.useScheduledPool").toBoolean()) {
-                                Executors.newScheduledThreadPool(size, factory)
-                            } else {
-                                Executors.newFixedThreadPool(size, factory)
-                            }
-                        }
-                        ?.asCoroutineDispatcher()
-                        ?: Dispatchers.Default
-                }
+                    ?.asCoroutineDispatcher()
+                    ?: Dispatchers.Default
+            }
     )
 }
