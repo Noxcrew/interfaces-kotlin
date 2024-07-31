@@ -1,7 +1,7 @@
 package com.noxcrew.interfaces.view
 
 import com.google.common.collect.HashMultimap
-import com.noxcrew.interfaces.Constants.SCOPE
+import com.noxcrew.interfaces.InterfacesConstants.SCOPE
 import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.event.DrawPaneEvent
 import com.noxcrew.interfaces.grid.GridPoint

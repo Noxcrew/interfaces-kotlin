@@ -4,7 +4,7 @@ import com.destroystokyo.paper.MaterialSetTag
 import com.destroystokyo.paper.MaterialTags
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.noxcrew.interfaces.Constants.SCOPE
+import com.noxcrew.interfaces.InterfacesConstants.SCOPE
 import com.noxcrew.interfaces.click.ClickContext
 import com.noxcrew.interfaces.click.ClickHandler
 import com.noxcrew.interfaces.click.CompletableClickHandler
@@ -155,6 +155,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         .weakValues()
         .build()
 
+    /** Re-opens the current open interface of [player]. */
+    public fun reopenInventory(player: Player) {
+        getOpenInterface(player.uniqueId)?.also {
+            SCOPE.launch {
+                it.open()
+            }
+        }
+    }
+
     /** Returns the currently open interface for [playerId]. */
     public fun getOpenInterface(playerId: UUID): PlayerInterfaceView? {
         // Check if the menu is definitely still meant to be open
@@ -285,25 +294,25 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 // Don't check top inventory if we're in the player inventory!
                 if (
                     (
-                        !isInPlayerInventory && topInventory.withIndex().any { (index, it) ->
-                            // Check if any item is being collected that cannot be moved!
-                            it != null && it.isSimilar(clickedItem) && !canFreelyMove(
-                                view,
-                                requireNotNull(GridPoint.fromBukkitChestSlot(index)),
-                                false
-                            )
-                        }
-                        ) ||
+                            !isInPlayerInventory && topInventory.withIndex().any { (index, it) ->
+                                // Check if any item is being collected that cannot be moved!
+                                it != null && it.isSimilar(clickedItem) && !canFreelyMove(
+                                    view,
+                                    requireNotNull(GridPoint.fromBukkitChestSlot(index)),
+                                    false
+                                )
+                            }
+                            ) ||
                     bottomInventory.withIndex().any { (index, it) ->
                         it != null && it.isSimilar(clickedItem) &&
-                            // These slots are always in the player inventory and always need to be relativized!
-                            !canFreelyMove(
-                                view,
-                                view.backing.relativizePlayerInventorySlot(
-                                    requireNotNull(GridPoint.fromBukkitPlayerSlot(index))
-                                ),
-                                true
-                            )
+                                // These slots are always in the player inventory and always need to be relativized!
+                                !canFreelyMove(
+                                    view,
+                                    view.backing.relativizePlayerInventorySlot(
+                                        requireNotNull(GridPoint.fromBukkitPlayerSlot(index))
+                                    ),
+                                    true
+                                )
                     }
                 ) {
                     event.isCancelled = true
@@ -477,9 +486,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler
     public fun onRespawn(event: PlayerRespawnEvent) {
-        SCOPE.launch {
-            getOpenInterface(event.player.uniqueId)?.open()
-        }
+        reopenInventory(event.player)
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
