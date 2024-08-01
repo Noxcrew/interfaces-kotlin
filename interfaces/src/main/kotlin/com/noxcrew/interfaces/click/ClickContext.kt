@@ -13,5 +13,7 @@ public data class ClickContext(
     /** The type of click that was performed. */
     public val type: ClickType,
     /** The hot bar slot pressed between 0-8 if [type] is [ClickType.NUMBER_KEY], or `-1` otherwise. */
-    public val slot: Int
+    public val slot: Int,
+    /** Whether the click was fired from an interact event (not from an open inventory). */
+    public val interact: Boolean
 )
