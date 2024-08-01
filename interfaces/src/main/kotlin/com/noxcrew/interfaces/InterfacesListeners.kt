@@ -252,7 +252,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val isPlayerInventory = (event.clickedInventory ?: event.inventory).holder is Player
 
         // Run base click handling
-        if (handleClick(view, clickedPoint, event.click, event.hotbarButton, isPlayerInventory)) {
+        if (handleClick(view, clickedPoint, event.click, event.hotbarButton, isPlayerInventory, false)) {
             event.isCancelled = true
         }
 
@@ -415,7 +415,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             return
         }
 
-        if (handleClick(view, clickedPoint, click, -1, true)) {
+        if (handleClick(view, clickedPoint, click, -1, isPlayerInventory = true, interact = true)) {
             // Support modern behavior where we don't interfere with block interactions
             if (view.builder.onlyCancelItemInteraction) {
                 event.setUseItemInHand(Event.Result.DENY)
@@ -557,7 +557,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         clickedPoint: GridPoint,
         click: ClickType,
         slot: Int,
-        isPlayerInventory: Boolean
+        isPlayerInventory: Boolean,
+        interact: Boolean
     ): Boolean {
         // Determine the type of click, if nothing was clicked we allow it
         val raw = view.pane.getRaw(clickedPoint)
@@ -581,7 +582,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         view.isProcessingClick = true
 
         // Forward this click to all pre-processors
-        val clickContext = ClickContext(view.player, view, click, slot)
+        val clickContext = ClickContext(view.player, view, click, slot, interact)
         view.builder.clickPreprocessors
             .forEach { handler -> ClickHandler.process(handler, clickContext) }
 
