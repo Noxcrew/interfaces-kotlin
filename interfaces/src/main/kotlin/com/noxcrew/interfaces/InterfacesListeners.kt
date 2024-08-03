@@ -133,7 +133,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     private data class ChatQuery(
         val view: InterfaceView,
         val onCancel: suspend () -> Unit,
-        val onComplete: suspend (Component) -> Unit,
+        val onComplete: suspend (Component) -> Boolean,
         val id: UUID
     )
 
@@ -499,8 +499,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Complete the query and re-open the view
         SCOPE.launch {
-            query.onComplete(event.message())
-            query.view.open()
+            if (query.onComplete(event.message())) {
+                query.view.open()
+            }
         }
 
         // Prevent the message from sending
@@ -641,7 +642,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         view: InterfaceView,
         timeout: Duration,
         onCancel: suspend () -> Unit,
-        onComplete: suspend (Component) -> Unit
+        onComplete: suspend (Component) -> Boolean
     ) {
         // Determine if the player has this inventory open
         if (!view.isOpen()) return
