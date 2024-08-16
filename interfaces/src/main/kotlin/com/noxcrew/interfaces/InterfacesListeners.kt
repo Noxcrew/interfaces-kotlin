@@ -198,6 +198,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         openPlayerInterfaceViews.put(playerId, view)
     }
 
+    /** Sets the background view for [playerId] to [view]. */
+    public fun setBackgroundView(playerId: UUID, view: PlayerInterfaceView?) {
+        if (view == null) {
+            backgroundPlayerInterfaceViews.invalidate(playerId)
+        } else {
+            backgroundPlayerInterfaceViews.put(playerId, view)
+        }
+    }
+
     /** Closes the given [view] of a player interface. */
     public fun closePlayerInterface(playerId: UUID, view: PlayerInterfaceView?) {
         // Save the contents of their currently shown inventory
@@ -244,7 +253,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Move the current open inventory to the background to indicate
         // it is no longer the actually opened inventory!
         openPlayerInterfaceViews.getIfPresent(event.player.uniqueId)?.also {
-            backgroundPlayerInterfaceViews.put(event.player.uniqueId, it)
+            setBackgroundView(event.player.uniqueId, it)
             openPlayerInterfaceViews.invalidate(event.player.uniqueId)
         }
 

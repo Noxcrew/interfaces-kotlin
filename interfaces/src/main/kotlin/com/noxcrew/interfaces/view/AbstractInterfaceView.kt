@@ -19,7 +19,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withTimeout
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
@@ -32,7 +31,6 @@ import org.slf4j.LoggerFactory
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -50,8 +48,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     private val logger = LoggerFactory.getLogger(AbstractInterfaceView::class.java)
-    private val semaphore = Semaphore(1)
-    private val queue = AtomicInteger(0)
+    private val paneMutex = Mutex()
+    private val debouncedRender = AtomicBoolean(false)
 
     private val children = WeakHashMap<AbstractInterfaceView<*, *, *>, Unit>()
 
@@ -202,12 +200,14 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Don't update if closed
         if (!openIfClosed.get() && !isOpen()) return
 
-        // If there is already queue of 2 renders we don't bother!
-        if (queue.get() >= 2) return
+        // If we're already rendering we queue up another render!
+        if (paneMutex.isLocked) {
+            debouncedRender.set(true)
+            return
+        }
 
-        // Await to acquire a semaphore before starting the render
-        queue.incrementAndGet()
-        semaphore.acquire()
+        // Await to acquire the mutex before we start rendering
+        paneMutex.lock()
         try {
             withTimeout(6.seconds) {
                 pane = panes.collapse(backing.totalRows(), builder.fillMenuWithAir)
@@ -219,8 +219,12 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 }
             }
         } finally {
-            semaphore.release()
-            queue.decrementAndGet()
+            paneMutex.unlock()
+        }
+
+        // If we queued up a debounced render we trigger another one!
+        if (debouncedRender.compareAndSet(true, false)) {
+            renderAndOpen()
         }
     }
 
@@ -279,9 +283,12 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         val completedPane = pane.complete(player)
 
         // Access to the pane has to be shared through a semaphore
-        semaphore.acquire()
-        panes[transform.priority] = completedPane
-        semaphore.release()
+        paneMutex.lock()
+        try {
+            panes[transform.priority] = completedPane
+        } finally {
+            paneMutex.unlock()
+        }
     }
 
     protected open fun drawPaneToInventory(drawNormalInventory: Boolean, drawPlayerInventory: Boolean) {
