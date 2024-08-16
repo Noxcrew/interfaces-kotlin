@@ -34,29 +34,29 @@ public class PlayerInterfaceView internal constructor(
         // Close whatever inventory the player has open so they can look at their normal inventory!
         // This will only continue if the menu hasn't been closed yet.
         if (!isOpen()) {
-            // First we close then we set the interface so we don't double open!
-            InterfacesListeners.INSTANCE.setOpenInterface(player.uniqueId, null)
+            // Remove this inventory from the background interface before closing so it
+            // doesn't automatically re-open!
+            InterfacesListeners.INSTANCE.closePlayerInterface(player.uniqueId, this)
             player.closeInventory()
-            InterfacesListeners.INSTANCE.setOpenInterface(player.uniqueId, this)
         }
 
-        // Double-check that this inventory is open now!
-        if (isOpen()) {
-            if (!builder.inheritExistingItems) {
-                // Clear the player's inventory!
-                player.inventory.clear()
-                if (player.openInventory.topInventory.type == InventoryType.CRAFTING ||
-                    player.openInventory.topInventory.type == InventoryType.CREATIVE
-                ) {
-                    player.openInventory.topInventory.clear()
-                }
-                player.openInventory.setCursor(null)
+        // Open this player interface for the player
+        InterfacesListeners.INSTANCE.openPlayerInterface(player.uniqueId, this)
+
+        if (!builder.inheritExistingItems) {
+            // Clear the player's inventory!
+            player.inventory.clear()
+            if (player.openInventory.topInventory.type == InventoryType.CRAFTING ||
+                player.openInventory.topInventory.type == InventoryType.CREATIVE
+            ) {
+                player.openInventory.topInventory.clear()
             }
-
-            // Trigger onOpen manually because there is no real inventory being opened,
-            // this will also re-draw the player inventory parts!
-            onOpen()
+            player.openInventory.setCursor(null)
         }
+
+        // Trigger onOpen manually because there is no real inventory being opened,
+        // this will also re-draw the player inventory parts!
+        onOpen()
     }
 
     override suspend fun close(reason: InventoryCloseEvent.Reason, changingView: Boolean) {
@@ -65,14 +65,10 @@ public class PlayerInterfaceView internal constructor(
         // Ensure we update the interface state in the main thread!
         // Even if the menu is not currently on the screen.
         InterfacesListeners.INSTANCE.runSync {
-            InterfacesListeners.INSTANCE.setOpenInterface(player.uniqueId, null)
+            InterfacesListeners.INSTANCE.closePlayerInterface(player.uniqueId, this)
         }
     }
 
     override fun isOpen(): Boolean =
-        (
-            player.openInventory.type == InventoryType.CRAFTING ||
-                player.openInventory.type == InventoryType.CREATIVE
-            ) &&
-            InterfacesListeners.INSTANCE.getOpenInterface(player.uniqueId) == this
+        InterfacesListeners.INSTANCE.getOpenPlayerInterface(player.uniqueId) == this
 }

@@ -150,44 +150,73 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     private val queries: Cache<UUID, ChatQuery> = Caffeine.newBuilder()
         .build()
 
-    /** A cache of open player interface views, with weak values. */
+    /** A cache of player interfaces that should be opened again in the future. */
+    private val backgroundPlayerInterfaceViews: Cache<UUID, PlayerInterfaceView> = Caffeine.newBuilder()
+        .weakValues()
+        .build()
+
+    /** A cache of actively open player interfaces. */
     private val openPlayerInterfaceViews: Cache<UUID, PlayerInterfaceView> = Caffeine.newBuilder()
         .weakValues()
         .build()
 
-    /** Re-opens the current open interface of [player]. */
+    /** Re-opens the current background interface of [player]. */
     public fun reopenInventory(player: Player) {
-        getOpenInterface(player.uniqueId)?.also {
+        getBackgroundPlayerInterface(player.uniqueId)?.also {
             SCOPE.launch {
                 it.open()
             }
         }
     }
 
-    /** Returns the currently open interface for [playerId]. */
-    public fun getOpenInterface(playerId: UUID): PlayerInterfaceView? {
+    /**
+     * Returns the background interface for [playerId]. This is the last
+     * player interface that was opened, which should be re-opened once
+     * we no longer have anything else showing.
+     */
+    public fun getBackgroundPlayerInterface(playerId: UUID): PlayerInterfaceView? {
         // Check if the menu is definitely still meant to be open
+        val result = backgroundPlayerInterfaceViews.getIfPresent(playerId) ?: return null
+        if (result.shouldStillBeOpened) return result
+        backgroundPlayerInterfaceViews.invalidate(playerId)
+        return null
+    }
+
+    /**
+     * Returns the currently open player interface for [playerId].
+     */
+    public fun getOpenPlayerInterface(playerId: UUID): PlayerInterfaceView? {
         val result = openPlayerInterfaceViews.getIfPresent(playerId) ?: return null
-        if (result.shouldStillBeOpened) {
-            return result
-        }
+        if (result.shouldStillBeOpened) return result
         openPlayerInterfaceViews.invalidate(playerId)
         return null
     }
 
-    /** Updates the currently open interface for [playerId] to [view]. */
-    public fun setOpenInterface(playerId: UUID, view: PlayerInterfaceView?) {
+    /** Marks the given [view] as the opened player interface. */
+    public fun openPlayerInterface(playerId: UUID, view: PlayerInterfaceView) {
+        backgroundPlayerInterfaceViews.invalidate(playerId)
+        openPlayerInterfaceViews.put(playerId, view)
+    }
+
+    /** Closes the given [view] of a player interface. */
+    public fun closePlayerInterface(playerId: UUID, view: PlayerInterfaceView?) {
         // Save the contents of their currently shown inventory
         val bukkitPlayer = Bukkit.getPlayer(playerId)
         if (bukkitPlayer != null) {
             saveInventoryContentsIfOpened(bukkitPlayer)
         }
 
+        abortQuery(playerId, view)
         if (view == null) {
+            backgroundPlayerInterfaceViews.invalidate(playerId)
             openPlayerInterfaceViews.invalidate(playerId)
         } else {
-            abortQuery(playerId, null)
-            openPlayerInterfaceViews.put(playerId, view)
+            if (backgroundPlayerInterfaceViews.getIfPresent(playerId) === view) {
+                backgroundPlayerInterfaceViews.invalidate(playerId)
+            }
+            if (openPlayerInterfaceViews.getIfPresent(playerId) === view) {
+                openPlayerInterfaceViews.invalidate(playerId)
+            }
         }
     }
 
@@ -212,6 +241,13 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val holder = event.inventory.holder
         val view = convertHolderToInterfaceView(holder) ?: return
 
+        // Move the current open inventory to the background to indicate
+        // it is no longer the actually opened inventory!
+        openPlayerInterfaceViews.getIfPresent(event.player.uniqueId)?.also {
+            backgroundPlayerInterfaceViews.put(event.player.uniqueId, it)
+            openPlayerInterfaceViews.invalidate(event.player.uniqueId)
+        }
+
         // Abort any previous query the player had
         abortQuery(event.player.uniqueId, null)
         view.onOpen()
@@ -231,15 +267,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         SCOPE.launch {
             // Determine if we can re-open a previous interface
-            val openInterface = getOpenInterface(event.player.uniqueId)
-            val shouldReopen = reason in REOPEN_REASONS && !event.player.isDead && openInterface != null
+            val backgroundInterface = getBackgroundPlayerInterface(event.player.uniqueId)
+            val shouldReopen = reason in REOPEN_REASONS && !event.player.isDead && backgroundInterface != null
 
             // Mark the current view as closed properly
             view.markClosed(reason)
 
             // If possible, open back up a previous interface
             if (shouldReopen) {
-                requireNotNull(openInterface).open()
+                requireNotNull(backgroundInterface).open()
             }
         }
     }
@@ -375,7 +411,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     @EventHandler
     public fun onPlayerQuit(event: PlayerQuitEvent) {
         abortQuery(event.player.uniqueId, null)
-        setOpenInterface(event.player.uniqueId, null)
+        closePlayerInterface(event.player.uniqueId, null)
     }
 
     /** Returns whether [block] will trigger some interaction if clicked with [item]. */
@@ -388,7 +424,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         if (event.useItemInHand() == Event.Result.DENY) return
 
         val player = event.player
-        val view = getOpenInterface(player.uniqueId) ?: return
+        val view = getOpenPlayerInterface(player.uniqueId) ?: return
 
         // If we are prioritizing block interactions we assure they are not happening first
         if (view.builder.prioritiseBlockInteractions) {
@@ -428,7 +464,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public fun onDropItem(event: PlayerDropItemEvent) {
         val player = event.player
-        val view = getOpenInterface(player.uniqueId) ?: return
+        val view = getOpenPlayerInterface(player.uniqueId) ?: return
         val slot = player.inventory.heldItemSlot
         val droppedSlot = GridPoint.at(3, slot)
 
@@ -441,7 +477,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public fun onSwapHands(event: PlayerSwapHandItemsEvent) {
         val player = event.player
-        val view = getOpenInterface(player.uniqueId) ?: return
+        val view = getOpenPlayerInterface(player.uniqueId) ?: return
         val slot = player.inventory.heldItemSlot
         val interactedSlot1 = GridPoint.at(3, slot)
         val interactedSlot2 = GridPoint.at(4, 4)
@@ -527,7 +563,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         if (holder is AbstractInterfaceView<*, *, *>) return holder
 
         // If it's the player's own inventory use the held one
-        if (holder is HumanEntity) return getOpenInterface(holder.uniqueId)
+        if (holder is HumanEntity) return getOpenPlayerInterface(holder.uniqueId)
 
         return null
     }

@@ -45,7 +45,7 @@ public class ExamplePlugin : JavaPlugin(), Listener {
 
                 suspendingHandler {
                     val player = it.sender() as Player
-                    InterfacesListeners.INSTANCE.getOpenInterface(player.uniqueId)?.close()
+                    InterfacesListeners.INSTANCE.getOpenPlayerInterface(player.uniqueId)?.close()
                     player.inventory.clear()
                 }
             }

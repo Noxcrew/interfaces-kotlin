@@ -412,15 +412,21 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             drawPaneToInventory(drawNormalInventory = true, drawPlayerInventory = isOpen)
             callback(createdInventory)
 
-            if ((openIfClosed.get() && !isOpen) || createdInventory) {
-                InterfacesListeners.INSTANCE.viewBeingOpened = this
-                if (player.isConnected) openInventory()
-                if (InterfacesListeners.INSTANCE.viewBeingOpened == this) {
-                    InterfacesListeners.INSTANCE.viewBeingOpened = null
+            if (this is PlayerInterfaceView) {
+                // If this is a player inventory we can't update the inventory without
+                // opening it, so we trigger opening it properly.
+                if (!isOpen && player.isConnected) openInventory()
+            } else {
+                if ((openIfClosed.get() && !isOpen) || createdInventory) {
+                    InterfacesListeners.INSTANCE.viewBeingOpened = this
+                    if (player.isConnected) openInventory()
+                    if (InterfacesListeners.INSTANCE.viewBeingOpened == this) {
+                        InterfacesListeners.INSTANCE.viewBeingOpened = null
+                    }
                 }
-                openIfClosed.set(false)
-                firstPaint = false
             }
+            openIfClosed.set(false)
+            firstPaint = false
         }
     }
 
