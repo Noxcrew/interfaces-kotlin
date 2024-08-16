@@ -15,7 +15,10 @@ import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.utilities.CollapsablePaneMap
 import com.noxcrew.interfaces.utilities.forEachInGrid
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withTimeout
 import net.kyori.adventure.text.Component
@@ -27,7 +30,7 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.slf4j.LoggerFactory
 import java.util.WeakHashMap
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
@@ -68,8 +71,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     private val shouldBeOpened = AtomicBoolean(false)
     private val openIfClosed = AtomicBoolean(false)
 
-    private val pendingTransforms = ConcurrentHashMap.newKeySet<AppliedTransform<P>>()
-    private val debouncedTransforms = ConcurrentHashMap.newKeySet<AppliedTransform<P>>()
+    private val pendingTransforms = ConcurrentLinkedQueue<AppliedTransform<P>>()
+    private var transformingJob: Job? = null
+    private val transformMutex = Mutex()
 
     private val panes = CollapsablePaneMap.create(backing.createPane())
     internal lateinit var pane: CompletedPane
@@ -221,55 +225,49 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     private fun applyTransforms(transforms: Collection<AppliedTransform<P>>): Boolean {
-        // Remove all these from the debounced transforms so we can try running
-        // them again!
-        debouncedTransforms -= transforms.toSet()
+        // Ignore if the transforms are empty
+        if (transforms.isEmpty()) return true
 
         // Check if the player is offline or the server stopping
         if (Bukkit.isStopping() || !player.isOnline) return false
 
-        transforms.forEach { transform ->
-            // If the transform is already pending we debounce it
-            if (transform in pendingTransforms) {
-                debouncedTransforms += transform
-                return@forEach
-            }
+        // Queue up the transforms
+        pendingTransforms.addAll(transforms)
 
-            // Indicate this transform is running which prevents the menu
-            // from rendering until all transforms are done!
-            pendingTransforms += transform
+        // Check if the job is already running
+        SCOPE.launch {
+            try {
+                transformMutex.lock()
 
-            SCOPE.launch {
-                try {
-                    // Don't run transforms for an offline player!
-                    if (!Bukkit.isStopping() && player.isOnline) {
-                        withTimeout(6.seconds) {
-                            runTransformAndApplyToPanes(transform)
+                // Start the job if it's not running currently!
+                if (transformingJob == null || transformingJob?.isCompleted == true) {
+                    transformingJob = SCOPE.async {
+                        // Go through all pending transforms one at a time until
+                        // we're fully done with all of them. Other threads may
+                        // add additional ones as we go through the queue.
+                        while (pendingTransforms.isNotEmpty()) {
+                            // Removes the first pending transform
+                            val transform = pendingTransforms.remove()
+
+                            try {
+                                // Don't run transforms for an offline player!
+                                if (!Bukkit.isStopping() && player.isOnline) {
+                                    withTimeout(6.seconds) {
+                                        runTransformAndApplyToPanes(transform)
+                                    }
+                                }
+                            } catch (exception: Exception) {
+                                logger.error("Failed to run and apply transform: $transform", exception)
+                            }
                         }
-                    }
-                } catch (exception: Exception) {
-                    logger.error("Failed to run and apply transform: $transform", exception)
-                } finally {
-                    // Update that this transform has finished and check if
-                    // we are ready to draw the screen finally!
-                    pendingTransforms -= transform
 
-                    if (transform in debouncedTransforms && applyTransforms(listOf(transform))) {
-                        // Simply run the transform again here and do nothing else
-                    } else {
-                        // If all transforms are done we can finally draw and open the menu
-                        if (pendingTransforms.isEmpty()) {
-                            renderAndOpen()
-                        }
+                        // After we have finished running all transforms we render and open
+                        // the menu before ending this job.
+                        renderAndOpen()
                     }
                 }
-            }
-        }
-
-        // In the case that transforms was empty we might be able to open the menu already
-        if (pendingTransforms.isEmpty()) {
-            SCOPE.launch {
-                renderAndOpen()
+            } finally {
+                transformMutex.unlock()
             }
         }
         return true
