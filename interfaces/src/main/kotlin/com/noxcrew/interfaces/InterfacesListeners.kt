@@ -71,7 +71,10 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         private val REOPEN_REASONS = EnumSet.of(
             Reason.PLAYER,
             Reason.UNKNOWN,
-            Reason.PLUGIN
+            Reason.PLUGIN,
+            Reason.TELEPORT,
+            Reason.CANT_USE,
+            Reason.UNLOADED
         )
 
         /** An incomplete set of blocks that have some interaction when clicked on. */
