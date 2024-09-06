@@ -11,10 +11,10 @@ import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CH
 import org.bukkit.entity.Player
 
 /** A grid map of completed elements. */
-internal open class CompletedPane : GridMap<CompletedElement> by HashGridMap() {
-    internal open fun getRaw(vector: GridPoint): CompletedElement? = get(vector)
+public open class CompletedPane : GridMap<CompletedElement> by HashGridMap() {
+    public open fun getRaw(vector: GridPoint): CompletedElement? = get(vector)
 
-    internal open fun getRawUnordered(vector: GridPoint): CompletedElement? = get(vector)
+    public open fun getRawUnordered(vector: GridPoint): CompletedElement? = get(vector)
 }
 
 /** A completed pane with an ordering. */

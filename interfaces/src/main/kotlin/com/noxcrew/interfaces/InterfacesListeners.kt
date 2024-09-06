@@ -598,7 +598,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         if (!view.backing.includesPlayerInventory && isPlayerInventory) return true
 
         // If there is no item here we allow editing
-        return view.pane.getRaw(clickedPoint) == null
+        return view.completedPane?.getRaw(clickedPoint) == null
     }
 
     /** Handles a [view] being clicked at [clickedPoint] through some [event]. */
@@ -611,7 +611,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         interact: Boolean
     ): Boolean {
         // Determine the type of click, if nothing was clicked we allow it
-        val raw = view.pane.getRaw(clickedPoint)
+        val raw = view.completedPane?.getRaw(clickedPoint)
 
         // Optionally cancel clicking on other slots
         if (raw == null) {

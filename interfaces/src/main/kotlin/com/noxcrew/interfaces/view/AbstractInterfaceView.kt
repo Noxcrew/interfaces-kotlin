@@ -74,7 +74,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     private val transformMutex = Mutex()
 
     private val panes = CollapsablePaneMap.create(backing.createPane())
-    internal lateinit var pane: CompletedPane
+    private lateinit var pane: CompletedPane
 
     protected lateinit var currentInventory: I
 
@@ -83,6 +83,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     override val isTreeOpened: Boolean
         get() = shouldStillBeOpened || children.keys.any { it.shouldStillBeOpened }
+
+    /** The pane of this view. */
+    public val completedPane: CompletedPane?
+        get() = if (::pane.isInitialized) pane else null
 
     /** Creates a new inventory GUI. */
     public abstract fun createInventory(): I
@@ -302,7 +306,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
 
         var madeChanges = false
-        pane.forEach { row, column, element ->
+        completedPane?.forEach { row, column, element ->
             // We defer drawing of any elements in the player inventory itself
             // for later unless the inventory is already open.
             val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
@@ -366,7 +370,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             val point = GridPoint.fromBukkitChestSlot(index) ?: continue
 
             // Ignore any items that are in the pane itself
-            if (pane.getRawUnordered(point) != null) continue
+            if (completedPane?.getRawUnordered(point) != null) continue
 
             // Store this item
             addedItems[point] = stack
