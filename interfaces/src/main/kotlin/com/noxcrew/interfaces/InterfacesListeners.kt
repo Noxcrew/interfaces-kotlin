@@ -212,12 +212,6 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     /** Closes the given [view] of a player interface. */
     public fun closePlayerInterface(playerId: UUID, view: PlayerInterfaceView?) {
-        // Save the contents of their currently shown inventory
-        val bukkitPlayer = Bukkit.getPlayer(playerId)
-        if (bukkitPlayer != null) {
-            saveInventoryContentsIfOpened(bukkitPlayer)
-        }
-
         abortQuery(playerId, view)
         if (view == null) {
             backgroundPlayerInterfaceViews.invalidate(playerId)
@@ -423,6 +417,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler
     public fun onPlayerQuit(event: PlayerQuitEvent) {
+        // Save the contents of their currently shown inventory
         abortQuery(event.player.uniqueId, null)
         closePlayerInterface(event.player.uniqueId, null)
     }
