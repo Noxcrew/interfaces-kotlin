@@ -138,6 +138,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // Add listeners to all triggers and update its transforms
         for ((trigger, transforms) in triggers.asMap()) {
+            if (transforms.isEmpty()) continue
             trigger.addListener(this) {
                 // Apply the transforms for the new ones
                 applyTransforms(transforms)
@@ -173,7 +174,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             firstPaint = true
             setup()
         } else {
-            renderAndOpen()
+            triggerRerender()
         }
     }
 
@@ -200,7 +201,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
     }
 
-    private suspend fun renderAndOpen() {
+    private suspend fun triggerRerender() {
         // Don't update if closed
         if (!openIfClosed.get() && !isOpen()) return
 
@@ -228,16 +229,22 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // If we queued up a debounced render we trigger another one!
         if (debouncedRender.compareAndSet(true, false)) {
-            renderAndOpen()
+            triggerRerender()
         }
     }
 
     private fun applyTransforms(transforms: Collection<AppliedTransform<P>>): Boolean {
-        // Ignore if the transforms are empty
-        if (transforms.isEmpty()) return true
-
         // Check if the player is offline or the server stopping
         if (Bukkit.isStopping() || !player.isOnline) return false
+
+        // Ignore if the transforms are empty
+        if (transforms.isEmpty()) {
+            // If there are no transforms we still need to open it!
+            SCOPE.launch {
+                triggerRerender()
+            }
+            return true
+        }
 
         // Queue up the transforms
         pendingTransforms.addAll(transforms)
@@ -271,7 +278,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
                         // After we have finished running all transforms we render and open
                         // the menu before ending this job.
-                        renderAndOpen()
+                        triggerRerender()
                     }
                 }
             } finally {
