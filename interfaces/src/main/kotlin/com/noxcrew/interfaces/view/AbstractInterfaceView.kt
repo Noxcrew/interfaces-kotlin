@@ -257,7 +257,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
                 // Start the job if it's not running currently!
                 if (transformingJob == null || transformingJob?.isCompleted == true) {
-                    transformingJob = SCOPE.async(
+                    transformingJob = SCOPE.launch(
                         InterfacesCoroutineDetails(player.uniqueId, "running and applying a transform")
                     ) {
                         // Go through all pending transforms one at a time until
