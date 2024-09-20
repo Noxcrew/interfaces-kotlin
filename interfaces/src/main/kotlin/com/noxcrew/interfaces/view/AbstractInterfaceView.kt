@@ -267,15 +267,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                             // Removes the first pending transform
                             val transform = pendingTransforms.remove()
 
-                            try {
-                                // Don't run transforms for an offline player!
-                                if (!Bukkit.isStopping() && player.isOnline) {
-                                    withTimeout(6.seconds) {
-                                        runTransformAndApplyToPanes(transform)
-                                    }
+                            // Don't run transforms for an offline player!
+                            if (!Bukkit.isStopping() && player.isOnline) {
+                                withTimeout(6.seconds) {
+                                    runTransformAndApplyToPanes(transform)
                                 }
-                            } catch (exception: Exception) {
-                                logger.error("Failed to run and apply transform: $transform", exception)
                             }
                         }
 
