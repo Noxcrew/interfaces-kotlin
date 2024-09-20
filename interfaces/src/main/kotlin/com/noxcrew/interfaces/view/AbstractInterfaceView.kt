@@ -17,7 +17,6 @@ import com.noxcrew.interfaces.utilities.CollapsablePaneMap
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.utilities.forEachInGrid
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
@@ -257,7 +256,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
                 // Start the job if it's not running currently!
                 if (transformingJob == null || transformingJob?.isCompleted == true) {
-                    transformingJob = SCOPE.async(
+                    transformingJob = SCOPE.launch(
                         InterfacesCoroutineDetails(player.uniqueId, "running and applying a transform")
                     ) {
                         // Go through all pending transforms one at a time until
@@ -267,15 +266,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                             // Removes the first pending transform
                             val transform = pendingTransforms.remove()
 
-                            try {
-                                // Don't run transforms for an offline player!
-                                if (!Bukkit.isStopping() && player.isOnline) {
-                                    withTimeout(6.seconds) {
-                                        runTransformAndApplyToPanes(transform)
-                                    }
+                            // Don't run transforms for an offline player!
+                            if (!Bukkit.isStopping() && player.isOnline) {
+                                withTimeout(6.seconds) {
+                                    runTransformAndApplyToPanes(transform)
                                 }
-                            } catch (exception: Exception) {
-                                logger.error("Failed to run and apply transform: $transform", exception)
                             }
                         }
 
