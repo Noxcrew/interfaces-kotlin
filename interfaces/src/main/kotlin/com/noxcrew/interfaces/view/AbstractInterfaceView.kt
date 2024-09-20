@@ -14,6 +14,7 @@ import com.noxcrew.interfaces.pane.complete
 import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.utilities.CollapsablePaneMap
+import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.utilities.forEachInGrid
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -240,7 +241,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Ignore if the transforms are empty
         if (transforms.isEmpty()) {
             // If there are no transforms we still need to open it!
-            SCOPE.launch {
+            SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering re-render with no transforms")) {
                 triggerRerender()
             }
             return true
@@ -250,13 +251,15 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         pendingTransforms.addAll(transforms)
 
         // Check if the job is already running
-        SCOPE.launch {
+        SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering re-render with transforms")) {
             try {
                 transformMutex.lock()
 
                 // Start the job if it's not running currently!
                 if (transformingJob == null || transformingJob?.isCompleted == true) {
-                    transformingJob = SCOPE.async {
+                    transformingJob = SCOPE.async(
+                        InterfacesCoroutineDetails(player.uniqueId, "running and applying a transform")
+                    ) {
                         // Go through all pending transforms one at a time until
                         // we're fully done with all of them. Other threads may
                         // add additional ones as we go through the queue.

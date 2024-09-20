@@ -10,6 +10,7 @@ import com.noxcrew.interfaces.click.ClickHandler
 import com.noxcrew.interfaces.click.CompletableClickHandler
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.pane.PlayerPane
+import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.view.AbstractInterfaceView
 import com.noxcrew.interfaces.view.ChestInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
@@ -166,7 +167,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     /** Re-opens the current background interface of [player]. */
     public fun reopenInventory(player: Player) {
         getBackgroundPlayerInterface(player.uniqueId)?.also {
-            SCOPE.launch {
+            SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
                 it.open()
             }
         }
@@ -272,7 +273,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Saves any persistent items stored in the given inventory before we close it
         view.savePersistentItems(event.inventory)
 
-        SCOPE.launch {
+        SCOPE.launch(InterfacesCoroutineDetails(event.player.uniqueId, "handling inventory close")) {
             // Determine if we can re-open a previous interface
             val backgroundInterface = getBackgroundPlayerInterface(event.player.uniqueId)
             val shouldReopen = reason in REOPEN_REASONS && !event.player.isDead && backgroundInterface != null
@@ -542,7 +543,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         queries.invalidate(player.uniqueId)
 
         // Complete the query and re-open the view
-        SCOPE.launch {
+        SCOPE.launch(InterfacesCoroutineDetails(event.player.uniqueId, "completing chat query")) {
             if (query.onComplete(event.message())) {
                 query.view.open()
             }
@@ -726,7 +727,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
                 // Remove the query, run the cancel handler, and re-open the view
                 queries.invalidate(playerId)
-                SCOPE.launch {
+                SCOPE.launch(InterfacesCoroutineDetails(playerId, "cancelling chat query due to timeout")) {
                     onCancel()
                     view.open()
                 }
@@ -743,7 +744,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         if (view != null && query.view != view) return
         queries.invalidate(playerId)
 
-        SCOPE.launch {
+        SCOPE.launch(InterfacesCoroutineDetails(playerId, "aborting chat query")) {
             // Run the cancellation handler
             query.onCancel()
 
