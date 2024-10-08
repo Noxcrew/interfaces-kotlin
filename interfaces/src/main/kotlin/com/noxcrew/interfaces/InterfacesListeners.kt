@@ -342,25 +342,25 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 // Don't check top inventory if we're in the player inventory!
                 if (
                     (
-                            !isInPlayerInventory && topInventory.withIndex().any { (index, it) ->
-                                // Check if any item is being collected that cannot be moved!
-                                it != null && it.isSimilar(clickedItem) && !canFreelyMove(
-                                    view,
-                                    requireNotNull(GridPoint.fromBukkitChestSlot(index)),
-                                    false
-                                )
-                            }
-                            ) ||
+                        !isInPlayerInventory && topInventory.withIndex().any { (index, it) ->
+                            // Check if any item is being collected that cannot be moved!
+                            it != null && it.isSimilar(clickedItem) && !canFreelyMove(
+                                view,
+                                requireNotNull(GridPoint.fromBukkitChestSlot(index)),
+                                false
+                            )
+                        }
+                        ) ||
                     bottomInventory.withIndex().any { (index, it) ->
                         it != null && it.isSimilar(clickedItem) &&
-                                // These slots are always in the player inventory and always need to be relativized!
-                                !canFreelyMove(
-                                    view,
-                                    view.backing.relativizePlayerInventorySlot(
-                                        requireNotNull(GridPoint.fromBukkitPlayerSlot(index))
-                                    ),
-                                    true
-                                )
+                            // These slots are always in the player inventory and always need to be relativized!
+                            !canFreelyMove(
+                                view,
+                                view.backing.relativizePlayerInventorySlot(
+                                    requireNotNull(GridPoint.fromBukkitPlayerSlot(index))
+                                ),
+                                true
+                            )
                     }
                 ) {
                     event.isCancelled = true
