@@ -107,8 +107,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Ensure that the menu does not open
         openIfClosed.set(false)
 
-        // Run a generic close handler if it's still opened
-        if (shouldBeOpened.compareAndSet(true, false) && (!changingView || builder.callCloseHandlerOnViewSwitch)) {
+        // Run a generic close handler if it's still opened and if the inventory was actually opened at any point
+        if (shouldBeOpened.compareAndSet(true, false) &&
+            (!changingView || builder.callCloseHandlerOnViewSwitch) &&
+            ::currentInventory.isInitialized
+        ) {
             builder.closeHandlers[reason]?.invoke(reason, this)
         }
 
