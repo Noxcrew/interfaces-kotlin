@@ -166,9 +166,11 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     /** Re-opens the current background interface of [player]. */
     public fun reopenInventory(player: Player) {
-        getBackgroundPlayerInterface(player.uniqueId)?.also {
+        (getOpenPlayerInterface(player.uniqueId) ?: getBackgroundPlayerInterface(player.uniqueId))?.also {
             SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
-                it.open()
+                if (!it.reopen()) {
+                    closePlayerInterface(player.uniqueId, it)
+                }
             }
         }
     }
@@ -283,7 +285,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
             // If possible, open back up a previous interface
             if (shouldReopen) {
-                requireNotNull(backgroundInterface).open()
+                if (!requireNotNull(backgroundInterface).reopen()) {
+                    closePlayerInterface(event.player.uniqueId, backgroundInterface)
+                }
             }
         }
     }
@@ -338,25 +342,25 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 // Don't check top inventory if we're in the player inventory!
                 if (
                     (
-                        !isInPlayerInventory && topInventory.withIndex().any { (index, it) ->
-                            // Check if any item is being collected that cannot be moved!
-                            it != null && it.isSimilar(clickedItem) && !canFreelyMove(
-                                view,
-                                requireNotNull(GridPoint.fromBukkitChestSlot(index)),
-                                false
-                            )
-                        }
-                        ) ||
+                            !isInPlayerInventory && topInventory.withIndex().any { (index, it) ->
+                                // Check if any item is being collected that cannot be moved!
+                                it != null && it.isSimilar(clickedItem) && !canFreelyMove(
+                                    view,
+                                    requireNotNull(GridPoint.fromBukkitChestSlot(index)),
+                                    false
+                                )
+                            }
+                            ) ||
                     bottomInventory.withIndex().any { (index, it) ->
                         it != null && it.isSimilar(clickedItem) &&
-                            // These slots are always in the player inventory and always need to be relativized!
-                            !canFreelyMove(
-                                view,
-                                view.backing.relativizePlayerInventorySlot(
-                                    requireNotNull(GridPoint.fromBukkitPlayerSlot(index))
-                                ),
-                                true
-                            )
+                                // These slots are always in the player inventory and always need to be relativized!
+                                !canFreelyMove(
+                                    view,
+                                    view.backing.relativizePlayerInventorySlot(
+                                        requireNotNull(GridPoint.fromBukkitPlayerSlot(index))
+                                    ),
+                                    true
+                                )
                     }
                 ) {
                     event.isCancelled = true
@@ -545,7 +549,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Complete the query and re-open the view
         SCOPE.launch(InterfacesCoroutineDetails(event.player.uniqueId, "completing chat query")) {
             if (query.onComplete(event.message())) {
-                query.view.open()
+                query.view.reopen()
             }
         }
 
@@ -729,7 +733,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 queries.invalidate(playerId)
                 SCOPE.launch(InterfacesCoroutineDetails(playerId, "cancelling chat query due to timeout")) {
                     onCancel()
-                    view.open()
+                    view.reopen()
                 }
             },
             timeout.inWholeMilliseconds / 50

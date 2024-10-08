@@ -94,7 +94,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     /** Opens the inventory GUI for the viewer. */
     public abstract fun openInventory()
 
-    /** Marks this menu as closed and processes it. */
+    /**
+     * Marks this menu as closed and processes it. This does not actually perform
+     * closing the menu, this method only handles the closing.
+     */
     internal suspend fun markClosed(
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
         changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
@@ -155,6 +158,13 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     override fun redrawComplete() {
         applyTransforms(builder.transforms)
+    }
+
+    override suspend fun reopen(): Boolean {
+        if (!player.isConnected) return false
+        if (!shouldBeOpened.get()) return false
+        open()
+        return true
     }
 
     override suspend fun open() {

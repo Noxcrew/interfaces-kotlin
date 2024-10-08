@@ -33,6 +33,9 @@ public interface InterfaceView {
     /** Opens up this view. */
     public suspend fun open()
 
+    /** Re-opens this view, if it hasn't yet been closed. */
+    public suspend fun reopen(): Boolean
+
     /** Closes this view. */
     public suspend fun close(
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
