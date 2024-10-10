@@ -703,7 +703,11 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         runSync {
             // Close the current inventory to open another to avoid close reasons
+            val reopen = view.shouldStillBeOpened
             view.player.closeInventory(Reason.OPEN_NEW)
+
+            // Ensure the view is allowed to be opened again after we're done
+            if (reopen) (view as AbstractInterfaceView<*, *, *>).markAsReopenable()
 
             // Clear the inventory
             view.player.inventory.clear()

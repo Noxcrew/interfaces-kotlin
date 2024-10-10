@@ -94,6 +94,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     /** Opens the inventory GUI for the viewer. */
     public abstract fun openInventory()
 
+    /** Marks down that this menu should be re-opened. */
+    internal fun markAsReopenable() {
+        shouldBeOpened.set(true)
+    }
+
     /**
      * Marks this menu as closed and processes it. This does not actually perform
      * closing the menu, this method only handles the closing.
