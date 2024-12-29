@@ -1,5 +1,8 @@
 package com.noxcrew.interfaces.view
 
+import com.noxcrew.interfaces.InterfacesConstants
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryCloseEvent
@@ -38,6 +41,13 @@ public interface InterfaceView {
 
     /** Closes this view. */
     public suspend fun close(
+        reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
+        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
+    ): Unit = close(CoroutineScope(currentCoroutineContext()), reason, changingView)
+
+    /** Closes this view immediately, running any closing handling on [coroutineScope]. */
+    public fun close(
+        coroutineScope: CoroutineScope,
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
         changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
     )

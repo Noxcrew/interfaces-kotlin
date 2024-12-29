@@ -16,6 +16,7 @@ import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.utilities.CollapsablePaneMap
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.utilities.forEachInGrid
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -103,7 +104,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
      * Marks this menu as closed and processes it. This does not actually perform
      * closing the menu, this method only handles the closing.
      */
-    internal suspend fun markClosed(
+    internal fun markClosed(
+        coroutineScope: CoroutineScope,
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
         changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
     ) {
@@ -120,7 +122,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             (!changingView || builder.callCloseHandlerOnViewSwitch) &&
             ::currentInventory.isInitialized
         ) {
-            builder.closeHandlers[reason]?.invoke(reason, this)
+            builder.closeHandlers[reason]?.also {
+                coroutineScope.launch {
+                    it.invoke(reason, this@AbstractInterfaceView)
+                }
+            }
         }
 
         // Don't close children when changing views!
@@ -132,7 +138,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             // properly.
             for ((child) in children) {
                 if (child.shouldBeOpened.get()) {
-                    child.close(reason, false)
+                    child.close(coroutineScope, reason, false)
                 }
             }
         }
@@ -196,8 +202,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
     }
 
-    override suspend fun close(reason: InventoryCloseEvent.Reason, changingView: Boolean) {
-        markClosed(reason, changingView)
+    override fun close(coroutineScope: CoroutineScope, reason: InventoryCloseEvent.Reason, changingView: Boolean) {
+        markClosed(coroutineScope, reason, changingView)
 
         // Ensure we always close on the main thread! Don't close if we are
         // changing views though.

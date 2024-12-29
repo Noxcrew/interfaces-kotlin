@@ -4,6 +4,7 @@ import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.interfaces.PlayerInterface
 import com.noxcrew.interfaces.inventory.PlayerInterfacesInventory
 import com.noxcrew.interfaces.pane.PlayerPane
+import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryCloseEvent
@@ -59,8 +60,8 @@ public class PlayerInterfaceView internal constructor(
         onOpen()
     }
 
-    override suspend fun close(reason: InventoryCloseEvent.Reason, changingView: Boolean) {
-        markClosed(reason, changingView)
+    override fun close(coroutineScope: CoroutineScope, reason: InventoryCloseEvent.Reason, changingView: Boolean) {
+        markClosed(coroutineScope, reason, changingView)
 
         // Ensure we update the interface state in the main thread!
         // Even if the menu is not currently on the screen.
