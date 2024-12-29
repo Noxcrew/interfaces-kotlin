@@ -18,6 +18,7 @@ import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.utilities.forEachInGrid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -180,7 +182,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     override suspend fun open() {
         // Don't open an interface for an offline player
-        if (!player.isConnected) return
+        if (!player.isConnected || !coroutineContext.isActive) return
 
         // Indicate that the menu should be opened after the next time rendering completes
         // and that it should be open right now
@@ -429,6 +431,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         } else {
             false
         }
+
+        // Exit if the coroutine context is no longer active
+        if (!coroutineContext.isActive) return
 
         // Draw the contents of the inventory synchronously because
         // we don't want it to happen in between ticks and show
