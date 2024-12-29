@@ -281,7 +281,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             val shouldReopen = reason in REOPEN_REASONS && !event.player.isDead && backgroundInterface != null
 
             // Mark the current view as closed properly
-            view.markClosed(reason)
+            view.markClosed(SCOPE, reason)
 
             // If possible, open back up a previous interface
             if (shouldReopen) {
@@ -761,7 +761,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             if (view != null) return@launch
 
             // Mark the view as properly closed
-            (query.view as AbstractInterfaceView<*, *, *>).markClosed(Reason.PLAYER)
+            (query.view as AbstractInterfaceView<*, *, *>).markClosed(SCOPE, Reason.PLAYER)
         }
     }
 
