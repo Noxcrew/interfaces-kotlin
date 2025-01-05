@@ -5,7 +5,7 @@ run-paper = "2.3.0"
 spotless = "6.18.0"
 
 # Tooling
-kotlin-coroutines = "1.9.0-RC"
+kotlin-coroutines = "1.10.1"
 guava = "32.1.2-jre"
 slf4j = "2.0.9"
 caffeine = "3.1.8"
