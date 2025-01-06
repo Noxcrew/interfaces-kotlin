@@ -9,16 +9,12 @@ import kotlin.reflect.KProperty
 public class BoundInteger(
     initial: Int,
     public var min: Int,
-    public var max: Int,
-) : ObservableProperty<Int>(initial),
-    Trigger {
+    public var max: Int
+) : ObservableProperty<Int>(initial), Trigger {
+
     private val delegateTrigger = DelegateTrigger()
 
-    override fun beforeChange(
-        property: KProperty<*>,
-        oldValue: Int,
-        newValue: Int,
-    ): Boolean {
+    override fun beforeChange(property: KProperty<*>, oldValue: Int, newValue: Int): Boolean {
         val acceptableRange = min..max
 
         if (newValue in acceptableRange) {
@@ -33,11 +29,7 @@ public class BoundInteger(
         return false
     }
 
-    override fun afterChange(
-        property: KProperty<*>,
-        oldValue: Int,
-        newValue: Int,
-    ) {
+    override fun afterChange(property: KProperty<*>, oldValue: Int, newValue: Int) {
         if (oldValue != newValue) {
             trigger()
         }
@@ -47,10 +39,7 @@ public class BoundInteger(
         delegateTrigger.trigger()
     }
 
-    override fun <T : Any> addListener(
-        reference: T,
-        listener: T.() -> Unit,
-    ) {
+    override fun <T : Any> addListener(reference: T, listener: T.() -> Unit) {
         delegateTrigger.addListener(reference, listener)
     }
 

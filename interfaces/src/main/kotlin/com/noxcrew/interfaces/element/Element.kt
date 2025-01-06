@@ -6,6 +6,7 @@ import org.bukkit.Material
 
 /** An element in an interface that is drawn by [drawable] and triggers [clickHandler]. */
 public interface Element {
+
     /** An empty element that shows as air and has no function. */
     public companion object EMPTY : Element by StaticElement(Drawable.drawable(Material.AIR))
 

@@ -6,6 +6,7 @@ import kotlinx.coroutines.cancel
 
 /** Handles a click action. Receives a [ClickContext] object filled with information about the click. */
 public fun interface ClickHandler {
+
     public companion object {
         /**
          * An empty click handler that performs no logic. The click event will be cancelled
@@ -21,13 +22,9 @@ public fun interface ClickHandler {
         public val ALLOW: ClickHandler = ClickHandler { cancelled = false }
 
         /** Runs a [CompletableClickHandler] with [clickHandler] and [context]. */
-        public fun process(
-            clickHandler: ClickHandler,
-            context: ClickContext,
-        ): Unit =
-            with(clickHandler) {
-                CompletableClickHandler().handle(context)
-            }
+        public fun process(clickHandler: ClickHandler, context: ClickContext): Unit = with(clickHandler) {
+            CompletableClickHandler().handle(context)
+        }
     }
 
     /** Handles a click with the given [context]. */
@@ -36,6 +33,7 @@ public fun interface ClickHandler {
 
 /** A click handler that be assigned tasks to run on completion. */
 public class CompletableClickHandler {
+
     private val deferred = CompletableDeferred<Unit>(null)
 
     /** Whether this handler has been completed (or cancelled). */

@@ -42,8 +42,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     override val player: Player,
     /** The interface backing this view. */
     public val backing: T,
-    private val parent: InterfaceView?,
+    private val parent: InterfaceView?
 ) : InterfaceView {
+
     public companion object {
         /** The amount of columns a chest inventory has. */
         public const val COLUMNS_IN_CHEST: Int = 9
@@ -108,7 +109,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     internal fun markClosed(
         coroutineScope: CoroutineScope,
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
-        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW,
+        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
     ) {
         if (!changingView) {
             // End a possible chat query with the listener (unless we're changing views)
@@ -203,11 +204,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
     }
 
-    override fun close(
-        coroutineScope: CoroutineScope,
-        reason: InventoryCloseEvent.Reason,
-        changingView: Boolean,
-    ) {
+    override fun close(coroutineScope: CoroutineScope, reason: InventoryCloseEvent.Reason, changingView: Boolean) {
         markClosed(coroutineScope, reason, changingView)
 
         // Ensure we always close on the main thread! Don't close if we are
@@ -285,29 +282,28 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
                 // Start the job if it's not running currently!
                 if (transformingJob == null || transformingJob?.isCompleted == true) {
-                    transformingJob =
-                        SCOPE.launch(
-                            InterfacesCoroutineDetails(player.uniqueId, "running and applying a transform"),
-                        ) {
-                            // Go through all pending transforms one at a time until
-                            // we're fully done with all of them. Other threads may
-                            // add additional ones as we go through the queue.
-                            while (pendingTransforms.isNotEmpty()) {
-                                // Removes the first pending transform
-                                val transform = pendingTransforms.remove()
+                    transformingJob = SCOPE.launch(
+                        InterfacesCoroutineDetails(player.uniqueId, "running and applying a transform")
+                    ) {
+                        // Go through all pending transforms one at a time until
+                        // we're fully done with all of them. Other threads may
+                        // add additional ones as we go through the queue.
+                        while (pendingTransforms.isNotEmpty()) {
+                            // Removes the first pending transform
+                            val transform = pendingTransforms.remove()
 
-                                // Don't run transforms for an offline player!
-                                if (!Bukkit.isStopping() && player.isOnline) {
-                                    withTimeout(6.seconds) {
-                                        runTransformAndApplyToPanes(transform)
-                                    }
+                            // Don't run transforms for an offline player!
+                            if (!Bukkit.isStopping() && player.isOnline) {
+                                withTimeout(6.seconds) {
+                                    runTransformAndApplyToPanes(transform)
                                 }
                             }
-
-                            // After we have finished running all transforms we render and open
-                            // the menu before ending this job.
-                            triggerRerender()
                         }
+
+                        // After we have finished running all transforms we render and open
+                        // the menu before ending this job.
+                        triggerRerender()
+                    }
                 }
             } finally {
                 transformMutex.unlock()
@@ -330,10 +326,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
     }
 
-    protected open fun drawPaneToInventory(
-        drawNormalInventory: Boolean,
-        drawPlayerInventory: Boolean,
-    ) {
+    protected open fun drawPaneToInventory(drawNormalInventory: Boolean, drawPlayerInventory: Boolean) {
         // Stop drawing if the player disconnected
         if (!player.isConnected) return
 
@@ -353,7 +346,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             currentInventory.set(
                 row,
                 column,
-                element.itemStack.apply { this?.let { builder.itemPostProcessor?.invoke(it) } },
+                element.itemStack.apply { this?.let { builder.itemPostProcessor?.invoke(it) } }
             )
             leftovers -= row to column
             madeChanges = true
@@ -370,7 +363,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 currentInventory.set(
                     row,
                     column,
-                    item,
+                    item
                 )
                 leftovers -= row to column
                 madeChanges = true
@@ -432,13 +425,12 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // If a new inventory is required we create one
         // and mark that the current one is not to be used!
-        val createdInventory =
-            if (requiresNewInventory()) {
-                currentInventory = createInventory()
-                true
-            } else {
-                false
-            }
+        val createdInventory = if (requiresNewInventory()) {
+            currentInventory = createInventory()
+            true
+        } else {
+            false
+        }
 
         // Exit if the coroutine context is no longer active
         if (!coroutineContext.isActive) return
@@ -481,11 +473,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
     }
 
-    override fun runChatQuery(
-        timeout: Duration,
-        onCancel: suspend () -> Unit,
-        onComplete: suspend (Component) -> Boolean,
-    ) {
+    override fun runChatQuery(timeout: Duration, onCancel: suspend () -> Unit, onComplete: suspend (Component) -> Boolean) {
         InterfacesListeners.INSTANCE.startChatQuery(this, timeout, onCancel, onComplete)
     }
 }
