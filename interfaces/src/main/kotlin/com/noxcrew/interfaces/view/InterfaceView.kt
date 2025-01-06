@@ -13,7 +13,6 @@ import kotlin.time.Duration.Companion.seconds
  * but this view was created for a specific viewer.
  */
 public interface InterfaceView {
-
     /** The player this view is for. */
     public val player: Player
 

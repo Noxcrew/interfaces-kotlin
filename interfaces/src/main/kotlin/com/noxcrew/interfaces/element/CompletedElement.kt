@@ -11,7 +11,8 @@ public data class CompletedElement(
 )
 
 /** Completes drawing this element for [player]. */
-public suspend fun Element.complete(player: Player): CompletedElement = CompletedElement(
-    drawable().draw(player),
-    clickHandler(),
-)
+public suspend fun Element.complete(player: Player): CompletedElement =
+    CompletedElement(
+        drawable().draw(player),
+        clickHandler(),
+    )

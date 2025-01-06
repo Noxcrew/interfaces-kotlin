@@ -8,7 +8,6 @@ public class StaticElement(
     private val drawable: Drawable,
     private val clickHandler: ClickHandler = ClickHandler.EMPTY,
 ) : Element {
-
     override fun drawable(): Drawable = drawable
 
     override fun clickHandler(): ClickHandler = clickHandler

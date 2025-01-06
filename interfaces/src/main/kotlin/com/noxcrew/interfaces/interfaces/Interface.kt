@@ -9,7 +9,6 @@ import org.bukkit.entity.Player
 
 /** A created interface that can be opened for a player to create a unique view. */
 public interface Interface<I : Interface<I, P>, P : Pane> {
-
     /** The amount of rows this interface contains. */
     public val rows: Int
 
