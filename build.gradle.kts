@@ -1,5 +1,7 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessPlugin
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import xyz.jpenilla.runpaper.task.RunServer
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -7,7 +9,7 @@ plugins {
     alias(libs.plugins.run.paper) apply false
 
     // Kotlin plugin prefers to be applied to parent when it's used in multiple sub-modules.
-    kotlin("jvm") version "1.9.24" apply false
+    kotlin("jvm") version "2.1.0" apply false
     alias(libs.plugins.spotless)
 }
 
@@ -15,7 +17,7 @@ val javaVersion: Int = 21
 
 allprojects {
     group = "com.noxcrew.interfaces"
-    version = "1.3.2-SNAPSHOT"
+    version = "1.4.0-SNAPSHOT"
 
     tasks.withType<JavaCompile> {
         sourceCompatibility = javaVersion.toString()
@@ -34,20 +36,33 @@ subprojects {
 
     configure<SpotlessExtension> {
         kotlin {
-            ktlint("0.47.1")
+            ktlint("1.5.0")
+            suppressLintsFor {
+                step = "ktlint"
+                shortCode = "standard:package-name"
+            }
+            suppressLintsFor {
+                step = "ktlint"
+                shortCode = "standard:annotation"
+            }
+            suppressLintsFor {
+                step = "ktlint"
+                shortCode = "standard:property-naming"
+            }
         }
     }
 
     // Configure any existing RunServerTasks
     tasks.withType<RunServer> {
-        minecraftVersion("1.21")
+        minecraftVersion("1.21.4")
         jvmArgs("-Dio.papermc.paper.suppress.sout.nags=true")
     }
 
     tasks.withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = javaVersion.toString()
-            freeCompilerArgs += listOf("-Xexplicit-api=strict")
+        explicitApiMode.set(ExplicitApiMode.Strict)
+
+        compilerOptions {
+            jvmTarget.set(JvmTarget.fromTarget(javaVersion.toString()))
         }
     }
 }
