@@ -9,6 +9,7 @@ import org.bukkit.entity.Player
 
 /** A created interface that can be opened for a player to create a unique view. */
 public interface Interface<I : Interface<I, P>, P : Pane> {
+
     /** The amount of rows this interface contains. */
     public val rows: Int
 
@@ -31,7 +32,7 @@ public interface Interface<I : Interface<I, P>, P : Pane> {
     public suspend fun open(
         player: Player,
         parent: InterfaceView? =
-            InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.holder),
+            InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.holder)
     ): InterfaceView
 
     /** Returns the [gridPoint] relative to the player's inventory within this inventory. */

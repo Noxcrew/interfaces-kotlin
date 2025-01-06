@@ -6,12 +6,11 @@ import java.util.concurrent.ConcurrentLinkedDeque
 
 /** A trigger that delegates triggers to its listeners. */
 public open class DelegateTrigger : Trigger {
-    private val updateListeners =
-        Caffeine
-            .newBuilder()
-            .weakKeys()
-            .build<Any, Queue<Any.() -> Unit>>()
-            .asMap()
+
+    private val updateListeners = Caffeine.newBuilder()
+        .weakKeys()
+        .build<Any, Queue<Any.() -> Unit>>()
+        .asMap()
 
     override fun trigger() {
         updateListeners.forEach { (obj, listeners) ->
@@ -19,14 +18,10 @@ public open class DelegateTrigger : Trigger {
         }
     }
 
-    override fun <T : Any> addListener(
-        reference: T,
-        listener: T.() -> Unit,
-    ) {
+    override fun <T : Any> addListener(reference: T, listener: T.() -> Unit) {
         @Suppress("UNCHECKED_CAST")
-        updateListeners
-            .computeIfAbsent(reference) {
-                ConcurrentLinkedDeque()
-            }.add(listener as (Any.() -> Unit))
+        updateListeners.computeIfAbsent(reference) {
+            ConcurrentLinkedDeque()
+        }.add(listener as (Any.() -> Unit))
     }
 }
