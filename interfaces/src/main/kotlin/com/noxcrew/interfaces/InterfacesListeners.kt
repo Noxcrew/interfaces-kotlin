@@ -75,7 +75,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             Reason.PLUGIN,
             Reason.TELEPORT,
             Reason.CANT_USE,
-            Reason.UNLOADED,
+            Reason.UNLOADED
         )
 
         /** An incomplete set of blocks that have some interaction when clicked on. */
@@ -85,7 +85,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     MaterialTags.WOODEN_DOORS,
                     MaterialTags.WOODEN_TRAPDOORS,
                     MaterialTags.FENCE_GATES,
-                    MaterialSetTag.BUTTONS,
+                    MaterialSetTag.BUTTONS
                 )
                 // Add blocks with inventories
                 .add(
@@ -100,7 +100,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     Material.LOOM,
                     Material.CARTOGRAPHY_TABLE,
                     Material.ENCHANTING_TABLE,
-                    Material.SMITHING_TABLE,
+                    Material.SMITHING_TABLE
                 )
                 .add(Material.LEVER)
                 .add(Material.CAKE)
@@ -109,25 +109,25 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     Material.COPPER_DOOR,
                     Material.EXPOSED_COPPER_DOOR,
                     Material.WEATHERED_COPPER_DOOR,
-                    Material.OXIDIZED_COPPER_DOOR,
+                    Material.OXIDIZED_COPPER_DOOR
                 )
                 .add(
                     Material.WAXED_COPPER_DOOR,
                     Material.WAXED_EXPOSED_COPPER_DOOR,
                     Material.WAXED_WEATHERED_COPPER_DOOR,
-                    Material.WAXED_OXIDIZED_COPPER_DOOR,
+                    Material.WAXED_OXIDIZED_COPPER_DOOR
                 )
                 .add(
                     Material.COPPER_TRAPDOOR,
                     Material.EXPOSED_COPPER_TRAPDOOR,
                     Material.WEATHERED_COPPER_TRAPDOOR,
-                    Material.OXIDIZED_COPPER_TRAPDOOR,
+                    Material.OXIDIZED_COPPER_TRAPDOOR
                 )
                 .add(
                     Material.WAXED_COPPER_TRAPDOOR,
                     Material.WAXED_EXPOSED_COPPER_TRAPDOOR,
                     Material.WAXED_WEATHERED_COPPER_TRAPDOOR,
-                    Material.WAXED_OXIDIZED_COPPER_TRAPDOOR,
+                    Material.WAXED_OXIDIZED_COPPER_TRAPDOOR
                 )
                 // You can click signs to edit them
                 .add(MaterialTags.SIGNS)
@@ -138,7 +138,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val view: InterfaceView,
         val onCancel: suspend () -> Unit,
         val onComplete: suspend (Component) -> Boolean,
-        val id: UUID,
+        val id: UUID
     )
 
     /** The view currently being opened. */
@@ -313,7 +313,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 if (event.click == ClickType.NUMBER_KEY && !canFreelyMove(
                         view,
                         view.backing.relativizePlayerInventorySlot(GridPoint.at(3, event.hotbarButton)),
-                        true,
+                        true
                     )
                 ) {
                     event.isCancelled = true
@@ -324,7 +324,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 if (event.click == ClickType.SWAP_OFFHAND && !canFreelyMove(
                         view,
                         view.backing.relativizePlayerInventorySlot(GridPoint.at(4, 4)),
-                        true,
+                        true
                     )
                 ) {
                     event.isCancelled = true
@@ -347,7 +347,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                             it != null && it.isSimilar(clickedItem) && !canFreelyMove(
                                 view,
                                 requireNotNull(GridPoint.fromBukkitChestSlot(index)),
-                                false,
+                                false
                             )
                         }
                         ) ||
@@ -357,9 +357,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                             !canFreelyMove(
                                 view,
                                 view.backing.relativizePlayerInventorySlot(
-                                    requireNotNull(GridPoint.fromBukkitPlayerSlot(index)),
+                                    requireNotNull(GridPoint.fromBukkitPlayerSlot(index))
                                 ),
-                                true,
+                                true
                             )
                     }
                 ) {
@@ -392,7 +392,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                             } else {
                                 targetSlot
                             },
-                            isMovingIntoPlayerInventory,
+                            isMovingIntoPlayerInventory
                         )
                     ) {
                         event.isCancelled = true
@@ -451,7 +451,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 GridPoint.at(3, player.inventory.heldItemSlot)
             } else {
                 PlayerPane.OFF_HAND_SLOT
-            },
+            }
         )
         val click = convertAction(event.action, player.isSneaking)
 
@@ -585,7 +585,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     private fun canFreelyMove(
         view: AbstractInterfaceView<*, *, *>,
         clickedPoint: GridPoint,
-        isPlayerInventory: Boolean,
+        isPlayerInventory: Boolean
     ): Boolean {
         // If we don't allow clicking empty slots we never allow freely moving
         if (view.builder.preventClickingEmptySlots &&
@@ -608,7 +608,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         click: ClickType,
         slot: Int,
         isPlayerInventory: Boolean,
-        interact: Boolean,
+        interact: Boolean
     ): Boolean {
         // Determine the type of click, if nothing was clicked we allow it
         val raw = view.completedPane?.getRaw(clickedPoint)
@@ -653,7 +653,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             Bukkit.getScheduler().runTaskLaterAsynchronously(
                 plugin,
                 Runnable { completedClickHandler.cancel() },
-                120,
+                120
             )
         }
 
@@ -691,7 +691,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         view: InterfaceView,
         timeout: Duration,
         onCancel: suspend () -> Unit,
-        onComplete: suspend (Component) -> Boolean,
+        onComplete: suspend (Component) -> Boolean
     ) {
         // Determine if the player has this inventory open
         if (!view.isOpen()) return
@@ -721,8 +721,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 view,
                 onCancel,
                 onComplete,
-                id,
-            ),
+                id
+            )
         )
 
         // Set a timer for to automatically cancel this query to prevent players
@@ -740,7 +740,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     view.reopen()
                 }
             },
-            timeout.inWholeMilliseconds / 50,
+            timeout.inWholeMilliseconds / 50
         )
     }
 
