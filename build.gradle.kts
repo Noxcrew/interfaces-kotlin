@@ -37,6 +37,18 @@ subprojects {
     configure<SpotlessExtension> {
         kotlin {
             ktlint("1.5.0")
+            suppressLintsFor {
+                step = "ktlint"
+                shortCode = "standard:package-name"
+            }
+            suppressLintsFor {
+                step = "ktlint"
+                shortCode = "standard:annotation"
+            }
+            suppressLintsFor {
+                step = "ktlint"
+                shortCode = "standard:property-naming"
+            }
         }
     }
 
