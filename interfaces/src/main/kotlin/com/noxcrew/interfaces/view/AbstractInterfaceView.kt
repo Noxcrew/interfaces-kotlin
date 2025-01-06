@@ -109,7 +109,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     internal fun markClosed(
         coroutineScope: CoroutineScope,
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
-        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
+        changingView: Boolean = reason ==
+            InventoryCloseEvent.Reason.OPEN_NEW
     ) {
         if (!changingView) {
             // End a possible chat query with the listener (unless we're changing views)

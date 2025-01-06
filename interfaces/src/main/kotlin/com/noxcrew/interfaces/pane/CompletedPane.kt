@@ -22,8 +22,7 @@ internal class CompletedOrderedPane(
     private val ordering: List<Int>
 ) : CompletedPane() {
 
-    override fun getRaw(vector: GridPoint): CompletedElement? =
-        ordering.getOrNull(vector.x)?.let { get(it, vector.y) }
+    override fun getRaw(vector: GridPoint): CompletedElement? = ordering.getOrNull(vector.x)?.let { get(it, vector.y) }
 }
 
 /** Completes a pane for [player] by drawing each element while suspending. */

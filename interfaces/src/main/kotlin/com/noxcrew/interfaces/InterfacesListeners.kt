@@ -428,8 +428,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     }
 
     /** Returns whether [block] will trigger some interaction if clicked with [item]. */
-    private fun hasInteraction(block: Block, item: ItemStack): Boolean =
-        CLICKABLE_BLOCKS.isTagged(block)
+    private fun hasInteraction(block: Block, item: ItemStack): Boolean = CLICKABLE_BLOCKS.isTagged(block)
 
     @EventHandler(priority = EventPriority.LOW)
     public fun onInteract(event: PlayerInteractEvent) {
@@ -582,11 +581,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     }
 
     /** Returns whether [clickedPoint] in [view] can be freely moved. */
-    private fun canFreelyMove(
-        view: AbstractInterfaceView<*, *, *>,
-        clickedPoint: GridPoint,
-        isPlayerInventory: Boolean
-    ): Boolean {
+    private fun canFreelyMove(view: AbstractInterfaceView<*, *, *>, clickedPoint: GridPoint, isPlayerInventory: Boolean): Boolean {
         // If we don't allow clicking empty slots we never allow freely moving
         if (view.builder.preventClickingEmptySlots &&
             !(view.builder.allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented && isPlayerInventory)
@@ -678,13 +673,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     }
 
     /** Returns whether an inventory interaction from [player] should be throttled. */
-    private fun shouldThrottle(player: Player): Boolean =
-        if (spamPrevention.getIfPresent(player.uniqueId) == null) {
-            spamPrevention.put(player.uniqueId, Unit)
-            false
-        } else {
-            true
-        }
+    private fun shouldThrottle(player: Player): Boolean = if (spamPrevention.getIfPresent(player.uniqueId) == null) {
+        spamPrevention.put(player.uniqueId, Unit)
+        false
+    } else {
+        true
+    }
 
     /** Starts a new chat query on [view]. */
     public fun startChatQuery(
