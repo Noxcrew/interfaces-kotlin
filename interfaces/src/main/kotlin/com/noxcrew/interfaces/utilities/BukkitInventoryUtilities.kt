@@ -25,11 +25,7 @@ public fun forEachInGrid(rows: Int, columns: Int, function: (row: Int, column: I
 }
 
 /** Creates a new  */
-public fun createBukkitInventory(
-    holder: InventoryHolder,
-    rows: Int,
-    title: Component?
-): Inventory {
+public fun createBukkitInventory(holder: InventoryHolder, rows: Int, title: Component?): Inventory {
     if (title == null) {
         return Bukkit.createInventory(holder, rows * COLUMNS_IN_CHEST)
     }

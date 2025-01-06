@@ -70,6 +70,5 @@ public class PlayerInterfaceView internal constructor(
         }
     }
 
-    override fun isOpen(): Boolean =
-        InterfacesListeners.INSTANCE.getOpenPlayerInterface(player.uniqueId) == this
+    override fun isOpen(): Boolean = InterfacesListeners.INSTANCE.getOpenPlayerInterface(player.uniqueId) == this
 }
