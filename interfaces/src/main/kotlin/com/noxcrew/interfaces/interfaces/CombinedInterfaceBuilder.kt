@@ -16,6 +16,6 @@ public class CombinedInterfaceBuilder :
     override fun build(): CombinedInterface = CombinedInterface(
         rows,
         initialTitle,
-        this
+        this,
     )
 }

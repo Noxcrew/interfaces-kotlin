@@ -6,7 +6,7 @@ import com.noxcrew.interfaces.drawable.Drawable
 /** A static element that uses [drawable] and a set [clickHandler]. */
 public class StaticElement(
     private val drawable: Drawable,
-    private val clickHandler: ClickHandler = ClickHandler.EMPTY
+    private val clickHandler: ClickHandler = ClickHandler.EMPTY,
 ) : Element {
 
     override fun drawable(): Drawable = drawable

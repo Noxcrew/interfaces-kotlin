@@ -14,11 +14,11 @@ import kotlin.time.Duration
 /** Implements a player interface view. */
 public class PlayerInterfaceView internal constructor(
     player: Player,
-    backing: PlayerInterface
+    backing: PlayerInterface,
 ) : AbstractInterfaceView<PlayerInterfacesInventory, PlayerInterface, PlayerPane>(
     player,
     backing,
-    null
+    null,
 ) {
 
     override fun title(value: Component) {

@@ -13,7 +13,7 @@ public class DrawPaneEvent(
     /** Whether any slots in the regular inventory were drawn. */
     public val isRegularInventory: Boolean,
     /** Whether any slots in the player inventory were drawn. */
-    public val isPlayerInventory: Boolean
+    public val isPlayerInventory: Boolean,
 ) : PlayerEvent(player) {
 
     public companion object {

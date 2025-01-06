@@ -15,7 +15,7 @@ public class CombinedInterfacesInventory(
     holder: InventoryHolder,
     player: Player,
     title: Component?,
-    private val rows: Int
+    private val rows: Int,
 ) : CachedInterfacesInventory() {
 
     private val chestSlots = rows * COLUMNS_IN_CHEST

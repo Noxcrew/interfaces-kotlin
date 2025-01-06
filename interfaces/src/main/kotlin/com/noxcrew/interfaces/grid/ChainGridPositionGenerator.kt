@@ -5,7 +5,7 @@ public data class ChainGridPositionGenerator(
     /** The first generator. */
     private val first: GridPositionGenerator,
     /** The second generator. */
-    private val second: GridPositionGenerator
+    private val second: GridPositionGenerator,
 ) : GridPositionGenerator {
 
     public companion object {
