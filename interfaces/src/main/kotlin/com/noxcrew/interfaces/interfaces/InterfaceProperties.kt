@@ -72,10 +72,7 @@ public open class InterfaceProperties<P : Pane> {
     public var fillMenuWithAir: Boolean = false
 
     /** Adds a new close handler [closeHandler] that triggers whenever the inventory is closed for any of the given [reasons]. */
-    public fun addCloseHandler(
-        reasons: Collection<InventoryCloseEvent.Reason> = DEFAULT_REASONS,
-        closeHandler: CloseHandler
-    ) {
+    public fun addCloseHandler(reasons: Collection<InventoryCloseEvent.Reason> = DEFAULT_REASONS, closeHandler: CloseHandler) {
         reasons.forEach {
             _closeHandlers[it] = closeHandler
         }

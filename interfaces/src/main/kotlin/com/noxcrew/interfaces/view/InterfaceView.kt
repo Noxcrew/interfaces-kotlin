@@ -41,14 +41,16 @@ public interface InterfaceView {
     /** Closes this view. */
     public suspend fun close(
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
-        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
+        changingView: Boolean = reason ==
+            InventoryCloseEvent.Reason.OPEN_NEW
     ): Unit = close(CoroutineScope(coroutineContext), reason, changingView)
 
     /** Closes this view immediately, running any closing handling on [coroutineScope]. */
     public fun close(
         coroutineScope: CoroutineScope,
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
-        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
+        changingView: Boolean = reason ==
+            InventoryCloseEvent.Reason.OPEN_NEW
     )
 
     /** Returns whether this view is opened based on the player's current shown inventory. */
@@ -77,9 +79,5 @@ public interface InterfaceView {
      *
      * Will fail if this view is not open.
      */
-    public fun runChatQuery(
-        timeout: Duration = 30.seconds,
-        onCancel: suspend () -> Unit = {},
-        onComplete: suspend (Component) -> Boolean
-    )
+    public fun runChatQuery(timeout: Duration = 30.seconds, onCancel: suspend () -> Unit = {}, onComplete: suspend (Component) -> Boolean)
 }

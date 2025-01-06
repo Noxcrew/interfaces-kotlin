@@ -31,12 +31,10 @@ public data class GridPoint(val x: Int, val y: Int) {
     }
 
     /** Returns a new [GridPoint] equal to this + [other]. */
-    public operator fun plus(other: GridPoint): GridPoint =
-        GridPoint(x + other.x, y + other.y)
+    public operator fun plus(other: GridPoint): GridPoint = GridPoint(x + other.x, y + other.y)
 
     /** Returns a new [GridPoint] equal to this - [other]. */
-    public operator fun minus(other: GridPoint): GridPoint =
-        GridPoint(x - other.x, y - other.y)
+    public operator fun minus(other: GridPoint): GridPoint = GridPoint(x - other.x, y - other.y)
 
     /** Returns a sequence of grid points between this and [other]. */
     public operator fun rangeTo(other: GridPoint): Sequence<GridPoint> = sequence {
