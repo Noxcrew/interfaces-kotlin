@@ -17,14 +17,16 @@ public abstract class PagedTransformation<P : Pane>(
     private val forward: PaginationButton,
     extraTriggers: Array<Trigger> = emptyArray(),
 ) : ReactiveTransform<P> {
-
     /** The current page of this transform, bound between 0 and the integer limit. */
     protected val boundPage: BoundInteger = BoundInteger(0, 0, Integer.MAX_VALUE)
 
     /** The current page of the transform. */
     protected var page: Int by boundPage
 
-    override suspend fun invoke(pane: P, view: InterfaceView) {
+    override suspend fun invoke(
+        pane: P,
+        view: InterfaceView,
+    ) {
         if (boundPage.hasPreceeding()) {
             applyButton(pane, back)
         }
@@ -35,13 +37,17 @@ public abstract class PagedTransformation<P : Pane>(
     }
 
     /** Places the given [button] in [pane]. */
-    protected open fun applyButton(pane: Pane, button: PaginationButton) {
+    protected open fun applyButton(
+        pane: Pane,
+        button: PaginationButton,
+    ) {
         val (point, drawable, increments) = button
 
-        pane[point] = StaticElement(drawable) { (player, _, click) ->
-            increments[click]?.let { increment -> page += increment }
-            button.clickHandler(player)
-        }
+        pane[point] =
+            StaticElement(drawable) { (player, _, click) ->
+                increments[click]?.let { increment -> page += increment }
+                button.clickHandler(player)
+            }
     }
 
     override val triggers: Array<Trigger> = arrayOf<Trigger>(boundPage).plus(extraTriggers)

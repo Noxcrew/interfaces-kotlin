@@ -36,7 +36,7 @@ subprojects {
 
     configure<SpotlessExtension> {
         kotlin {
-            ktlint("0.48.2")
+            ktlint("1.5.0")
         }
     }
 

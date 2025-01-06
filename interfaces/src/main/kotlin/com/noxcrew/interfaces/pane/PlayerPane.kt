@@ -5,7 +5,6 @@ import com.noxcrew.interfaces.grid.GridPoint
 
 /** An ordered pane that wraps the player inventory. */
 public class PlayerPane : OrderedPane(PANE_ORDERING) {
-
     internal companion object {
         /** The base ordering of the player inventory to go from logical rows to Bukkit rows. */
         internal val PANE_ORDERING = listOf(1, 2, 3, 0, 4)
@@ -30,7 +29,10 @@ public class PlayerPane : OrderedPane(PANE_ORDERING) {
         public operator fun get(slot: Int): Element? = get(3, slot)
 
         /** Sets the item in the hotbar at the [slot]-th slot to [value]. */
-        public operator fun set(slot: Int, value: Element): Unit = set(3, slot, value)
+        public operator fun set(
+            slot: Int,
+            value: Element,
+        ): Unit = set(3, slot, value)
     }
 
     public inner class Armor {

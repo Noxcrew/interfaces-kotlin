@@ -16,16 +16,19 @@ public class PlayerInterfaceView internal constructor(
     player: Player,
     backing: PlayerInterface,
 ) : AbstractInterfaceView<PlayerInterfacesInventory, PlayerInterface, PlayerPane>(
-    player,
-    backing,
-    null,
-) {
-
+        player,
+        backing,
+        null,
+    ) {
     override fun title(value: Component) {
         error("PlayerInventoryView's cannot have a title")
     }
 
-    override fun runChatQuery(timeout: Duration, onCancel: suspend () -> Unit, onComplete: suspend (Component) -> Boolean) {
+    override fun runChatQuery(
+        timeout: Duration,
+        onCancel: suspend () -> Unit,
+        onComplete: suspend (Component) -> Boolean,
+    ) {
         error("PlayerInventoryView does not support chat queries")
     }
 
@@ -60,7 +63,11 @@ public class PlayerInterfaceView internal constructor(
         onOpen()
     }
 
-    override fun close(coroutineScope: CoroutineScope, reason: InventoryCloseEvent.Reason, changingView: Boolean) {
+    override fun close(
+        coroutineScope: CoroutineScope,
+        reason: InventoryCloseEvent.Reason,
+        changingView: Boolean,
+    ) {
         markClosed(coroutineScope, reason, changingView)
 
         // Ensure we update the interface state in the main thread!
@@ -70,6 +77,5 @@ public class PlayerInterfaceView internal constructor(
         }
     }
 
-    override fun isOpen(): Boolean =
-        InterfacesListeners.INSTANCE.getOpenPlayerInterface(player.uniqueId) == this
+    override fun isOpen(): Boolean = InterfacesListeners.INSTANCE.getOpenPlayerInterface(player.uniqueId) == this
 }
