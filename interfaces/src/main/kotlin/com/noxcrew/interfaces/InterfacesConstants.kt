@@ -14,50 +14,50 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /** Holds the shared scope used for any interfaces coroutines. */
 public object InterfacesConstants {
+
     private val EXCEPTION_LOGGER = LoggerFactory.getLogger("InterfacesExceptionHandler")
 
     /** The [CoroutineScope] for any suspending operations performed by interfaces. */
-    public val SCOPE: CoroutineScope =
-        CoroutineScope(
-            CoroutineName("interfaces") +
-                SupervisorJob() +
-                CoroutineExceptionHandler { context, exception ->
-                    val details = context[InterfacesCoroutineDetails]
+    public val SCOPE: CoroutineScope = CoroutineScope(
+        CoroutineName("interfaces") +
+            SupervisorJob() +
+            CoroutineExceptionHandler { context, exception ->
+                val details = context[InterfacesCoroutineDetails]
 
-                    if (details == null) {
-                        EXCEPTION_LOGGER.error("An unknown error occurred in a coroutine!", exception)
-                    } else {
-                        val (player, reason) = details
-                        EXCEPTION_LOGGER.error(
-                            """
-                            An unknown error occurred in a coroutine!
-                             - Player: ${player ?: "N/A"} (${player?.let(Bukkit::getPlayer)?.name ?: "offline"})
-                             - Launch reason: $reason
-                            """.trimIndent(),
-                            exception,
-                        )
+                if (details == null) {
+                    EXCEPTION_LOGGER.error("An unknown error occurred in a coroutine!", exception)
+                } else {
+                    val (player, reason) = details
+                    EXCEPTION_LOGGER.error(
+                        """
+                        An unknown error occurred in a coroutine!
+                         - Player: ${player ?: "N/A"} (${player?.let(Bukkit::getPlayer)?.name ?: "offline"})
+                         - Launch reason: $reason
+                        """.trimIndent(),
+                        exception
+                    )
+                }
+            } +
+            run {
+                val threadNumber = AtomicInteger()
+                val factory = { runnable: Runnable ->
+                    Thread("interfaces-${threadNumber.getAndIncrement()}").apply {
+                        isDaemon = true
                     }
-                } +
-                run {
-                    val threadNumber = AtomicInteger()
-                    val factory = { runnable: Runnable ->
-                        Thread("interfaces-${threadNumber.getAndIncrement()}").apply {
-                            isDaemon = true
+                }
+
+                System.getProperty("com.noxcrew.interfaces.fixedPoolSize")
+                    ?.toIntOrNull()
+                    ?.coerceAtLeast(2)
+                    ?.let { size ->
+                        if (System.getProperty("com.noxcrew.interfaces.useScheduledPool").toBoolean()) {
+                            Executors.newScheduledThreadPool(size, factory)
+                        } else {
+                            Executors.newFixedThreadPool(size, factory)
                         }
                     }
-
-                    System
-                        .getProperty("com.noxcrew.interfaces.fixedPoolSize")
-                        ?.toIntOrNull()
-                        ?.coerceAtLeast(2)
-                        ?.let { size ->
-                            if (System.getProperty("com.noxcrew.interfaces.useScheduledPool").toBoolean()) {
-                                Executors.newScheduledThreadPool(size, factory)
-                            } else {
-                                Executors.newFixedThreadPool(size, factory)
-                            }
-                        }?.asCoroutineDispatcher()
-                        ?: Dispatchers.Default
-                },
-        )
+                    ?.asCoroutineDispatcher()
+                    ?: Dispatchers.Default
+            }
+    )
 }

@@ -9,6 +9,7 @@ import com.noxcrew.interfaces.utilities.IncrementingInteger
 
 /** Assists in creating a new interface. */
 public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : InterfaceProperties<P>() {
+
     private val transformCounter by IncrementingInteger()
     private val _transforms: MutableCollection<AppliedTransform<P>> = mutableListOf()
 
@@ -20,10 +21,7 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
     public abstract fun build(): I
 
     /** Adds a new transform to the interface that updates whenever [triggers] change. */
-    public fun withTransform(
-        vararg triggers: Trigger,
-        transform: Transform<P>,
-    ) {
+    public fun withTransform(vararg triggers: Trigger, transform: Transform<P>) {
         _transforms += AppliedTransform(transformCounter, triggers.toSet(), transform)
     }
 

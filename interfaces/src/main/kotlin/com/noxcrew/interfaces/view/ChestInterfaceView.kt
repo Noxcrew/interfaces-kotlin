@@ -13,25 +13,25 @@ import org.bukkit.inventory.InventoryHolder
 public class ChestInterfaceView internal constructor(
     player: Player,
     backing: ChestInterface,
-    parent: InterfaceView?,
+    parent: InterfaceView?
 ) : AbstractInterfaceView<ChestInterfacesInventory, ChestInterface, Pane>(
-        player,
-        backing,
-        parent,
-    ),
+    player,
+    backing,
+    parent
+),
     InventoryHolder {
+
     private val titleState = TitleState(backing.initialTitle)
 
     override fun title(value: Component) {
         titleState.current = value
     }
 
-    override fun createInventory(): ChestInterfacesInventory =
-        ChestInterfacesInventory(
-            this,
-            titleState.current,
-            backing.rows,
-        )
+    override fun createInventory(): ChestInterfacesInventory = ChestInterfacesInventory(
+        this,
+        titleState.current,
+        backing.rows
+    )
 
     override fun openInventory() {
         player.openInventory(this.inventory)

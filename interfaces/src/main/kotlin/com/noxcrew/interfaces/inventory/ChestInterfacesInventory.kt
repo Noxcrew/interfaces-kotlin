@@ -11,30 +11,21 @@ import org.bukkit.inventory.ItemStack
 public class ChestInterfacesInventory(
     holder: InventoryHolder,
     title: Component?,
-    rows: Int,
+    rows: Int
 ) : CachedInterfacesInventory() {
+
     /** The [chestInventory] being used to place items in. */
     public val chestInventory: Inventory = createBukkitInventory(holder, rows, title)
 
-    override fun get(
-        row: Int,
-        column: Int,
-    ): ItemStack? {
+    override fun get(row: Int, column: Int): ItemStack? {
         val index = gridPointToBukkitIndex(row, column)
         return chestInventory.getItem(index)
     }
 
-    override fun setInternal(
-        row: Int,
-        column: Int,
-        item: ItemStack?,
-    ) {
+    override fun setInternal(row: Int, column: Int, item: ItemStack?) {
         val index = gridPointToBukkitIndex(row, column)
         chestInventory.setItem(index, item)
     }
 
-    override fun isPlayerInventory(
-        row: Int,
-        column: Int,
-    ): Boolean = false
+    override fun isPlayerInventory(row: Int, column: Int): Boolean = false
 }

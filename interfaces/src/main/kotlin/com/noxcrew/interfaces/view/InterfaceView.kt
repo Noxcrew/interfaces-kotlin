@@ -13,6 +13,7 @@ import kotlin.time.Duration.Companion.seconds
  * but this view was created for a specific viewer.
  */
 public interface InterfaceView {
+
     /** The player this view is for. */
     public val player: Player
 
@@ -40,14 +41,14 @@ public interface InterfaceView {
     /** Closes this view. */
     public suspend fun close(
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
-        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW,
+        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
     ): Unit = close(CoroutineScope(coroutineContext), reason, changingView)
 
     /** Closes this view immediately, running any closing handling on [coroutineScope]. */
     public fun close(
         coroutineScope: CoroutineScope,
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
-        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW,
+        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
     )
 
     /** Returns whether this view is opened based on the player's current shown inventory. */
@@ -79,6 +80,6 @@ public interface InterfaceView {
     public fun runChatQuery(
         timeout: Duration = 30.seconds,
         onCancel: suspend () -> Unit = {},
-        onComplete: suspend (Component) -> Boolean,
+        onComplete: suspend (Component) -> Boolean
     )
 }

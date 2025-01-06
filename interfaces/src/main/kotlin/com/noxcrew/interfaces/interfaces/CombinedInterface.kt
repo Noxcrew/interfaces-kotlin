@@ -10,9 +10,9 @@ import org.bukkit.entity.Player
 public class CombinedInterface internal constructor(
     override val rows: Int,
     override val initialTitle: Component?,
-    override val builder: CombinedInterfaceBuilder,
-) : Interface<CombinedInterface, CombinedPane>,
-    TitledInterface {
+    override val builder: CombinedInterfaceBuilder
+) : Interface<CombinedInterface, CombinedPane>, TitledInterface {
+
     public companion object {
         /** The maximum number of rows for a combined interface. */
         public const val MAX_NUMBER_OF_ROWS: Int = 9
@@ -24,10 +24,7 @@ public class CombinedInterface internal constructor(
 
     override fun createPane(): CombinedPane = CombinedPane(rows)
 
-    override suspend fun open(
-        player: Player,
-        parent: InterfaceView?,
-    ): CombinedInterfaceView {
+    override suspend fun open(player: Player, parent: InterfaceView?): CombinedInterfaceView {
         val view = CombinedInterfaceView(player, this, parent)
         view.open()
         return view

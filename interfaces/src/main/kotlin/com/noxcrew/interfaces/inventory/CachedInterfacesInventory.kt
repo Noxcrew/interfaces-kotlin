@@ -4,11 +4,8 @@ import org.bukkit.inventory.ItemStack
 
 /** An [InterfacesInventory] where changes are only applied if the new item stack is different. */
 public abstract class CachedInterfacesInventory : InterfacesInventory {
-    final override fun set(
-        row: Int,
-        column: Int,
-        item: ItemStack?,
-    ): Boolean {
+
+    final override fun set(row: Int, column: Int, item: ItemStack?): Boolean {
         val current = get(row, column)
 
         if (current == item) {
@@ -20,9 +17,5 @@ public abstract class CachedInterfacesInventory : InterfacesInventory {
     }
 
     /** Sets the item at ([row], [column]) to [item]. */
-    protected abstract fun setInternal(
-        row: Int,
-        column: Int,
-        item: ItemStack?,
-    )
+    protected abstract fun setInternal(row: Int, column: Int, item: ItemStack?)
 }
