@@ -14,7 +14,7 @@ public class TabbedExampleInterface : RegistrableInterface {
 
     private companion object {
         private val ELEMENT = StaticElement(
-            drawable(Material.NETHER_STAR)
+            drawable(Material.NETHER_STAR),
         )
     }
 

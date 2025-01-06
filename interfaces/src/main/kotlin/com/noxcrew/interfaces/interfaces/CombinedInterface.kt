@@ -10,7 +10,7 @@ import org.bukkit.entity.Player
 public class CombinedInterface internal constructor(
     override val rows: Int,
     override val initialTitle: Component?,
-    override val builder: CombinedInterfaceBuilder
+    override val builder: CombinedInterfaceBuilder,
 ) : Interface<CombinedInterface, CombinedPane>, TitledInterface {
 
     public companion object {

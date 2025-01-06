@@ -38,7 +38,6 @@ subprojects {
         kotlin {
             ktlint("0.48.2")
         }
-        ratchetFrom("origin/main")
     }
 
     // Configure any existing RunServerTasks

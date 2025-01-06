@@ -42,7 +42,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     override val player: Player,
     /** The interface backing this view. */
     public val backing: T,
-    private val parent: InterfaceView?
+    private val parent: InterfaceView?,
 ) : InterfaceView {
 
     public companion object {
@@ -109,7 +109,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     internal fun markClosed(
         coroutineScope: CoroutineScope,
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
-        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW
+        changingView: Boolean = reason == InventoryCloseEvent.Reason.OPEN_NEW,
     ) {
         if (!changingView) {
             // End a possible chat query with the listener (unless we're changing views)
@@ -283,7 +283,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 // Start the job if it's not running currently!
                 if (transformingJob == null || transformingJob?.isCompleted == true) {
                     transformingJob = SCOPE.launch(
-                        InterfacesCoroutineDetails(player.uniqueId, "running and applying a transform")
+                        InterfacesCoroutineDetails(player.uniqueId, "running and applying a transform"),
                     ) {
                         // Go through all pending transforms one at a time until
                         // we're fully done with all of them. Other threads may
@@ -346,7 +346,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             currentInventory.set(
                 row,
                 column,
-                element.itemStack.apply { this?.let { builder.itemPostProcessor?.invoke(it) } }
+                element.itemStack.apply { this?.let { builder.itemPostProcessor?.invoke(it) } },
             )
             leftovers -= row to column
             madeChanges = true
@@ -363,7 +363,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 currentInventory.set(
                     row,
                     column,
-                    item
+                    item,
                 )
                 leftovers -= row to column
                 madeChanges = true

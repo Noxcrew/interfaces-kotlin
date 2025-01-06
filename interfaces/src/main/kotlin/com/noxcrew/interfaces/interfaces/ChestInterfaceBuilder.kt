@@ -16,6 +16,6 @@ public class ChestInterfaceBuilder :
     override fun build(): ChestInterface = ChestInterface(
         rows,
         initialTitle,
-        this
+        this,
     )
 }

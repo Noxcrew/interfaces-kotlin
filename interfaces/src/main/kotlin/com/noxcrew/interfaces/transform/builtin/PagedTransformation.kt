@@ -15,7 +15,7 @@ import org.bukkit.event.inventory.ClickType
 public abstract class PagedTransformation<P : Pane>(
     private val back: PaginationButton,
     private val forward: PaginationButton,
-    extraTriggers: Array<Trigger> = emptyArray()
+    extraTriggers: Array<Trigger> = emptyArray(),
 ) : ReactiveTransform<P> {
 
     /** The current page of this transform, bound between 0 and the integer limit. */
@@ -56,5 +56,5 @@ public data class PaginationButton(
     /** The increments to apply to the current page number based on the incoming click type. */
     public val increments: Map<ClickType, Int>,
     /** An optional additional click handler to run when this button is used. */
-    public val clickHandler: (Player) -> Unit = {}
+    public val clickHandler: (Player) -> Unit = {},
 )
