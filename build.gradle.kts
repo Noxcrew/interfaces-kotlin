@@ -17,7 +17,7 @@ val javaVersion: Int = 21
 
 allprojects {
     group = "com.noxcrew.interfaces"
-    version = "1.3.3-SNAPSHOT"
+    version = "1.4.0-SNAPSHOT"
 
     tasks.withType<JavaCompile> {
         sourceCompatibility = javaVersion.toString()
@@ -36,13 +36,14 @@ subprojects {
 
     configure<SpotlessExtension> {
         kotlin {
-            ktlint("0.47.1")
+            ktlint("0.48.2")
         }
+        ratchetFrom("origin/main")
     }
 
     // Configure any existing RunServerTasks
     tasks.withType<RunServer> {
-        minecraftVersion("1.21")
+        minecraftVersion("1.21.4")
         jvmArgs("-Dio.papermc.paper.suppress.sout.nags=true")
     }
 

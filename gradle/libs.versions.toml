@@ -1,23 +1,23 @@
 [versions]
 # Plugins
-shadow = "8.1.7"
-run-paper = "2.3.0"
-spotless = "6.18.0"
+shadow = "9.0.0-beta4"
+run-paper = "2.3.1"
+spotless = "7.0.0.BETA4"
 
 # Tooling
 kotlin-coroutines = "1.10.1"
-guava = "32.1.2-jre"
-slf4j = "2.0.9"
+guava = "33.4.0-jre"
+slf4j = "2.0.16"
 caffeine = "3.1.8"
-cloud = "2.0.0-rc.2"
-cloud-minecraft = "2.0.0-beta.8"
+cloud = "2.0.0"
+cloud-minecraft = "2.0.0-beta.10"
 
 # Misc
-adventure-core = "4.17.0"
-paper-api = "1.21-R0.1-SNAPSHOT"
+adventure-core = "4.18.0"
+paper-api = "1.21.4-R0.1-SNAPSHOT"
 
 [plugins]
-shadow = { id = "io.github.goooler.shadow", version.ref = "shadow" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 
