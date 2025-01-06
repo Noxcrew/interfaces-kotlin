@@ -17,14 +17,16 @@ public class CombinedInterfacesInventory(
     title: Component?,
     private val rows: Int,
 ) : CachedInterfacesInventory() {
-
     private val chestSlots = rows * COLUMNS_IN_CHEST
     private val playerInventory = player.inventory
 
     /** The [chestInventory] being used to place items in. */
     public val chestInventory: Inventory = createBukkitInventory(holder, rows, title)
 
-    override fun get(row: Int, column: Int): ItemStack? {
+    override fun get(
+        row: Int,
+        column: Int,
+    ): ItemStack? {
         val bukkitIndex = gridPointToBukkitIndex(row, column)
 
         if (row >= rows) {
@@ -35,7 +37,11 @@ public class CombinedInterfacesInventory(
         return chestInventory.getItem(bukkitIndex)
     }
 
-    override fun setInternal(row: Int, column: Int, item: ItemStack?) {
+    override fun setInternal(
+        row: Int,
+        column: Int,
+        item: ItemStack?,
+    ) {
         val bukkitIndex = gridPointToBukkitIndex(row, column)
 
         if (row >= rows) {
@@ -47,5 +53,8 @@ public class CombinedInterfacesInventory(
         chestInventory.setItem(bukkitIndex, item)
     }
 
-    override fun isPlayerInventory(row: Int, column: Int): Boolean = row >= rows
+    override fun isPlayerInventory(
+        row: Int,
+        column: Int,
+    ): Boolean = row >= rows
 }

@@ -8,7 +8,6 @@ import org.bukkit.inventory.ItemStack
 
 /** Stores all shared properties of an interface. */
 public open class InterfaceProperties<P : Pane> {
-
     private companion object {
         /** All default reasons used for a new close handler. */
         private val DEFAULT_REASONS = InventoryCloseEvent.Reason.entries.minus(InventoryCloseEvent.Reason.PLUGIN)
