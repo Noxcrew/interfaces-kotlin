@@ -15,7 +15,7 @@ public class CatalogueExampleInterface : RegistrableInterface {
 
         withTransform { pane, _ ->
             pane[3, 3] = StaticElement(
-                Drawable.drawable(Material.STICK)
+                Drawable.drawable(Material.STICK),
             ) { (player) ->
                 runBlocking {
                     ChangingTitleExampleInterface().create().open(player)

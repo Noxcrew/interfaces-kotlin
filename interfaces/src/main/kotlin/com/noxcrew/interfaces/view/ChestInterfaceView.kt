@@ -13,11 +13,11 @@ import org.bukkit.inventory.InventoryHolder
 public class ChestInterfaceView internal constructor(
     player: Player,
     backing: ChestInterface,
-    parent: InterfaceView?
+    parent: InterfaceView?,
 ) : AbstractInterfaceView<ChestInterfacesInventory, ChestInterface, Pane>(
     player,
     backing,
-    parent
+    parent,
 ),
     InventoryHolder {
 
@@ -30,7 +30,7 @@ public class ChestInterfaceView internal constructor(
     override fun createInventory(): ChestInterfacesInventory = ChestInterfacesInventory(
         this,
         titleState.current,
-        backing.rows
+        backing.rows,
     )
 
     override fun openInventory() {

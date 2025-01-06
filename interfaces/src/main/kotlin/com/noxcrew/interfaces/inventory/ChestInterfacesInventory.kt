@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack
 public class ChestInterfacesInventory(
     holder: InventoryHolder,
     title: Component?,
-    rows: Int
+    rows: Int,
 ) : CachedInterfacesInventory() {
 
     /** The [chestInventory] being used to place items in. */

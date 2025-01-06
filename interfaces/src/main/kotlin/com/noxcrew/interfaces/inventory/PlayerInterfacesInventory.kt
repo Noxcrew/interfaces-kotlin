@@ -7,7 +7,7 @@ import org.bukkit.inventory.PlayerInventory
 
 /** A wrapper around a [PlayerInventory]. */
 public class PlayerInterfacesInventory(
-    player: Player
+    player: Player,
 ) : CachedInterfacesInventory() {
 
     private val playerInventory = player.inventory

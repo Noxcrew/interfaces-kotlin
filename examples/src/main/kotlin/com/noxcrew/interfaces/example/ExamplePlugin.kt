@@ -30,7 +30,7 @@ public class ExamplePlugin : JavaPlugin(), Listener {
             ChangingTitleExampleInterface(),
             CatalogueExampleInterface(),
             MovingExampleInterface(),
-            TabbedExampleInterface()
+            TabbedExampleInterface(),
         )
     }
 
@@ -96,7 +96,7 @@ public class ExamplePlugin : JavaPlugin(), Listener {
                 counter++
             },
             0,
-            1
+            1,
         )
     }
 
@@ -108,7 +108,7 @@ public class ExamplePlugin : JavaPlugin(), Listener {
                 runBlocking {
                     playerInterface().open(e.player)
                 }
-            }
+            },
         )
     }
 

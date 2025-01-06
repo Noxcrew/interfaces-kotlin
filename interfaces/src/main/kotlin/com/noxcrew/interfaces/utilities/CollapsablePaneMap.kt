@@ -12,14 +12,14 @@ internal class CollapsablePaneMap private constructor(
     private val basePane: Pane,
     // privately pass in a map here so that we can use
     // super methods when overriding methods in the delegate.
-    private val internal: MutableMap<Int, CompletedPane>
+    private val internal: MutableMap<Int, CompletedPane>,
 ) : MutableMap<Int, CompletedPane> by internal {
 
     internal companion object {
         /** Creates a new collapsable map with [basePane]. */
         internal fun create(basePane: Pane) = CollapsablePaneMap(
             basePane,
-            sortedMapOf(Comparator.reverseOrder())
+            sortedMapOf(Comparator.reverseOrder()),
         )
     }
 

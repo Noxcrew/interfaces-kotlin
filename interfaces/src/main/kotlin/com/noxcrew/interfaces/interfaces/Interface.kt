@@ -32,7 +32,7 @@ public interface Interface<I : Interface<I, P>, P : Pane> {
     public suspend fun open(
         player: Player,
         parent: InterfaceView? =
-            InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.holder)
+            InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.holder),
     ): InterfaceView
 
     /** Returns the [gridPoint] relative to the player's inventory within this inventory. */

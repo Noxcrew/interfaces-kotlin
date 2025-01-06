@@ -34,7 +34,7 @@ public object InterfacesConstants {
                          - Player: ${player ?: "N/A"} (${player?.let(Bukkit::getPlayer)?.name ?: "offline"})
                          - Launch reason: $reason
                         """.trimIndent(),
-                        exception
+                        exception,
                     )
                 }
             } +
@@ -58,6 +58,6 @@ public object InterfacesConstants {
                     }
                     ?.asCoroutineDispatcher()
                     ?: Dispatchers.Default
-            }
+            },
     )
 }

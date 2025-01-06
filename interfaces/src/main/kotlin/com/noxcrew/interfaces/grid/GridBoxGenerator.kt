@@ -6,7 +6,7 @@ package com.noxcrew.interfaces.grid
  */
 public data class GridBoxGenerator(
     private val min: GridPoint,
-    private val max: GridPoint
+    private val max: GridPoint,
 ) : GridPositionGenerator {
 
     public constructor(x1: Int, y1: Int, x2: Int, y2: Int) : this(GridPoint(x1, y1), GridPoint(x2, y2))
