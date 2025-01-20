@@ -85,7 +85,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         get() = shouldBeOpened.get()
 
     override val isTreeOpened: Boolean
-        get() = shouldStillBeOpened || children.keys.any { it.shouldStillBeOpened }
+        get() = shouldStillBeOpened || children.keys.any { it.isTreeOpened }
 
     /** The pane of this view. */
     public val completedPane: CompletedPane?
