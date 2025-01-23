@@ -22,11 +22,13 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
 
     /** Adds a new transform to the interface that updates whenever [triggers] change. */
     public fun withTransform(vararg triggers: Trigger, transform: Transform<P>) {
-        _transforms += AppliedTransform(transformCounter, triggers.toSet(), transform)
+        // Passing ::invoke is a workaround for a K2 issue where suspending + generic functional interfaces
+        // cannot be passed as a function argument properly without triggering a runtime exception.
+        _transforms += AppliedTransform(transformCounter, triggers.toSet(), transform::invoke)
     }
 
     /** Adds a new reactive transform to the interface. */
     public fun addTransform(reactiveTransform: ReactiveTransform<P>) {
-        _transforms += AppliedTransform(transformCounter, reactiveTransform.triggers.toSet(), reactiveTransform)
+        _transforms += AppliedTransform(transformCounter, reactiveTransform.triggers.toSet(), reactiveTransform::invoke)
     }
 }
