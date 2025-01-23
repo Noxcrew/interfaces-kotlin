@@ -310,7 +310,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             if (view.backing.includesPlayerInventory) {
                 // If you use a number key we check if the item you're swapping with is
                 // protected.
-                if (event.click == ClickType.NUMBER_KEY && !canFreelyMove(
+                if (event.click == ClickType.NUMBER_KEY &&
+                    !canFreelyMove(
                         view,
                         view.backing.relativizePlayerInventorySlot(GridPoint.at(3, event.hotbarButton)),
                         true
@@ -321,7 +322,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 }
 
                 // If you try to swap with the off-hand we have to specifically check for that.
-                if (event.click == ClickType.SWAP_OFFHAND && !canFreelyMove(
+                if (event.click == ClickType.SWAP_OFFHAND &&
+                    !canFreelyMove(
                         view,
                         view.backing.relativizePlayerInventorySlot(GridPoint.at(4, 4)),
                         true
@@ -342,17 +344,21 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 // Don't check top inventory if we're in the player inventory!
                 if (
                     (
-                        !isInPlayerInventory && topInventory.withIndex().any { (index, it) ->
-                            // Check if any item is being collected that cannot be moved!
-                            it != null && it.isSimilar(clickedItem) && !canFreelyMove(
-                                view,
-                                requireNotNull(GridPoint.fromBukkitChestSlot(index)),
-                                false
-                            )
-                        }
+                        !isInPlayerInventory &&
+                            topInventory.withIndex().any { (index, it) ->
+                                // Check if any item is being collected that cannot be moved!
+                                it != null &&
+                                    it.isSimilar(clickedItem) &&
+                                    !canFreelyMove(
+                                        view,
+                                        requireNotNull(GridPoint.fromBukkitChestSlot(index)),
+                                        false
+                                    )
+                            }
                         ) ||
                     bottomInventory.withIndex().any { (index, it) ->
-                        it != null && it.isSimilar(clickedItem) &&
+                        it != null &&
+                            it.isSimilar(clickedItem) &&
                             // These slots are always in the player inventory and always need to be relativized!
                             !canFreelyMove(
                                 view,
