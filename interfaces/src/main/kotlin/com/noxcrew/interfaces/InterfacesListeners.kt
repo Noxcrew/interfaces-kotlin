@@ -236,7 +236,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     public fun saveInventoryContentsIfOpened(player: HumanEntity) {
         // Saves any persistent items stored in the main inventory whenever we are currently
         // showing a combined or player inventory before we draw the new one over-top
-        val currentlyShown = convertHolderToInterfaceView(player.openInventory.topInventory.holder)
+        val currentlyShown = convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false))
             ?: getBackgroundPlayerInterface(player.uniqueId)
         if (currentlyShown != null && currentlyShown !is ChestInterfaceView) {
             currentlyShown.savePersistentItems(player.inventory)
@@ -248,7 +248,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Save previous inventory contents before we open the new one
         saveInventoryContentsIfOpened(event.player)
 
-        val holder = event.inventory.holder
+        val holder = event.inventory.getHolder(false)
         val view = convertHolderToInterfaceView(holder) ?: return
 
         // Move the current open inventory to the background to indicate
@@ -265,7 +265,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler
     public fun onClose(event: InventoryCloseEvent) {
-        val holder = event.inventory.holder
+        val holder = event.inventory.getHolder(false)
         val view = holder as? AbstractInterfaceView<*, *, *> ?: return
         val reason = event.reason
 
@@ -294,10 +294,10 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public fun onClick(event: InventoryClickEvent) {
-        val holder = event.inventory.holder
+        val holder = event.inventory.getHolder(false)
         val view = convertHolderToInterfaceView(holder) ?: return
         val clickedPoint = clickedPoint(view, event) ?: return
-        val isPlayerInventory = (event.clickedInventory ?: event.inventory).holder is Player
+        val isPlayerInventory = (event.clickedInventory ?: event.inventory).getHolder(false) is Player
 
         // Run base click handling
         if (handleClick(view, clickedPoint, event.click, event.hotbarButton, isPlayerInventory, false)) {
@@ -375,7 +375,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
                 // Ideally we predict which slot got shift clicked into! We start by finding any
                 // stack that this item can be added onto, after that we find the first empty slot.
-                val isMovingIntoPlayerInventory = otherInventory.holder is Player
+                val isMovingIntoPlayerInventory = otherInventory.getHolder(false) is Player
                 val firstEmptySlot = otherInventory.indexOfFirst {
                     it != null && !it.isEmpty && it.isSimilar(event.currentItem ?: ItemStack.empty())
                 }.takeIf { it != -1 } ?: otherInventory.indexOfFirst { it == null || it.isEmpty }
@@ -409,7 +409,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public fun onDrag(event: InventoryDragEvent) {
-        val holder = event.inventory.holder
+        val holder = event.inventory.getHolder(false)
         val view = convertHolderToInterfaceView(holder) ?: return
         for (slot in event.rawSlots) {
             val clickedPoint = GridPoint.fromBukkitChestSlot(slot) ?: continue
@@ -506,7 +506,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public fun onDeath(event: PlayerDeathEvent) {
         // Determine the holder of the top inventory being shown (can be open player inventory)
-        val view = convertHolderToInterfaceView(event.player.openInventory.topInventory.holder) ?: return
+        val view = convertHolderToInterfaceView(event.player.openInventory.topInventory.getHolder(false)) ?: return
 
         // Ignore inventories that do not use the player inventory!
         if (!view.backing.includesPlayerInventory) return
@@ -559,7 +559,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     /** Extracts the clicked point from an inventory click event. */
     private fun clickedPoint(view: AbstractInterfaceView<*, *, *>, event: InventoryClickEvent): GridPoint? {
-        if (event.inventory.holder is Player) {
+        if (event.inventory.getHolder(false) is Player) {
             return GridPoint.fromBukkitPlayerSlot(event.slot)?.let { view.backing.relativizePlayerInventorySlot(it) }
         }
         return GridPoint.fromBukkitChestSlot(event.rawSlot)

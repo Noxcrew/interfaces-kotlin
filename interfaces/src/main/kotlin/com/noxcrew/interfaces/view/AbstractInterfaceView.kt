@@ -443,7 +443,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             if (!shouldBeOpened.get()) return@runSync
 
             // Save persistent items if the view is currently opened
-            if (player.openInventory.topInventory.holder == this) {
+            if (player.openInventory.topInventory.getHolder(false) == this) {
                 savePersistentItems(player.openInventory.topInventory)
             }
 

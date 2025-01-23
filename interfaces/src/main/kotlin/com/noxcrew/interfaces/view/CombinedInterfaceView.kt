@@ -44,5 +44,5 @@ public class CombinedInterfaceView internal constructor(
 
     override fun getInventory(): Inventory = currentInventory.chestInventory
 
-    override fun isOpen(): Boolean = player.openInventory.topInventory.holder == this
+    override fun isOpen(): Boolean = player.openInventory.topInventory.getHolder(false) == this
 }
