@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.run.paper) apply false
 
     // Kotlin plugin prefers to be applied to parent when it's used in multiple sub-modules.
-    kotlin("jvm") version "2.1.0" apply false
+    kotlin("jvm") version "2.1.10" apply false
     alias(libs.plugins.spotless)
 }
 
