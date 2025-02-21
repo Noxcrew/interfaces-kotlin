@@ -1,7 +1,7 @@
 # `interfaces-kotlin`
 
-![](https://img.shields.io/github/license/noxcrew/interfaces-kotlin.svg)
-![](https://img.shields.io/github/actions/workflow/status/noxcrew/interfaces-kotlin/build.yml?logo=github)
+![](https://img.shields.io/github/license/noxcrew/interfaces-kotlin.svg?style=flat-square)
+![](https://img.shields.io/github/actions/workflow/status/noxcrew/interfaces-kotlin/build.yml?logo=github&style=flat-square)
 ![](https://dcbadge.limes.pink/api/server/mcc?style=flat-square)
 
 _Building interfaces in Kotlin since 2022._
@@ -48,7 +48,7 @@ Interfaces can be found on our [public Maven repository](https://maven.noxcrew.c
 
 ## Help
 
-Additional support 
+Additional support is provided in the `#api-chat` channel on the [MCC Discord](https://discord.gg/mcc).
 
 ## Example
 
