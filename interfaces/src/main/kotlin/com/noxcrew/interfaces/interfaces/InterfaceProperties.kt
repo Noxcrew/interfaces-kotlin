@@ -47,12 +47,12 @@ public open class InterfaceProperties<P : Pane> {
      * [ChestInterfaceBuilder].
      */
     public var allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented: Boolean = false
-        get() {
-            // This setting is not allowed on non-chest interfaces!
-            if (this !is ChestInterfaceBuilder) {
-                return false
+        set(value) {
+            field = if (this !is ChestInterfaceBuilder) {
+                false
+            } else {
+                value
             }
-            return field
         }
 
     /**
