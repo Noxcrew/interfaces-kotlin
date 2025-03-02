@@ -75,7 +75,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             Reason.PLUGIN,
             Reason.TELEPORT,
             Reason.CANT_USE,
-            Reason.UNLOADED
+            Reason.UNLOADED,
         )
 
         /** An incomplete set of blocks that have some interaction when clicked on. */
@@ -85,7 +85,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     MaterialTags.WOODEN_DOORS,
                     MaterialTags.WOODEN_TRAPDOORS,
                     MaterialTags.FENCE_GATES,
-                    MaterialSetTag.BUTTONS
+                    MaterialSetTag.BUTTONS,
                 )
                 // Add blocks with inventories
                 .add(
@@ -100,7 +100,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     Material.LOOM,
                     Material.CARTOGRAPHY_TABLE,
                     Material.ENCHANTING_TABLE,
-                    Material.SMITHING_TABLE
+                    Material.SMITHING_TABLE,
                 )
                 .add(Material.LEVER)
                 .add(Material.CAKE)
@@ -109,25 +109,25 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     Material.COPPER_DOOR,
                     Material.EXPOSED_COPPER_DOOR,
                     Material.WEATHERED_COPPER_DOOR,
-                    Material.OXIDIZED_COPPER_DOOR
+                    Material.OXIDIZED_COPPER_DOOR,
                 )
                 .add(
                     Material.WAXED_COPPER_DOOR,
                     Material.WAXED_EXPOSED_COPPER_DOOR,
                     Material.WAXED_WEATHERED_COPPER_DOOR,
-                    Material.WAXED_OXIDIZED_COPPER_DOOR
+                    Material.WAXED_OXIDIZED_COPPER_DOOR,
                 )
                 .add(
                     Material.COPPER_TRAPDOOR,
                     Material.EXPOSED_COPPER_TRAPDOOR,
                     Material.WEATHERED_COPPER_TRAPDOOR,
-                    Material.OXIDIZED_COPPER_TRAPDOOR
+                    Material.OXIDIZED_COPPER_TRAPDOOR,
                 )
                 .add(
                     Material.WAXED_COPPER_TRAPDOOR,
                     Material.WAXED_EXPOSED_COPPER_TRAPDOOR,
                     Material.WAXED_WEATHERED_COPPER_TRAPDOOR,
-                    Material.WAXED_OXIDIZED_COPPER_TRAPDOOR
+                    Material.WAXED_OXIDIZED_COPPER_TRAPDOOR,
                 )
                 // You can click signs to edit them
                 .add(MaterialTags.SIGNS)
@@ -138,7 +138,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val view: InterfaceView,
         val onCancel: suspend () -> Unit,
         val onComplete: suspend (Component) -> Boolean,
-        val id: UUID
+        val id: UUID,
     )
 
     /** The view currently being opened. */
@@ -150,19 +150,14 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         .expireAfterWrite(200.toLong(), TimeUnit.MILLISECONDS)
         .build()
 
-    /** A cache of all ongoing chat queries. */
-    private val queries: Cache<UUID, ChatQuery> = Caffeine.newBuilder()
-        .build()
+    /** A map of all ongoing chat queries. */
+    private val queries = mutableMapOf<UUID, ChatQuery>()
 
-    /** A cache of player interfaces that should be opened again in the future. */
-    private val backgroundPlayerInterfaceViews: Cache<UUID, PlayerInterfaceView> = Caffeine.newBuilder()
-        .weakValues()
-        .build()
+    /** A map of player interfaces that should be opened again in the future. */
+    private val backgroundPlayerInterfaceViews = mutableMapOf<UUID, PlayerInterfaceView>()
 
-    /** A cache of actively open player interfaces. */
-    private val openPlayerInterfaceViews: Cache<UUID, PlayerInterfaceView> = Caffeine.newBuilder()
-        .weakValues()
-        .build()
+    /** A map of actively open player interfaces. */
+    private val openPlayerInterfaceViews = mutableMapOf<UUID, PlayerInterfaceView>()
 
     /** Re-opens the current background interface of [player]. */
     public fun reopenInventory(player: Player) {
@@ -182,9 +177,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
      */
     public fun getBackgroundPlayerInterface(playerId: UUID): PlayerInterfaceView? {
         // Check if the menu is definitely still meant to be open
-        val result = backgroundPlayerInterfaceViews.getIfPresent(playerId) ?: return null
+        val result = backgroundPlayerInterfaceViews[playerId] ?: return null
         if (result.shouldStillBeOpened) return result
-        backgroundPlayerInterfaceViews.invalidate(playerId)
+        backgroundPlayerInterfaceViews -= playerId
         return null
     }
 
@@ -192,24 +187,24 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
      * Returns the currently open player interface for [playerId].
      */
     public fun getOpenPlayerInterface(playerId: UUID): PlayerInterfaceView? {
-        val result = openPlayerInterfaceViews.getIfPresent(playerId) ?: return null
+        val result = openPlayerInterfaceViews[playerId] ?: return null
         if (result.shouldStillBeOpened) return result
-        openPlayerInterfaceViews.invalidate(playerId)
+        openPlayerInterfaceViews -= playerId
         return null
     }
 
     /** Marks the given [view] as the opened player interface. */
     public fun openPlayerInterface(playerId: UUID, view: PlayerInterfaceView) {
-        backgroundPlayerInterfaceViews.invalidate(playerId)
-        openPlayerInterfaceViews.put(playerId, view)
+        backgroundPlayerInterfaceViews -= playerId
+        openPlayerInterfaceViews[playerId] = view
     }
 
     /** Sets the background view for [playerId] to [view]. */
     public fun setBackgroundView(playerId: UUID, view: PlayerInterfaceView?) {
         if (view == null) {
-            backgroundPlayerInterfaceViews.invalidate(playerId)
+            backgroundPlayerInterfaceViews -= playerId
         } else {
-            backgroundPlayerInterfaceViews.put(playerId, view)
+            backgroundPlayerInterfaceViews[playerId] = view
         }
     }
 
@@ -217,15 +212,11 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     public fun closePlayerInterface(playerId: UUID, view: PlayerInterfaceView?) {
         abortQuery(playerId, view)
         if (view == null) {
-            backgroundPlayerInterfaceViews.invalidate(playerId)
-            openPlayerInterfaceViews.invalidate(playerId)
+            backgroundPlayerInterfaceViews -= playerId
+            openPlayerInterfaceViews -= playerId
         } else {
-            if (backgroundPlayerInterfaceViews.getIfPresent(playerId) === view) {
-                backgroundPlayerInterfaceViews.invalidate(playerId)
-            }
-            if (openPlayerInterfaceViews.getIfPresent(playerId) === view) {
-                openPlayerInterfaceViews.invalidate(playerId)
-            }
+            backgroundPlayerInterfaceViews.remove(playerId, view)
+            openPlayerInterfaceViews.remove(playerId, view)
         }
     }
 
@@ -253,9 +244,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Move the current open inventory to the background to indicate
         // it is no longer the actually opened inventory!
-        openPlayerInterfaceViews.getIfPresent(event.player.uniqueId)?.also {
+        openPlayerInterfaceViews.remove(event.player.uniqueId)?.also {
             setBackgroundView(event.player.uniqueId, it)
-            openPlayerInterfaceViews.invalidate(event.player.uniqueId)
         }
 
         // Abort any previous query the player had
@@ -314,7 +304,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     !canFreelyMove(
                         view,
                         view.backing.relativizePlayerInventorySlot(GridPoint.at(3, event.hotbarButton)),
-                        true
+                        true,
                     )
                 ) {
                     event.isCancelled = true
@@ -326,7 +316,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     !canFreelyMove(
                         view,
                         view.backing.relativizePlayerInventorySlot(GridPoint.at(4, 4)),
-                        true
+                        true,
                     )
                 ) {
                     event.isCancelled = true
@@ -352,7 +342,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                                     !canFreelyMove(
                                         view,
                                         requireNotNull(GridPoint.fromBukkitChestSlot(index)),
-                                        false
+                                        false,
                                     )
                             }
                         ) ||
@@ -363,9 +353,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                             !canFreelyMove(
                                 view,
                                 view.backing.relativizePlayerInventorySlot(
-                                    requireNotNull(GridPoint.fromBukkitPlayerSlot(index))
+                                    requireNotNull(GridPoint.fromBukkitPlayerSlot(index)),
                                 ),
-                                true
+                                true,
                             )
                     }
                 ) {
@@ -398,7 +388,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                             } else {
                                 targetSlot
                             },
-                            isMovingIntoPlayerInventory
+                            isMovingIntoPlayerInventory,
                         )
                     ) {
                         event.isCancelled = true
@@ -428,8 +418,6 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler
     public fun onPlayerQuit(event: PlayerQuitEvent) {
-        // Save the contents of their currently shown inventory
-        abortQuery(event.player.uniqueId, null)
         closePlayerInterface(event.player.uniqueId, null)
     }
 
@@ -456,7 +444,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 GridPoint.at(3, player.inventory.heldItemSlot)
             } else {
                 PlayerPane.OFF_HAND_SLOT
-            }
+            },
         )
         val click = convertAction(event.action, player.isSneaking)
 
@@ -548,8 +536,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val player = event.player
 
         // Determine if they have a pending query and end it
-        val query = queries.getIfPresent(player.uniqueId) ?: return
-        queries.invalidate(player.uniqueId)
+        val query = queries.remove(player.uniqueId) ?: return
 
         // Complete the query and re-open the view
         SCOPE.launch(InterfacesCoroutineDetails(event.player.uniqueId, "completing chat query")) {
@@ -609,7 +596,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         click: ClickType,
         slot: Int,
         isPlayerInventory: Boolean,
-        interact: Boolean
+        interact: Boolean,
     ): Boolean {
         // Determine the type of click, if nothing was clicked we allow it
         val raw = view.completedPane?.getRaw(clickedPoint)
@@ -654,7 +641,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             Bukkit.getScheduler().runTaskLaterAsynchronously(
                 plugin,
                 Runnable { completedClickHandler.cancel() },
-                120
+                120,
             )
         }
 
@@ -691,7 +678,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         view: InterfaceView,
         timeout: Duration,
         onCancel: suspend () -> Unit,
-        onComplete: suspend (Component) -> Boolean
+        onComplete: suspend (Component) -> Boolean,
     ) {
         // Determine if the player has this inventory open
         if (!view.isOpen()) return
@@ -699,7 +686,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Store the current open inventory and remove it from the cache so it does
         // not interfere and we can have the player be itemless
         val playerId = view.player.uniqueId
-        openPlayerInterfaceViews.invalidate(playerId)
+        openPlayerInterfaceViews -= playerId
 
         runSync {
             // Close the current inventory to open another to avoid close reasons
@@ -721,8 +708,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 view,
                 onCancel,
                 onComplete,
-                id
-            )
+                id,
+            ),
         )
 
         // Set a timer for to automatically cancel this query to prevent players
@@ -730,27 +717,25 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         Bukkit.getScheduler().runTaskLater(
             plugin,
             Runnable {
-                val queryThen = queries.getIfPresent(playerId) ?: return@Runnable
+                val queryThen = queries[playerId] ?: return@Runnable
                 if (queryThen.id != id) return@Runnable
 
                 // Remove the query, run the cancel handler, and re-open the view
-                queries.invalidate(playerId)
+                queries -= playerId
                 SCOPE.launch(InterfacesCoroutineDetails(playerId, "cancelling chat query due to timeout")) {
                     onCancel()
                     view.reopen()
                 }
             },
-            timeout.inWholeMilliseconds / 50
+            timeout.inWholeMilliseconds / 50,
         )
     }
 
     /** Aborts an ongoing query for [playerId], without re-opening the original view. */
     public fun abortQuery(playerId: UUID, view: InterfaceView?) {
-        val query = queries.getIfPresent(playerId) ?: return
-
         // Only end the specific view on request
-        if (view != null && query.view != view) return
-        queries.invalidate(playerId)
+        if (view != null && queries[playerId]?.view != view) return
+        val query = queries.remove(playerId) ?: return
 
         SCOPE.launch(InterfacesCoroutineDetails(playerId, "aborting chat query")) {
             // Run the cancellation handler
