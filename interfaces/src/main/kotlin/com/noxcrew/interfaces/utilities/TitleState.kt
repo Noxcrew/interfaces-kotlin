@@ -3,10 +3,10 @@ package com.noxcrew.interfaces.utilities
 import net.kyori.adventure.text.Component
 
 /** Manages the state of a title. */
-internal class TitleState(initialState: Component?) {
+public class TitleState(initialState: Component?) {
 
     /** The current value of the title. */
-    internal var current = initialState
+    public var current: Component? = initialState
         set(value) {
             // Don't update if nothing changed
             if (field == value) return
@@ -20,5 +20,5 @@ internal class TitleState(initialState: Component?) {
         }
 
     /** Whether the title has changed at some point. */
-    internal var hasChanged = false
+    public var hasChanged: Boolean = false
 }
