@@ -1,5 +1,7 @@
 package com.noxcrew.interfaces.interfaces
 
+import com.noxcrew.interfaces.grid.mapping.CombinedGridMapper
+import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.pane.CombinedPane
 import com.noxcrew.interfaces.view.CombinedInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
@@ -10,7 +12,7 @@ import org.bukkit.entity.Player
 public class CombinedInterface internal constructor(
     override val rows: Int,
     override val initialTitle: Component?,
-    override val builder: CombinedInterfaceBuilder
+    override val builder: CombinedInterfaceBuilder,
 ) : Interface<CombinedInterface, CombinedPane>, TitledInterface {
 
     public companion object {
@@ -19,6 +21,7 @@ public class CombinedInterface internal constructor(
     }
 
     override val includesPlayerInventory: Boolean = true
+    override val mapper: CombinedGridMapper = CombinedGridMapper(rows)
 
     override fun totalRows(): Int = rows + 4
 

@@ -5,6 +5,7 @@ import org.bukkit.inventory.ItemStack
 /** Represents some inventory that item stacks can be placed into. */
 public interface InterfacesInventory {
 
+    // TODO REMOVE
     /** Returns whether ([row], [column]) falls within a player's inventory. */
     public fun isPlayerInventory(row: Int, column: Int): Boolean
 

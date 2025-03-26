@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.view
 
+import com.noxcrew.interfaces.grid.mapping.ChestGridMapper
 import com.noxcrew.interfaces.interfaces.ChestInterface
 import com.noxcrew.interfaces.inventory.ChestInterfacesInventory
 import com.noxcrew.interfaces.pane.Pane
@@ -13,11 +14,11 @@ import org.bukkit.inventory.InventoryHolder
 public class ChestInterfaceView internal constructor(
     player: Player,
     backing: ChestInterface,
-    parent: InterfaceView?
+    parent: InterfaceView?,
 ) : AbstractInterfaceView<ChestInterfacesInventory, ChestInterface, Pane>(
     player,
     backing,
-    parent
+    parent,
 ),
     InventoryHolder {
 
@@ -28,9 +29,10 @@ public class ChestInterfaceView internal constructor(
     }
 
     override fun createInventory(): ChestInterfacesInventory = ChestInterfacesInventory(
-        this,
-        titleState.current,
-        backing.rows
+        holder = this,
+        title = titleState.current,
+        rows = backing.rows,
+        mapper = backing.mapper,
     )
 
     override fun openInventory() {

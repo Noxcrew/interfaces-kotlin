@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.inventory
 
+import com.noxcrew.interfaces.grid.mapping.ChestGridMapper
 import com.noxcrew.interfaces.utilities.createBukkitInventory
 import com.noxcrew.interfaces.utilities.gridPointToBukkitIndex
 import net.kyori.adventure.text.Component
@@ -11,20 +12,19 @@ import org.bukkit.inventory.ItemStack
 public class ChestInterfacesInventory(
     holder: InventoryHolder,
     title: Component?,
-    rows: Int
+    rows: Int,
+    private val mapper: ChestGridMapper,
 ) : CachedInterfacesInventory() {
 
     /** The [chestInventory] being used to place items in. */
     public val chestInventory: Inventory = createBukkitInventory(holder, rows, title)
 
     override fun get(row: Int, column: Int): ItemStack? {
-        val index = gridPointToBukkitIndex(row, column)
-        return chestInventory.getItem(index)
+        return chestInventory.getItem(mapper.toTopInventorySlot(row, column))
     }
 
     override fun setInternal(row: Int, column: Int, item: ItemStack?) {
-        val index = gridPointToBukkitIndex(row, column)
-        chestInventory.setItem(index, item)
+        chestInventory.setItem(mapper.toTopInventorySlot(row, column), item)
     }
 
     override fun isPlayerInventory(row: Int, column: Int): Boolean = false
