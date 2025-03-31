@@ -19,6 +19,9 @@ public interface GridMapper {
     }
 
     public interface PlayerInventory : GridMapper {
+        public companion object {
+            public const val PLAYER_INV_ROWS: Int = 3
+        }
         /** The slot returned is relevant to the PlayerInventory mapping, normally 0-8 is the hot bar. */
         public fun toPlayerInventorySlot(row: Int, column: Int): Int
     }

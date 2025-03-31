@@ -17,14 +17,6 @@ public open class CompletedPane : GridMap<CompletedElement> by HashGridMap() {
     public open fun getRawUnordered(vector: GridPoint): CompletedElement? = get(vector)
 }
 
-/** A completed pane with an ordering. */
-internal class CompletedOrderedPane(
-    private val ordering: List<Int>
-) : CompletedPane() {
-
-    override fun getRaw(vector: GridPoint): CompletedElement? = ordering.getOrNull(vector.x)?.let { get(it, vector.y) }
-}
-
 /** Completes a pane for [player] by drawing each element while suspending. */
 internal suspend fun Pane.complete(player: Player): CompletedPane {
     val pane = convertToEmptyCompletedPane()
@@ -48,10 +40,7 @@ internal fun Pane.convertToEmptyCompletedPaneAndFill(rows: Int): CompletedPane {
     return pane
 }
 
-/** Converts this pane to either a [CompletedPane] or [CompletedOrderedPane] based on its type. */
+/** Converts this pane to a [CompletedPane] based on its type. */
 internal fun Pane.convertToEmptyCompletedPane(): CompletedPane {
-    if (this is OrderedPane) {
-        return CompletedOrderedPane(ordering)
-    }
     return CompletedPane()
 }

@@ -1,13 +1,10 @@
 package com.noxcrew.interfaces.grid.mapping
 
+import com.noxcrew.interfaces.grid.mapping.GridMapper.PlayerInventory.Companion.PLAYER_INV_ROWS
 import com.noxcrew.interfaces.utilities.gridPointToBukkitIndex
 import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
 
 public class CombinedGridMapper(private val rows: Int) : ChestGridMapper(rows), GridMapper.PlayerInventory {
-
-    private companion object {
-        private const val PLAYER_INV_ROWS = 3
-    }
 
     /** Rows of chest times [COLUMNS_IN_CHEST] minus [COLUMNS_IN_CHEST] because 0-8 is in the hot bar. */
     private val chestSize = rows * COLUMNS_IN_CHEST - COLUMNS_IN_CHEST

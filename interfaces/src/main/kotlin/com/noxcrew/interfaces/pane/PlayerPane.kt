@@ -16,9 +16,6 @@ public class PlayerPane : Pane() {
         /** The row used for the offhand slot. */
         internal const val OFFHAND_ROW = 5
 
-        /** The base ordering of the player inventory to go from logical rows to Bukkit rows. */
-        internal val PANE_ORDERING = listOf(1, 2, 3, 0, 4)
-
         /** The location of the off-hand slot. */
         internal val OFF_HAND_SLOT = GridPoint.at(OFFHAND_ROW, 0)
 
