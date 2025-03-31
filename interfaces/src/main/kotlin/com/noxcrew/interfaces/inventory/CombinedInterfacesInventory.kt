@@ -2,7 +2,6 @@ package com.noxcrew.interfaces.inventory
 
 import com.noxcrew.interfaces.grid.mapping.CombinedGridMapper
 import com.noxcrew.interfaces.utilities.createBukkitInventory
-import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory

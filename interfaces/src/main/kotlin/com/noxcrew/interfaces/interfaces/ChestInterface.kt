@@ -1,7 +1,6 @@
 package com.noxcrew.interfaces.interfaces
 
 import com.noxcrew.interfaces.grid.mapping.ChestGridMapper
-import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.view.ChestInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView

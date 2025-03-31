@@ -4,6 +4,7 @@ import com.noxcrew.interfaces.grid.mapping.GridMapper.PlayerInventory.Companion.
 import com.noxcrew.interfaces.utilities.gridPointToBukkitIndex
 import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
 
+/** Handles [com.noxcrew.interfaces.grid.GridPoint] mapping for containers combining Chest and Player inventory. */
 public class CombinedGridMapper(private val rows: Int) : ChestGridMapper(rows), GridMapper.PlayerInventory {
 
     /** Rows of chest times [COLUMNS_IN_CHEST] minus [COLUMNS_IN_CHEST] because 0-8 is in the hot bar. */

@@ -8,7 +8,6 @@ import com.noxcrew.interfaces.pane.PlayerPane.Companion.HELMET_SLOT
 import com.noxcrew.interfaces.pane.PlayerPane.Companion.LEGGING_SLOT
 import com.noxcrew.interfaces.pane.PlayerPane.Companion.OFFHAND_ROW
 import org.bukkit.entity.Player
-import org.bukkit.inventory.CraftingInventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.PlayerInventory
 

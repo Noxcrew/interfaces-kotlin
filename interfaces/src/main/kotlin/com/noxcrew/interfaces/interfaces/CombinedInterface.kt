@@ -1,7 +1,6 @@
 package com.noxcrew.interfaces.interfaces
 
 import com.noxcrew.interfaces.grid.mapping.CombinedGridMapper
-import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.pane.CombinedPane
 import com.noxcrew.interfaces.view.CombinedInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView

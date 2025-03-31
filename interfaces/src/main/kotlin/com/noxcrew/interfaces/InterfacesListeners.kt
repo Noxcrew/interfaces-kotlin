@@ -287,10 +287,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val holder = event.inventory.getHolder(false)
         val view = convertHolderToInterfaceView(holder) ?: return
         val clickedPoint = view.backing.mapper.toGridPoint(event.rawSlot) ?: return
-        val oldClickedPoint = clickedPoint(view, event) ?: return
         val isPlayerInventory = (event.clickedInventory ?: event.inventory).getHolder(false) is Player
-
-        event.whoClicked.sendMessage("Mapped -> $clickedPoint, old -> $oldClickedPoint, slot -> ${event.rawSlot}/${event.slot}")
 
         // Run base click handling
         if (handleClick(view, clickedPoint, event.click, event.hotbarButton, isPlayerInventory, false)) {

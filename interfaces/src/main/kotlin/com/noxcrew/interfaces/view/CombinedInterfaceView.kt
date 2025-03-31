@@ -18,7 +18,8 @@ public class CombinedInterfaceView internal constructor(
     player,
     backing,
     parent,
-), InventoryHolder {
+),
+    InventoryHolder {
 
     private val titleState = TitleState(backing.initialTitle)
 

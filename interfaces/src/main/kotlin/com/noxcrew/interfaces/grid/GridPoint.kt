@@ -10,8 +10,11 @@ public data class GridPoint(val x: Int, val y: Int) {
         /** The slot index used to indicate a click was outside the UI. */
         public const val OUTSIDE_CHEST_INDEX: Int = -999
 
+        /** Used only on [fromBukkitPlayerSlot], left over from an old system and will be removed when the function is. */
         private val OLD_PANE_MAPPING = listOf(1, 2, 3, 0, 4)
+
         /** Returns the grid point for a [slot] in a player inventory. */
+        @Deprecated("Should move everything to use GridMapper instead.")
         public fun fromBukkitPlayerSlot(slot: Int): GridPoint? {
             if (slot !in PLAYER_INVENTORY_RANGE) return null
             val x = slot / 9

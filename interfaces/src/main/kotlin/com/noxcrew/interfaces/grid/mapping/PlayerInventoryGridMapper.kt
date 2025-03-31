@@ -5,6 +5,10 @@ import com.noxcrew.interfaces.grid.mapping.GridMapper.PlayerInventory.Companion.
 import com.noxcrew.interfaces.utilities.gridPointToBukkitIndex
 import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
 
+/**
+ * Handles [GridPoint] mapping for the player's own inventory.
+ * Including armor slots and offhand.
+ */
 public object PlayerInventoryGridMapper : AbstractGridMapper(), GridMapper.PlayerInventory {
 
     private const val PLAYER_INV_SIZE = PLAYER_INV_ROWS * COLUMNS_IN_CHEST
