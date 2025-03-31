@@ -25,6 +25,4 @@ public class ChestInterfacesInventory(
     override fun setInternal(row: Int, column: Int, item: ItemStack?) {
         chestInventory.setItem(mapper.toTopInventorySlot(row, column), item)
     }
-
-    override fun isPlayerInventory(row: Int, column: Int): Boolean = false
 }

@@ -13,13 +13,11 @@ import org.bukkit.entity.Player
 /** A grid map of completed elements. */
 public open class CompletedPane : GridMap<CompletedElement> by HashGridMap() {
     public open fun getRaw(vector: GridPoint): CompletedElement? = get(vector)
-
-    public open fun getRawUnordered(vector: GridPoint): CompletedElement? = get(vector)
 }
 
 /** Completes a pane for [player] by drawing each element while suspending. */
 internal suspend fun Pane.complete(player: Player): CompletedPane {
-    val pane = convertToEmptyCompletedPane()
+    val pane = CompletedPane()
 
     forEachSuspending { row, column, element ->
         pane[row, column] = element.complete(player)
@@ -30,7 +28,7 @@ internal suspend fun Pane.complete(player: Player): CompletedPane {
 
 /** Fills up a completed pane with empty elements. */
 internal fun Pane.convertToEmptyCompletedPaneAndFill(rows: Int): CompletedPane {
-    val pane = convertToEmptyCompletedPane()
+    val pane = CompletedPane()
     val airElement = CompletedElement(null, ClickHandler.EMPTY)
 
     forEachInGrid(rows, COLUMNS_IN_CHEST) { row, column ->
@@ -38,9 +36,4 @@ internal fun Pane.convertToEmptyCompletedPaneAndFill(rows: Int): CompletedPane {
     }
 
     return pane
-}
-
-/** Converts this pane to a [CompletedPane] based on its type. */
-internal fun Pane.convertToEmptyCompletedPane(): CompletedPane {
-    return CompletedPane()
 }

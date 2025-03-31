@@ -39,6 +39,4 @@ public class CombinedInterfacesInventory(
 
         chestInventory.setItem(mapper.toTopInventorySlot(row, column), item)
     }
-
-    override fun isPlayerInventory(row: Int, column: Int): Boolean = row >= rows
 }

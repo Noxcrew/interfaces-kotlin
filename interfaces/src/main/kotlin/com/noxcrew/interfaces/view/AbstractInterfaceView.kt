@@ -404,7 +404,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             val point = GridPoint.fromBukkitChestSlot(index) ?: continue
 
             // Ignore any items that are in the pane itself
-            if (completedPane?.getRawUnordered(point) != null) continue
+            if (completedPane?.getRaw(point) != null) continue
 
             // Store this item
             addedItems[point] = stack

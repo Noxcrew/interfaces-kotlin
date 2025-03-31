@@ -13,7 +13,7 @@ import org.bukkit.inventory.PlayerInventory
 
 /** A wrapper around a [PlayerInventory]. */
 public class PlayerInterfacesInventory(
-    private val player: Player,
+    player: Player,
     private val mapper: PlayerInventoryGridMapper,
 ) : CachedInterfacesInventory() {
 
@@ -65,6 +65,4 @@ public class PlayerInterfacesInventory(
         // Lastly, all normal items.
         playerInventory.setItem(mapper.toPlayerInventorySlot(row, column), item)
     }
-
-    override fun isPlayerInventory(row: Int, column: Int): Boolean = true
 }
