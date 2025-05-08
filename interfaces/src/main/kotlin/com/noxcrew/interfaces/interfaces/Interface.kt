@@ -2,6 +2,7 @@ package com.noxcrew.interfaces.interfaces
 
 import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.grid.GridPoint
+import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.pane.CombinedPane
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.view.InterfaceView
@@ -15,6 +16,9 @@ public interface Interface<I : Interface<I, P>, P : Pane> {
 
     /** The builder that creates this interface. */
     public val builder: InterfaceBuilder<P, I>
+
+    /** The [GridMapper] to convert from and to [GridPoint]. */
+    public val mapper: GridMapper
 
     /** Whether this view includes the player inventory. */
     public val includesPlayerInventory: Boolean

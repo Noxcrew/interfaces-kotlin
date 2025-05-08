@@ -286,7 +286,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     public fun onClick(event: InventoryClickEvent) {
         val holder = event.inventory.getHolder(false)
         val view = convertHolderToInterfaceView(holder) ?: return
-        val clickedPoint = clickedPoint(view, event) ?: return
+        val clickedPoint = view.backing.mapper.toGridPoint(event.rawSlot) ?: return
         val isPlayerInventory = (event.clickedInventory ?: event.inventory).getHolder(false) is Player
 
         // Run base click handling

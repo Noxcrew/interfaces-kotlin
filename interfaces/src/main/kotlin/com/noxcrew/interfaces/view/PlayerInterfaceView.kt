@@ -29,7 +29,7 @@ public class PlayerInterfaceView internal constructor(
         error("PlayerInventoryView does not support chat queries")
     }
 
-    override fun createInventory(): PlayerInterfacesInventory = PlayerInterfacesInventory(player)
+    override fun createInventory(): PlayerInterfacesInventory = PlayerInterfacesInventory(player, backing.mapper)
 
     override fun openInventory() {
         // Close whatever inventory the player has open so they can look at their normal inventory!

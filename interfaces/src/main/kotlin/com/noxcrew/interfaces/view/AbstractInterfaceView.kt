@@ -54,6 +54,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     private val paneMutex = Mutex()
     private val debouncedRender = AtomicBoolean(false)
 
+    private val mapper = backing.mapper
+
     private val children = WeakHashMap<AbstractInterfaceView<*, *, *>, Unit>()
 
     /** The builder used by this interface. */
@@ -341,7 +343,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         completedPane?.forEach { row, column, element ->
             // We defer drawing of any elements in the player inventory itself
             // for later unless the inventory is already open.
-            val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
+            val isPlayerInventory = mapper.isPlayerInventory(row, column)
             if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) return@forEach
 
             currentInventory.set(
@@ -358,7 +360,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             for ((point, item) in addedItems) {
                 val row = point.x
                 val column = point.y
-                val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
+                val isPlayerInventory = mapper.isPlayerInventory(row, column)
                 if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
 
                 currentInventory.set(
@@ -375,7 +377,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         if (!builder.inheritExistingItems) {
             // Empty any slots that are not otherwise edited
             for ((row, column) in leftovers) {
-                val isPlayerInventory = currentInventory.isPlayerInventory(row, column)
+                val isPlayerInventory = mapper.isPlayerInventory(row, column)
                 if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
                 currentInventory.set(row, column, ItemStack(Material.AIR))
                 madeChanges = true
@@ -402,7 +404,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             val point = GridPoint.fromBukkitChestSlot(index) ?: continue
 
             // Ignore any items that are in the pane itself
-            if (completedPane?.getRawUnordered(point) != null) continue
+            if (completedPane?.getRaw(point) != null) continue
 
             // Store this item
             addedItems[point] = stack

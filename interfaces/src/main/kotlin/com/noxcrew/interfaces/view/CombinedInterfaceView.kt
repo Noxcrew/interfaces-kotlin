@@ -13,11 +13,11 @@ import org.bukkit.inventory.InventoryHolder
 public class CombinedInterfaceView internal constructor(
     player: Player,
     backing: CombinedInterface,
-    parent: InterfaceView?
+    parent: InterfaceView?,
 ) : AbstractInterfaceView<CombinedInterfacesInventory, CombinedInterface, CombinedPane>(
     player,
     backing,
-    parent
+    parent,
 ),
     InventoryHolder {
 
@@ -28,10 +28,11 @@ public class CombinedInterfaceView internal constructor(
     }
 
     override fun createInventory(): CombinedInterfacesInventory = CombinedInterfacesInventory(
-        this,
-        player,
-        titleState.current,
-        backing.rows
+        holder = this,
+        player = player,
+        title = titleState.current,
+        rows = backing.rows,
+        mapper = backing.mapper,
     )
 
     override fun openInventory() {

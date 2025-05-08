@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.interfaces
 
+import com.noxcrew.interfaces.grid.mapping.PlayerInventoryGridMapper
 import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.view.InterfaceView
 import com.noxcrew.interfaces.view.PlayerInterfaceView
@@ -16,6 +17,7 @@ public class PlayerInterface internal constructor(
     }
 
     override val includesPlayerInventory: Boolean = true
+    override val mapper: PlayerInventoryGridMapper = PlayerInventoryGridMapper
 
     override val rows: Int = 4
 
