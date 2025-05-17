@@ -18,6 +18,7 @@ import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.utilities.forEachInGrid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -42,7 +43,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     override val player: Player,
     /** The interface backing this view. */
     public val backing: T,
-    private val parent: InterfaceView?
+    private val parent: InterfaceView?,
 ) : InterfaceView {
 
     public companion object {
@@ -74,9 +75,16 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     private val shouldBeOpened = AtomicBoolean(false)
     private val openIfClosed = AtomicBoolean(false)
 
+    private val supervisor = SupervisorJob()
+
     private val pendingTransforms = ConcurrentLinkedQueue<AppliedTransform<P>>()
+    private var lazyPending = ConcurrentLinkedQueue<AppliedTransform<P>>()
+
     private var transformingJob: Job? = null
     private val transformMutex = Mutex()
+
+    private var decoratingJob: Job? = null
+    private val decorationMutex = Mutex()
 
     private val panes = CollapsablePaneMap.create(backing.createPane())
     private lateinit var pane: CompletedPane
@@ -112,7 +120,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         coroutineScope: CoroutineScope,
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
         changingView: Boolean = reason ==
-            InventoryCloseEvent.Reason.OPEN_NEW
+            InventoryCloseEvent.Reason.OPEN_NEW,
     ) {
         if (!changingView) {
             // End a possible chat query with the listener (unless we're changing views)
@@ -147,6 +155,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 }
             }
         }
+
+        // Cancel the supervisor job to cancel any rendering attempts
+        supervisor.cancel()
     }
 
     private fun setup() {
@@ -269,43 +280,60 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Ignore if the transforms are empty
         if (transforms.isEmpty()) {
             // If there are no transforms we still need to open it!
-            SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering re-render with no transforms")) {
+            SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering re-render with no transforms") + supervisor) {
                 triggerRerender()
             }
             return true
         }
 
-        // Queue up the transforms
-        pendingTransforms.addAll(transforms)
+        val instantTransforms = transforms.filter { it.type.delayRender }
+        val lazyTransforms = transforms.filterNot { it.type.delayRender }
+
+        if (instantTransforms.isEmpty() || lazyTransforms.isEmpty()) {
+            // If either category is empty we run everything immediately
+            pendingTransforms.addAll(transforms)
+        } else {
+            // Both categories must be filled so we separate them
+            pendingTransforms.addAll(instantTransforms)
+            lazyPending.addAll(lazyTransforms)
+        }
 
         // Check if the job is already running
-        SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering re-render with transforms")) {
+        SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering re-render with transforms") + supervisor) {
             try {
                 transformMutex.lock()
 
                 // Start the job if it's not running currently!
                 if (transformingJob == null || transformingJob?.isCompleted == true) {
                     transformingJob = SCOPE.launch(
-                        InterfacesCoroutineDetails(player.uniqueId, "running and applying a transform")
+                        InterfacesCoroutineDetails(player.uniqueId, "running and applying a transform") + supervisor,
                     ) {
-                        // Go through all pending transforms one at a time until
-                        // we're fully done with all of them. Other threads may
-                        // add additional ones as we go through the queue.
                         while (pendingTransforms.isNotEmpty()) {
-                            // Removes the first pending transform
-                            val transform = pendingTransforms.remove()
+                            // Go through all pending transforms one at a time until
+                            // we're fully done with all of them. Other threads may
+                            // add additional ones as we go through the queue.
+                            while (pendingTransforms.isNotEmpty()) {
+                                // Removes the first pending transform
+                                val transform = pendingTransforms.remove()
 
-                            // Don't run transforms for an offline player!
-                            if (!Bukkit.isStopping() && player.isOnline) {
-                                withTimeout(6.seconds) {
-                                    runTransformAndApplyToPanes(transform)
+                                // Don't run transforms for an offline player!
+                                if (!Bukkit.isStopping() && player.isOnline) {
+                                    withTimeout(6.seconds) {
+                                        runTransformAndApplyToPanes(transform)
+                                    }
                                 }
                             }
-                        }
 
-                        // After we have finished running all transforms we render and open
-                        // the menu before ending this job.
-                        triggerRerender()
+                            // After we have finished running all transforms we render and open
+                            // the menu before ending this job.
+                            triggerRerender()
+
+                            // After we complete a render we add any lazy transforms to the pending
+                            // list which may cause us to keep rendering even after the re-render
+                            val oldLazy = lazyPending
+                            lazyPending = ConcurrentLinkedQueue<AppliedTransform<P>>()
+                            pendingTransforms += oldLazy
+                        }
                     }
                 }
             } finally {
@@ -315,17 +343,60 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         return true
     }
 
+    /** Starts a task to lazily decorate items. */
+    private fun lazilyDecorateItems() {
+        SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering lazy draw") + supervisor) {
+            try {
+                decorationMutex.lock()
+
+                // Start the job if it's not running currently!
+                if (decoratingJob == null || decoratingJob?.isCompleted == true) {
+                    decoratingJob = SCOPE.launch(
+                        InterfacesCoroutineDetails(player.uniqueId, "lazily decorating items") + supervisor,
+                    ) {
+                        // Go through all panes and resolve lazy tasks
+                        for (pane in panes.values) {
+                            pane.forEachSuspending { _, _, element ->
+                                if (element.pendingLazy == null) return@forEachSuspending
+                                val item = element.itemStack?.clone() ?: ItemStack.empty()
+                                element.pendingLazy?.decorate(player, item)
+                                element.pendingLazy = null
+                                element.itemStack = if (item.isEmpty) null else item
+                            }
+                        }
+
+                        // Trigger a re-rendering of the menu to show the newly resolved decorations
+                        triggerRerender()
+                    }
+                }
+            } finally {
+                decorationMutex.unlock()
+            }
+        }
+    }
+
     private suspend fun runTransformAndApplyToPanes(transform: AppliedTransform<P>) {
         val pane = backing.createPane()
-        transform(pane, this@AbstractInterfaceView)
-        val completedPane = pane.complete(player)
-
-        // Access to the pane has to be shared through a semaphore
-        paneMutex.lock()
         try {
-            panes[transform.priority] = completedPane
-        } finally {
-            paneMutex.unlock()
+            transform(pane, this@AbstractInterfaceView)
+            val completedPane = pane.complete(player)
+
+            // Access to the pane has to be shared through a semaphore
+            paneMutex.lock()
+            try {
+                panes[transform.priority] = completedPane
+            } finally {
+                paneMutex.unlock()
+            }
+        } catch (x: Exception) {
+            logger.error("Encountered exception while drawing transform ${transform.debugId}", x)
+
+            // To prevent the player getting stuck in an unknown state we close the menu
+            // so they can possibly return to some player inventory open below. If your player
+            // inventory has issues you are on your own.
+            if (transform.type.closeOnError) {
+                close(InventoryCloseEvent.Reason.UNKNOWN)
+            }
         }
     }
 
@@ -340,6 +411,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
 
         var madeChanges = false
+        var lazyElements = false
         completedPane?.forEach { row, column, element ->
             // We defer drawing of any elements in the player inventory itself
             // for later unless the inventory is already open.
@@ -349,10 +421,16 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             currentInventory.set(
                 row,
                 column,
-                element.itemStack.apply { this?.let { builder.itemPostProcessor?.invoke(it) } }
+                element.itemStack.apply { this?.let { builder.itemPostProcessor?.invoke(it) } },
             )
+            if (element.pendingLazy != null) lazyElements = true
             leftovers -= row to column
             madeChanges = true
+        }
+
+        // If any elements are not yet fully drawn start a task to do so!
+        if (lazyElements) {
+            lazilyDecorateItems()
         }
 
         // Apply the overlay of persistent items on top
@@ -366,7 +444,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 currentInventory.set(
                     row,
                     column,
-                    item
+                    item,
                 )
                 leftovers -= row to column
                 madeChanges = true

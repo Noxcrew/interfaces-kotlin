@@ -616,6 +616,10 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             return true
         }
 
+        // Determine if there is a click handler on this item (and if it's ready)
+        val handler = raw.clickHandler
+            .takeIf { raw.pendingLazy?.requireDecorationToClick != true } ?: return true
+
         // Only allow one click to be processed at the same time
         view.isProcessingClick = true
 
@@ -625,7 +629,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             .forEach { handler -> ClickHandler.process(handler, clickContext) }
 
         // Run the click handler and deal with its result
-        val completedClickHandler = raw.clickHandler
+        val completedClickHandler = handler
             .run { CompletableClickHandler().apply { handle(clickContext) } }
             .onComplete { ex ->
                 if (ex != null) {

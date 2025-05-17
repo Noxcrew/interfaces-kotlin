@@ -5,6 +5,8 @@ import com.noxcrew.interfaces.properties.Trigger
 
 /** A transform that can been applied to a pane. */
 public class AppliedTransform<P : Pane>(
+    internal val debugId: String,
+    internal val type: TransformType,
     internal val priority: Int,
     internal val triggers: Set<Trigger>,
     transform: Transform<P>
