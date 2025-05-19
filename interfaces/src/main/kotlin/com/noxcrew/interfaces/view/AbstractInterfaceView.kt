@@ -3,6 +3,7 @@ package com.noxcrew.interfaces.view
 import com.google.common.collect.HashMultimap
 import com.noxcrew.interfaces.InterfacesConstants.SCOPE
 import com.noxcrew.interfaces.InterfacesListeners
+import com.noxcrew.interfaces.element.CompletedElement
 import com.noxcrew.interfaces.event.DrawPaneEvent
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.interfaces.Interface
@@ -54,8 +55,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     private val logger = LoggerFactory.getLogger(AbstractInterfaceView::class.java)
     private val paneMutex = Mutex()
     private val debouncedRender = AtomicBoolean(false)
-    private val debouncedTransform = AtomicBoolean(false)
-    private val debouncedDecorate = AtomicBoolean(false)
 
     private val mapper = backing.mapper
 
@@ -90,6 +89,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     private val panes = CollapsablePaneMap.create(backing.createPane())
     private lateinit var pane: CompletedPane
+
+    private var normalInventoryLazy: ConcurrentLinkedQueue<CompletedElement> = ConcurrentLinkedQueue()
+    private var playerInventoryLazy: ConcurrentLinkedQueue<CompletedElement> = ConcurrentLinkedQueue()
 
     protected lateinit var currentInventory: I
 
@@ -300,9 +302,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             lazyPending.addAll(lazyTransforms)
         }
 
-        // Mark that we need to transform, and if we're already running
-        // a job don't start a new one!
-        debouncedTransform.set(true)
+        // Ignore if we know there is already a job as it will go through all pending transforms
         if (transformingJob != null && transformingJob?.isCompleted == false) return true
 
         // Check if the job is already running
@@ -315,33 +315,31 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                     transformingJob = SCOPE.launch(
                         InterfacesCoroutineDetails(player.uniqueId, "running and applying a transform") + supervisor,
                     ) {
-                        while (debouncedTransform.compareAndSet(true, false)) {
+                        while (pendingTransforms.isNotEmpty()) {
+                            // Go through all pending transforms one at a time until
+                            // we're fully done with all of them. Other threads may
+                            // add additional ones as we go through the queue.
                             while (pendingTransforms.isNotEmpty()) {
-                                // Go through all pending transforms one at a time until
-                                // we're fully done with all of them. Other threads may
-                                // add additional ones as we go through the queue.
-                                while (pendingTransforms.isNotEmpty()) {
-                                    // Removes the first pending transform
-                                    val transform = pendingTransforms.remove()
+                                // Removes the first pending transform
+                                val transform = pendingTransforms.remove()
 
-                                    // Don't run transforms for an offline player!
-                                    if (!Bukkit.isStopping() && player.isOnline) {
-                                        withTimeout(6.seconds) {
-                                            runTransformAndApplyToPanes(transform)
-                                        }
+                                // Don't run transforms for an offline player!
+                                if (!Bukkit.isStopping() && player.isOnline) {
+                                    withTimeout(6.seconds) {
+                                        runTransformAndApplyToPanes(transform)
                                     }
                                 }
-
-                                // After we have finished running all transforms we render and open
-                                // the menu before ending this job.
-                                triggerRerender()
-
-                                // After we complete a render we add any lazy transforms to the pending
-                                // list which may cause us to keep rendering even after the re-render
-                                val oldLazy = lazyPending
-                                lazyPending = ConcurrentLinkedQueue<AppliedTransform<P>>()
-                                pendingTransforms += oldLazy
                             }
+
+                            // After we have finished running all transforms we render and open
+                            // the menu before ending this job.
+                            triggerRerender()
+
+                            // After we complete a render we add any lazy transforms to the pending
+                            // list which may cause us to keep rendering even after the re-render
+                            val oldLazy = lazyPending
+                            lazyPending = ConcurrentLinkedQueue<AppliedTransform<P>>()
+                            pendingTransforms += oldLazy
                         }
                     }
                 }
@@ -354,13 +352,12 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     /** Starts a task to lazily decorate items. */
     private fun lazilyDecorateItems() {
-        // Mark that we need to decorate, and if we're already running
-        // a job don't start a new one!
-        debouncedDecorate.set(true)
+        // Try to start decorating if there is not already a job running
         if (decoratingJob != null && decoratingJob?.isCompleted == false) return
 
         SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering lazy draw") + supervisor) {
             try {
+                // Use a mutex to ensure there are no two jobs!
                 decorationMutex.lock()
 
                 // Start the job if it's not running currently!
@@ -368,38 +365,34 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                     decoratingJob = SCOPE.launch(
                         InterfacesCoroutineDetails(player.uniqueId, "lazily decorating items") + supervisor,
                     ) {
-                        while (debouncedDecorate.compareAndSet(true, false)) {
-                            // Go through all panes and resolve lazy tasks
-                            for (pane in panes.values) {
-                                pane.forEachSuspending { _, _, element ->
-                                    if (element.pendingLazy == null) return@forEachSuspending
+                        while (true) {
+                            // Determine which element needs to be updated
+                            val element = normalInventoryLazy.poll() ?: playerInventoryLazy.poll() ?: break
 
-                                    // We cap decorations at 6 seconds per item!
-                                    withTimeout(6.seconds) {
-                                        val item = element.itemStack?.clone() ?: ItemStack.empty()
-                                        element.pendingLazy?.decorate(player, item)
-                                        element.pendingLazy = null
-                                        element.itemStack = if (item.isEmpty) null else item
+                            // We cap decorations at 6 seconds per item!
+                            withTimeout(6.seconds) {
+                                val item = element.itemStack?.clone() ?: ItemStack.empty()
+                                element.pendingLazy?.decorate(player, item)
+                                element.pendingLazy = null
+                                element.itemStack = if (item.isEmpty) null else item
 
-                                        // If we're already rendering we simply queue up the re-render but
-                                        // continue in this coroutine so we can hopefully get multiple
-                                        // elements decorated before to debounce is done.
-                                        if (paneMutex.isLocked) {
-                                            debouncedRender.set(true)
-                                            return@withTimeout
-                                        }
+                                // If we're already rendering we simply queue up the re-render but
+                                // continue in this coroutine so we can hopefully get multiple
+                                // elements decorated before to debounce is done.
+                                if (paneMutex.isLocked) {
+                                    debouncedRender.set(true)
+                                    return@withTimeout
+                                }
 
-                                        // Trigger a re-rendering of the menu after each
-                                        // individual item stack has finished rendering!
-                                        SCOPE.launch(
-                                            InterfacesCoroutineDetails(
-                                                player.uniqueId,
-                                                "triggering re-render after lazy draw",
-                                            ) + supervisor,
-                                        ) {
-                                            triggerRerender()
-                                        }
-                                    }
+                                // Trigger a re-rendering of the menu after each
+                                // individual item stack has finished rendering!
+                                SCOPE.launch(
+                                    InterfacesCoroutineDetails(
+                                        player.uniqueId,
+                                        "triggering re-render after lazy draw",
+                                    ) + supervisor,
+                                ) {
+                                    triggerRerender()
                                 }
                             }
                         }
@@ -447,7 +440,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
 
         var madeChanges = false
-        var lazyElements = false
+        val lazyElements = ConcurrentLinkedQueue<CompletedElement>()
         completedPane?.forEach { row, column, element ->
             // We defer drawing of any elements in the player inventory itself
             // for later unless the inventory is already open.
@@ -459,13 +452,25 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 column,
                 element.itemStack.apply { this?.let { builder.itemPostProcessor?.invoke(it) } },
             )
-            if (element.pendingLazy != null) lazyElements = true
+            element.pendingLazy?.also { lazyElements += element }
             leftovers -= row to column
             madeChanges = true
         }
 
         // If any elements are not yet fully drawn start a task to do so!
-        if (lazyElements) {
+        // Replace the previous list of lazy elements on the right group.
+        // This prevents us from continuing to lazily decorate items that are
+        // no longer drawn to the screen! (if players browse away from loading
+        // pages)
+        if (drawNormalInventory) {
+            normalInventoryLazy = lazyElements
+            if (drawPlayerInventory) {
+                playerInventoryLazy = ConcurrentLinkedQueue()
+            }
+        } else if (drawPlayerInventory) {
+            playerInventoryLazy = lazyElements
+        }
+        if (lazyElements.isNotEmpty()) {
             lazilyDecorateItems()
         }
 
