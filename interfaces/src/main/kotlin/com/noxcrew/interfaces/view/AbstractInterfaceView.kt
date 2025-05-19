@@ -362,11 +362,14 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                                 element.pendingLazy?.decorate(player, item)
                                 element.pendingLazy = null
                                 element.itemStack = if (item.isEmpty) null else item
+
+                                // Trigger a re-rendering of the menu after each
+                                // individual item stack has finished rendering!
+                                // If this happens mid-render it will debounce
+                                // which is fine!
+                                triggerRerender()
                             }
                         }
-
-                        // Trigger a re-rendering of the menu to show the newly resolved decorations
-                        triggerRerender()
                     }
                 }
             } finally {
