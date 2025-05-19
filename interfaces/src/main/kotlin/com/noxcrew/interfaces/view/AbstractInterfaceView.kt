@@ -363,11 +363,19 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                                 element.pendingLazy = null
                                 element.itemStack = if (item.isEmpty) null else item
 
+                                // If we're already rendering we simply queue up the re-render but
+                                // continue in this coroutine so we can hopefully get multiple
+                                // elements decorated before the debounce is done.
+                                if (paneMutex.isLocked) {
+                                    debouncedRender.set(true)
+                                    return@forEachSuspending
+                                }
+
                                 // Trigger a re-rendering of the menu after each
                                 // individual item stack has finished rendering!
-                                // If this happens mid-render it will debounce
-                                // which is fine!
-                                triggerRerender()
+                                SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering re-render after lazy draw") + supervisor) {
+                                    triggerRerender()
+                                }
                             }
                         }
                     }
