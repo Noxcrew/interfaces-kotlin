@@ -303,7 +303,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Mark that we need to transform, and if we're already running
         // a job don't start a new one!
         debouncedTransform.set(true)
-        if (transformingJob != null) return true
+        if (transformingJob != null && transformingJob?.isCompleted == false) return true
 
         // Check if the job is already running
         SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering re-render with transforms") + supervisor) {
@@ -357,7 +357,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Mark that we need to decorate, and if we're already running
         // a job don't start a new one!
         debouncedDecorate.set(true)
-        if (decoratingJob != null) return
+        if (decoratingJob != null && decoratingJob?.isCompleted == false) return
 
         SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering lazy draw") + supervisor) {
             try {
@@ -373,28 +373,32 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                             for (pane in panes.values) {
                                 pane.forEachSuspending { _, _, element ->
                                     if (element.pendingLazy == null) return@forEachSuspending
-                                    val item = element.itemStack?.clone() ?: ItemStack.empty()
-                                    element.pendingLazy?.decorate(player, item)
-                                    element.pendingLazy = null
-                                    element.itemStack = if (item.isEmpty) null else item
 
-                                    // If we're already rendering we simply queue up the re-render but
-                                    // continue in this coroutine so we can hopefully get multiple
-                                    // elements decorated before to debounce is done.
-                                    if (paneMutex.isLocked) {
-                                        debouncedRender.set(true)
-                                        return@forEachSuspending
-                                    }
+                                    // We cap decorations at 6 seconds per item!
+                                    withTimeout(6.seconds) {
+                                        val item = element.itemStack?.clone() ?: ItemStack.empty()
+                                        element.pendingLazy?.decorate(player, item)
+                                        element.pendingLazy = null
+                                        element.itemStack = if (item.isEmpty) null else item
 
-                                    // Trigger a re-rendering of the menu after each
-                                    // individual item stack has finished rendering!
-                                    SCOPE.launch(
-                                        InterfacesCoroutineDetails(
-                                            player.uniqueId,
-                                            "triggering re-render after lazy draw",
-                                        ) + supervisor,
-                                    ) {
-                                        triggerRerender()
+                                        // If we're already rendering we simply queue up the re-render but
+                                        // continue in this coroutine so we can hopefully get multiple
+                                        // elements decorated before to debounce is done.
+                                        if (paneMutex.isLocked) {
+                                            debouncedRender.set(true)
+                                            return@withTimeout
+                                        }
+
+                                        // Trigger a re-rendering of the menu after each
+                                        // individual item stack has finished rendering!
+                                        SCOPE.launch(
+                                            InterfacesCoroutineDetails(
+                                                player.uniqueId,
+                                                "triggering re-render after lazy draw",
+                                            ) + supervisor,
+                                        ) {
+                                            triggerRerender()
+                                        }
                                     }
                                 }
                             }
