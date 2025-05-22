@@ -14,12 +14,12 @@ public open class InterfaceProperties<P : Pane> {
         private val DEFAULT_REASONS = InventoryCloseEvent.Reason.entries.minus(InventoryCloseEvent.Reason.PLUGIN)
     }
 
-    private val _closeHandlers: MutableMap<InventoryCloseEvent.Reason, CloseHandler> = mutableMapOf()
+    private val _closeHandlers: MutableMap<InventoryCloseEvent.Reason, MutableList<CloseHandler>> = mutableMapOf()
     private val _clickPreprocessors: MutableCollection<ClickHandler> = mutableListOf()
     private val _preventedInteractions: MutableCollection<Action> = mutableListOf()
 
     /** All close handlers on this interface mapped by closing reason. */
-    public val closeHandlers: Map<InventoryCloseEvent.Reason, CloseHandler>
+    public val closeHandlers: Map<InventoryCloseEvent.Reason, List<CloseHandler>>
         get() = _closeHandlers
 
     /** A collection of click handlers that will be run before each click without blocking. */
@@ -74,7 +74,7 @@ public open class InterfaceProperties<P : Pane> {
     /** Adds a new close handler [closeHandler] that triggers whenever the inventory is closed for any of the given [reasons]. */
     public fun addCloseHandler(reasons: Collection<InventoryCloseEvent.Reason> = DEFAULT_REASONS, closeHandler: CloseHandler) {
         reasons.forEach {
-            _closeHandlers[it] = closeHandler
+            _closeHandlers.computeIfAbsent(it) { mutableListOf() } += closeHandler
         }
     }
 

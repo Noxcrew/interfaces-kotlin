@@ -139,7 +139,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             (!changingView || builder.callCloseHandlerOnViewSwitch) &&
             ::currentInventory.isInitialized
         ) {
-            builder.closeHandlers[reason]?.also {
+            builder.closeHandlers[reason]?.forEach {
                 coroutineScope.launch {
                     it.invoke(reason, this@AbstractInterfaceView)
                 }
