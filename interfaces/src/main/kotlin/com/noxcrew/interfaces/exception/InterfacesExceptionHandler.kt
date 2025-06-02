@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.exception
 
+import kotlinx.coroutines.CancellationException
 import org.bukkit.Bukkit
 import org.bukkit.event.inventory.InventoryCloseEvent
 
@@ -13,6 +14,9 @@ public fun interface InterfacesExceptionHandler {
     public suspend fun <T> execute(context: InterfacesExceptionContext, function: suspend () -> T,): T? {
         try {
             return function()
+        } catch (x: CancellationException) {
+            // Silently ignore job cancellation!
+            return null
         } catch (x: Exception) {
             val resolution = handleException(x, context)
             when (resolution) {
