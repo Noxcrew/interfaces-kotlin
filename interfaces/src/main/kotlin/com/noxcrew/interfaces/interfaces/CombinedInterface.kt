@@ -1,7 +1,6 @@
 package com.noxcrew.interfaces.interfaces
 
 import com.noxcrew.interfaces.grid.mapping.CombinedGridMapper
-import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.pane.CombinedPane
 import com.noxcrew.interfaces.view.CombinedInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
@@ -15,15 +14,8 @@ public class CombinedInterface internal constructor(
     override val builder: CombinedInterfaceBuilder,
 ) : Interface<CombinedInterface, CombinedPane>, TitledInterface {
 
-    public companion object {
-        /** The maximum number of rows for a combined interface. */
-        public const val MAX_NUMBER_OF_ROWS: Int = 9
-    }
-
     override val includesPlayerInventory: Boolean = true
     override val mapper: CombinedGridMapper = CombinedGridMapper(rows)
-
-    override fun totalRows(): Int = rows + GridMapper.PlayerInventory.PLAYER_INV_PLUS_HOTBAR_ROWS
 
     override fun createPane(): CombinedPane = CombinedPane(rows)
 

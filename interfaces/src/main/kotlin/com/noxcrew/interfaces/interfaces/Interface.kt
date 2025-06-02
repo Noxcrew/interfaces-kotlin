@@ -23,9 +23,6 @@ public interface Interface<I : Interface<I, P>, P : Pane> {
     /** Whether this view includes the player inventory. */
     public val includesPlayerInventory: Boolean
 
-    /** Returns the total amount of rows. */
-    public fun totalRows(): Int = rows
-
     /** Creates a new pane based on this interface's type. */
     public fun createPane(): P
 
