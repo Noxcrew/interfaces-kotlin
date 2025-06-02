@@ -2,25 +2,18 @@ package com.noxcrew.interfaces.utilities
 
 import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.pane.CompletedPane
-import com.noxcrew.interfaces.pane.Pane
-import com.noxcrew.interfaces.pane.convertToEmptyCompletedPaneAndFill
+import com.noxcrew.interfaces.pane.createEmptyPane
 
 /** A collection of completed panes that can be collapsed to create a new merged [CompletedPane]. */
 internal class CollapsablePaneMap private constructor(
-    // pass in a pane from the view so that we can persist
-    // ordering, used in the listeners.
-    private val basePane: Pane,
     // privately pass in a map here so that we can use
     // super methods when overriding methods in the delegate.
     private val internal: MutableMap<Int, CompletedPane>
 ) : MutableMap<Int, CompletedPane> by internal {
 
     internal companion object {
-        /** Creates a new collapsable map with [basePane]. */
-        internal fun create(basePane: Pane) = CollapsablePaneMap(
-            basePane,
-            sortedMapOf(Comparator.reverseOrder())
-        )
+        /** Creates a new collapsable map of panes. */
+        internal fun create() = CollapsablePaneMap(sortedMapOf(Comparator.reverseOrder()))
     }
 
     private var cachedPane: CompletedPane? = null
@@ -35,15 +28,14 @@ internal class CollapsablePaneMap private constructor(
             return pane
         }
 
-        val pane = basePane.convertToEmptyCompletedPaneAndFill(mapper, allowClickingEmptySlots)
+        val pane = createEmptyPane(mapper, allowClickingEmptySlots)
         val current = internal.toMap().values
-
         current.forEach { layer ->
             layer.forEach { row, column, value ->
                 pane[row, column] = value
             }
         }
-
+        cachedPane = pane
         return pane
     }
 }
