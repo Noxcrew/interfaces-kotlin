@@ -13,7 +13,7 @@ import org.bukkit.entity.Player
 /** The base for a simple built menu. */
 public abstract class SimpleInventoryMenu<B : InterfaceBuilder<out Pane, *>> : BaseInventoryMenu {
     /** The exception handler to use for this menu. */
-    public open val exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler
+    public open val exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler()
 
     /** Builds the interface for this type using [configure]. */
     protected abstract suspend fun build(player: Player, configure: suspend B.() -> Unit): Interface<*, *>

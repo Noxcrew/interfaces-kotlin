@@ -13,7 +13,7 @@ import org.bukkit.entity.Player
 /** The base for a menu that is applied on a player's whole inventory. */
 public abstract class PlayerInventoryMenu : BaseInventoryMenu {
     /** The exception handler to use for this menu. */
-    public open val exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler
+    public open val exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler()
 
     /** Configures the GUI for the given [player]. */
     protected abstract suspend fun PlayerInterfaceBuilder.configure(player: Player)

@@ -79,7 +79,7 @@ public open class InterfaceProperties<P : Pane> {
     public var defaultTimeout: Duration = 2.5.seconds
 
     /** The exception handler to use for this interface. */
-    public var exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler
+    public var exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler()
 
     /** Adds a new close handler [closeHandler] that triggers whenever the inventory is closed for any of the given [reasons]. */
     public fun addCloseHandler(reasons: Collection<InventoryCloseEvent.Reason> = DEFAULT_REASONS, closeHandler: CloseHandler) {
