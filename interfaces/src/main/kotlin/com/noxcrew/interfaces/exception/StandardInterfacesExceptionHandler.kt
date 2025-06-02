@@ -5,7 +5,7 @@ import net.kyori.adventure.text.Component
 import org.slf4j.LoggerFactory
 
 /** The standard implementation that handles an interfaces exception. */
-public class StandardInterfacesExceptionHandler(
+public open class StandardInterfacesExceptionHandler(
     /** Whether decorations are allowed to fail gracefully. */
     public val allowDecorationFailure: Boolean = true,
 ) : InterfacesExceptionHandler {

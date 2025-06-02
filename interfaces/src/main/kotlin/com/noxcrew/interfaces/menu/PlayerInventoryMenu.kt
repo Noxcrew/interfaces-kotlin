@@ -21,6 +21,7 @@ public abstract class PlayerInventoryMenu : BaseInventoryMenu {
 
     /** Builds the menu. */
     protected open suspend fun buildMenu(player: Player): PlayerInterface = buildPlayerInterface {
+        this@buildPlayerInterface.exceptionHandler = this@PlayerInventoryMenu.exceptionHandler
         configure(player)
     }
 

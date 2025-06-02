@@ -29,6 +29,7 @@ public abstract class SimpleInventoryMenu<B : InterfaceBuilder<out Pane, *>> : B
             ),
         ) {
             build(player) {
+                this@build.exceptionHandler = this@SimpleInventoryMenu.exceptionHandler
                 configure(player)
             }
         } ?: return null
