@@ -163,6 +163,23 @@ public class ExamplePlugin : JavaPlugin(), Listener {
         withTransform { pane, _ ->
             val item = ItemStack(Material.COMPASS).name("interfaces example")
 
+            forEachInGrid(3, 9) { row, column ->
+                val item = ItemStack(Material.WHITE_STAINED_GLASS_PANE)
+                    .name("row: $row, column: $column")
+
+                pane[row, column] = StaticElement(drawable(item)) { (player) ->
+                    player.sendMessage("row: $row, column: $column")
+                }
+            }
+            forEachInGrid(1, 9) { _, column ->
+                val item = ItemStack(Material.WHITE_STAINED_GLASS_PANE)
+                    .name("hotbar, column: $column")
+
+                pane.hotbar[column] = StaticElement(drawable(item)) { (player) ->
+                    player.sendMessage("hotbar, column: $column")
+                }
+            }
+
             pane.hotbar[3] = StaticElement(drawable(item)) { (player) ->
                 player.sendMessage("hello")
             }

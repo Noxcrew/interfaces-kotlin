@@ -13,7 +13,7 @@ import org.bukkit.inventory.PlayerInventory
 
 /** A wrapper around a [PlayerInventory]. */
 public class PlayerInterfacesInventory(
-    player: Player,
+    private val player: Player,
     private val mapper: PlayerInventoryGridMapper,
 ) : CachedInterfacesInventory() {
 
@@ -33,9 +33,8 @@ public class PlayerInterfacesInventory(
                 CHEST_SLOT.y -> playerInventory.chestplate
                 LEGGING_SLOT.y -> playerInventory.leggings
                 BOOTS_SLOT.y -> playerInventory.boots
-
-                // In the future could add support for crafting grid slots.
-                else -> null
+                // Crafting grid slots.
+                else -> player.openInventory.topInventory.getItem(column)
             }
         }
 
@@ -58,6 +57,8 @@ public class PlayerInterfacesInventory(
                 CHEST_SLOT.y -> playerInventory.chestplate = item
                 LEGGING_SLOT.y -> playerInventory.leggings = item
                 BOOTS_SLOT.y -> playerInventory.boots = item
+                // Crafting grid slots.
+                else -> player.openInventory.topInventory.setItem(column, item)
             }
             return
         }

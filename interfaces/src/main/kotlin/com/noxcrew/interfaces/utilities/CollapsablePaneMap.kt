@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.utilities
 
+import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.pane.CompletedPane
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.pane.convertToEmptyCompletedPaneAndFill
@@ -29,12 +30,12 @@ internal class CollapsablePaneMap private constructor(
         return internal.put(key, value)
     }
 
-    internal fun collapse(rows: Int, fill: Boolean): CompletedPane {
+    internal fun collapse(mapper: GridMapper, fill: Boolean): CompletedPane {
         cachedPane?.let { pane ->
             return pane
         }
 
-        val pane = if (fill) basePane.convertToEmptyCompletedPaneAndFill(rows) else CompletedPane()
+        val pane = if (fill) basePane.convertToEmptyCompletedPaneAndFill(mapper) else CompletedPane()
         val current = internal.toMap().values
 
         current.forEach { layer ->

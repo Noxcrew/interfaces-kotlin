@@ -60,6 +60,10 @@ public class PlayerInterfaceView internal constructor(
         // Trigger onOpen manually because there is no real inventory being opened,
         // this will also re-draw the player inventory parts!
         onOpen()
+
+        // Work around a 1.21.5 Paper bug where off-hand and armor disappear on the client
+        // until an update is triggered on the client, after closing a menu.
+        player.updateInventory()
     }
 
     override fun close(coroutineScope: CoroutineScope, reason: InventoryCloseEvent.Reason, changingView: Boolean) {

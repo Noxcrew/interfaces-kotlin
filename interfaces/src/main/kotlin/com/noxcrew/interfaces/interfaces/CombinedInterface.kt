@@ -1,6 +1,7 @@
 package com.noxcrew.interfaces.interfaces
 
 import com.noxcrew.interfaces.grid.mapping.CombinedGridMapper
+import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.pane.CombinedPane
 import com.noxcrew.interfaces.view.CombinedInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
@@ -22,7 +23,7 @@ public class CombinedInterface internal constructor(
     override val includesPlayerInventory: Boolean = true
     override val mapper: CombinedGridMapper = CombinedGridMapper(rows)
 
-    override fun totalRows(): Int = rows + 4
+    override fun totalRows(): Int = rows + GridMapper.PlayerInventory.PLAYER_INV_PLUS_HOTBAR_ROWS
 
     override fun createPane(): CombinedPane = CombinedPane(rows)
 

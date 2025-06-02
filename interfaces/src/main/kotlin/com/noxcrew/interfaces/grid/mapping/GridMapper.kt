@@ -13,6 +13,11 @@ import com.noxcrew.interfaces.grid.GridPoint.Companion.OUTSIDE_CHEST_INDEX
 public interface GridMapper {
 
     /**
+     * Runs [function] for every position in the grid.
+     */
+    public fun forEachInGrid(function: (row: Int, column: Int) -> Unit)
+
+    /**
      * This function is called from the listener where the [slot] is the `rawSlot` representation.
      * This means that slots will go from 0 to x as opposed to normal slots which are based on the inventory they are in.
      */
@@ -34,6 +39,8 @@ public interface GridMapper {
     public interface PlayerInventory : GridMapper {
         public companion object {
             public const val PLAYER_INV_ROWS: Int = 3
+
+            public const val PLAYER_INV_PLUS_HOTBAR_ROWS: Int = PLAYER_INV_ROWS + 1
         }
 
         /** The slot returned is relevant to the PlayerInventory mapping, normally 0-8 is the hot bar. */

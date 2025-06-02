@@ -6,6 +6,7 @@ import com.noxcrew.interfaces.element.complete
 import com.noxcrew.interfaces.grid.GridMap
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.grid.HashGridMap
+import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.utilities.forEachInGrid
 import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
 import org.bukkit.entity.Player
@@ -27,13 +28,11 @@ internal suspend fun Pane.complete(player: Player): CompletedPane {
 }
 
 /** Fills up a completed pane with empty elements. */
-internal fun Pane.convertToEmptyCompletedPaneAndFill(rows: Int): CompletedPane {
+internal fun Pane.convertToEmptyCompletedPaneAndFill(mapper: GridMapper): CompletedPane {
     val pane = CompletedPane()
     val airElement = CompletedElement(null, ClickHandler.EMPTY)
-
-    forEachInGrid(rows, COLUMNS_IN_CHEST) { row, column ->
+    mapper.forEachInGrid { row, column ->
         pane[row, column] = airElement
     }
-
     return pane
 }

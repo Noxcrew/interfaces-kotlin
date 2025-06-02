@@ -312,7 +312,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             ) {
                 withTimeout(builder.defaultTimeout) {
                     // Collect the panes together and add air where necessary
-                    pane = panes.collapse(backing.totalRows(), builder.fillMenuWithAir)
+                    pane = panes.collapse(backing.mapper, builder.fillMenuWithAir)
 
                     // Render the completed panes
                     renderToInventory { createdNewInventory ->
@@ -504,7 +504,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // Determine all slots we need to clear if unused
         val leftovers = mutableListOf<Pair<Int, Int>>()
-        forEachInGrid(backing.totalRows(), COLUMNS_IN_CHEST) { row, column ->
+        backing.mapper.forEachInGrid { row, column ->
             leftovers += row to column
         }
 
@@ -618,6 +618,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // and mark that the current one is not to be used!
         val createdInventory = if (requiresNewInventory()) {
             currentInventory = createInventory()
+
+            // Whenever we create a new inventory we have to re-mark this interface
+            // as the one being rendered!
+            InterfacesListeners.INSTANCE.setRenderView(player.uniqueId, this)
             true
         } else {
             false
