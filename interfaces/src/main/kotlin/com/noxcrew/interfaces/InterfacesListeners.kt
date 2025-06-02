@@ -213,6 +213,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         renderingPlayerInterfaceViews.remove(playerId, view)
     }
 
+    /** Sets the background view for [playerId] to [view]. */
+    public fun setBackgroundView(playerId: UUID, view: PlayerInterfaceView?) {
+        if (view == null) {
+            backgroundPlayerInterfaceViews -= playerId
+        } else {
+            backgroundPlayerInterfaceViews[playerId] = view
+        }
+    }
+
     /** Marks the given [view] as the opened player interface. */
     public fun setOpenView(playerId: UUID, view: PlayerInterfaceView) {
         completeRendering(playerId, view)
