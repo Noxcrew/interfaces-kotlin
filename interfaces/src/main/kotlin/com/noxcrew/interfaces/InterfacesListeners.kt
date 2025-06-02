@@ -616,11 +616,14 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Determine the type of click, if nothing was clicked we allow it
         val raw = view.completedPane?.getRaw(clickedPoint)
 
-        // Determine if there is a click handler on this item (and if it's ready)
-        val handler = raw?.clickHandler?.takeIf { raw.pendingLazy?.requireDecorationToClick != true }
-        if (handler == null) {
-            return view.builder.preventClickingEmptySlots &&
+        // Determine if there is a click handler on this item
+        val handler = raw?.clickHandler
+            ?: return view.builder.preventClickingEmptySlots &&
                 !(view.builder.allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented && isPlayerInventory)
+
+        // Prevent clicking on a decoration that is still loading!
+        if (raw.pendingLazy?.requireDecorationToClick == true) {
+            return true
         }
 
         // Automatically cancel if throttling or already processing
