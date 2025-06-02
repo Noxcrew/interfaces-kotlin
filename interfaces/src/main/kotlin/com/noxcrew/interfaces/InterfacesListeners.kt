@@ -70,7 +70,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         }
 
         /** All valid closing reasons that should re-open the previously opened player inventory. */
-        private val REOPEN_REASONS = EnumSet.of(
+        public val REOPEN_REASONS: Set<Reason> = EnumSet.of(
             Reason.PLAYER,
             Reason.UNKNOWN,
             Reason.PLUGIN,
@@ -142,9 +142,6 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val id: UUID,
     )
 
-    /** The view currently being opened. */
-    internal var viewBeingOpened: InterfaceView? = null
-
     private val logger = LoggerFactory.getLogger(InterfacesListeners::class.java)
 
     private val spamPrevention: Cache<UUID, Unit> = Caffeine.newBuilder()
@@ -167,9 +164,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     public fun reopenInventory(player: Player) {
         (getOpenPlayerInterface(player.uniqueId) ?: getBackgroundPlayerInterface(player.uniqueId))?.also {
             SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
-                if (!it.reopen()) {
-                    markViewClosed(player.uniqueId, it)
-                }
+                it.reopen()
             }
         }
     }
@@ -197,9 +192,14 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         return null
     }
 
-    /** Sets the view currently being rendered for [playerId] to [view]. */
-    public suspend fun setRenderView(playerId: UUID, view: InterfaceView) {
+    /** Sets the view currently being rendered for [playerId] to [view], returns `false` if this view is already being rendered. */
+    public suspend fun setRenderView(playerId: UUID, view: InterfaceView): Boolean {
+        // Close any view previously being rendered when opening a new one!
+        // We remove from this map whenever rendering finishes to avoid any
+        // unintended closes.
+        if (renderingPlayerInterfaceViews[playerId] == view) return false
         renderingPlayerInterfaceViews.put(playerId, view)?.close(Reason.OPEN_NEW)
+        return true
     }
 
     /** Moves any currently open player interface to the background view. */
@@ -208,9 +208,14 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         backgroundPlayerInterfaceViews[playerId] = view
     }
 
+    /** Marks that rendering has completed. */
+    public fun completeRendering(playerId: UUID, view: InterfaceView) {
+        renderingPlayerInterfaceViews.remove(playerId, view)
+    }
+
     /** Marks the given [view] as the opened player interface. */
     public fun setOpenView(playerId: UUID, view: PlayerInterfaceView) {
-        renderingPlayerInterfaceViews.remove(playerId, view)
+        completeRendering(playerId, view)
         backgroundPlayerInterfaceViews.remove(playerId, view)
         openPlayerInterfaceViews[playerId] = view
     }
@@ -267,27 +272,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val view = holder as? AbstractInterfaceView<*, *, *> ?: return
         val reason = event.reason
 
-        // Ignore if the view is about to be re-opened right after
-        if (view == viewBeingOpened) return
-
-        // Saves any persistent items stored in the given inventory before we close it
+        // Saves any persistent items stored in the given inventory, then close it
         view.savePersistentItems(event.inventory)
-
-        SCOPE.launch(InterfacesCoroutineDetails(event.player.uniqueId, "handling inventory close")) {
-            // Determine if we can re-open a previous interface
-            val backgroundInterface = getBackgroundPlayerInterface(event.player.uniqueId)
-            val shouldReopen = reason in REOPEN_REASONS && !event.player.isDead && backgroundInterface != null
-
-            // Mark the current view as closed properly
-            view.markClosed(SCOPE, reason)
-
-            // If possible, open back up a previous interface
-            if (shouldReopen) {
-                if (!requireNotNull(backgroundInterface).reopen()) {
-                    markViewClosed(event.player.uniqueId, backgroundInterface)
-                }
-            }
-        }
+        view.markClosed(SCOPE, reason)
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)

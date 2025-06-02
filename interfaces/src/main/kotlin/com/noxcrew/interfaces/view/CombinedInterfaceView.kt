@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.view
 
+import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.interfaces.CombinedInterface
 import com.noxcrew.interfaces.inventory.CombinedInterfacesInventory
 import com.noxcrew.interfaces.pane.CombinedPane
@@ -38,6 +39,7 @@ public class CombinedInterfaceView internal constructor(
     )
 
     override fun openInventory() {
+        InterfacesListeners.INSTANCE.completeRendering(player.uniqueId, this)
         player.openInventory(this.inventory)
     }
 

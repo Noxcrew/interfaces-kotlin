@@ -3,6 +3,7 @@ package com.noxcrew.interfaces.view
 import com.google.common.collect.HashMultimap
 import com.noxcrew.interfaces.InterfacesConstants.SCOPE
 import com.noxcrew.interfaces.InterfacesListeners
+import com.noxcrew.interfaces.InterfacesListeners.Companion.REOPEN_REASONS
 import com.noxcrew.interfaces.element.CompletedElement
 import com.noxcrew.interfaces.event.DrawPaneEvent
 import com.noxcrew.interfaces.exception.InterfacesExceptionContext
@@ -165,6 +166,15 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // Cancel the supervisor job to cancel any rendering attempts
         supervisor.cancel()
+
+        // Test if a background menu should be opened
+        val backgroundInterface = InterfacesListeners.INSTANCE.getBackgroundPlayerInterface(player.uniqueId)
+        val shouldReopen = reason in REOPEN_REASONS && !player.isDead && backgroundInterface != null
+        if (shouldReopen) {
+            SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
+                backgroundInterface?.reopen()
+            }
+        }
     }
 
     /** Registers weak listeners on all transforms of this menu to re-render this menu. */
@@ -196,8 +206,20 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     override suspend fun reopen(): Boolean {
-        if (!player.isConnected) return false
-        if (!shouldBeOpened.get()) return false
+        // This menu was already closed, in case this menu is somehow lingering we'll
+        // tell the listener again we already closed!
+        if (!shouldBeOpened.get()) {
+            InterfacesListeners.INSTANCE.markViewClosed(player.uniqueId, this)
+            return false
+        }
+
+        // The player has since disconnected, close the menu properly!
+        if (!player.isConnected) {
+            markClosed(SCOPE, InventoryCloseEvent.Reason.DISCONNECT)
+            return false
+        }
+
+        // Open the menu as normal.
         open()
         return true
     }
@@ -208,7 +230,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // Mark this menu as the one being rendered for the player, we cancel any previous menus
         // being rendered when a new one is set.
-        InterfacesListeners.INSTANCE.setRenderView(player.uniqueId, this)
+        if (!InterfacesListeners.INSTANCE.setRenderView(player.uniqueId, this)) return
 
         // Indicate that the menu should be opened after the next time rendering completes
         // and that it should be open right now
@@ -605,13 +627,13 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             if (this is PlayerInterfaceView) {
                 // If this is a player inventory we can't update the inventory without
                 // opening it, so we trigger opening it properly.
-                if (!isOpen && player.isConnected) openInventory()
+                if (!isOpen && player.isConnected) {
+                    openInventory()
+                }
             } else {
                 if ((openIfClosed.get() && !isOpen) || createdInventory) {
-                    InterfacesListeners.INSTANCE.viewBeingOpened = this
-                    if (player.isConnected) openInventory()
-                    if (InterfacesListeners.INSTANCE.viewBeingOpened == this) {
-                        InterfacesListeners.INSTANCE.viewBeingOpened = null
+                    if (player.isConnected) {
+                        openInventory()
                     }
                 }
             }

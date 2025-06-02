@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.view
 
+import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.interfaces.ChestInterface
 import com.noxcrew.interfaces.inventory.ChestInterfacesInventory
 import com.noxcrew.interfaces.pane.Pane
@@ -35,6 +36,7 @@ public class ChestInterfaceView internal constructor(
     )
 
     override fun openInventory() {
+        InterfacesListeners.INSTANCE.completeRendering(player.uniqueId, this)
         player.openInventory(this.inventory)
     }
 
