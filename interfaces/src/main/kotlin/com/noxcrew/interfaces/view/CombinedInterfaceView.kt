@@ -23,6 +23,8 @@ public class CombinedInterfaceView internal constructor(
 
     private val titleState = TitleState(backing.initialTitle)
 
+    override val overlapsPlayerInventory: Boolean = true
+
     override fun title(value: Component) {
         titleState.current = value
     }

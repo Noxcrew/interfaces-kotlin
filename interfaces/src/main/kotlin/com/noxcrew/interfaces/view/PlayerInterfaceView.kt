@@ -21,6 +21,8 @@ public class PlayerInterfaceView internal constructor(
     null
 ) {
 
+    override val overlapsPlayerInventory: Boolean = true
+
     override fun title(value: Component) {
         error("PlayerInventoryView's cannot have a title")
     }
@@ -37,12 +39,12 @@ public class PlayerInterfaceView internal constructor(
         if (!isOpen()) {
             // Remove this inventory from the background interface before closing so it
             // doesn't automatically re-open!
-            InterfacesListeners.INSTANCE.closePlayerInterface(player.uniqueId, this)
+            InterfacesListeners.INSTANCE.markViewClosed(player.uniqueId, this)
             player.closeInventory()
         }
 
         // Open this player interface for the player
-        InterfacesListeners.INSTANCE.openPlayerInterface(player.uniqueId, this)
+        InterfacesListeners.INSTANCE.setOpenView(player.uniqueId, this)
 
         if (!builder.inheritExistingItems) {
             // Clear the player's inventory!
@@ -62,12 +64,6 @@ public class PlayerInterfaceView internal constructor(
 
     override fun close(coroutineScope: CoroutineScope, reason: InventoryCloseEvent.Reason, changingView: Boolean) {
         markClosed(coroutineScope, reason, changingView)
-
-        // Ensure we update the interface state in the main thread!
-        // Even if the menu is not currently on the screen.
-        InterfacesListeners.INSTANCE.runSync {
-            InterfacesListeners.INSTANCE.closePlayerInterface(player.uniqueId, this)
-        }
     }
 
     override fun isOpen(): Boolean = InterfacesListeners.INSTANCE.getOpenPlayerInterface(player.uniqueId) == this

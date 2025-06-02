@@ -5,7 +5,6 @@ import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.transform.ReactiveTransform
 import com.noxcrew.interfaces.transform.Transform
-import com.noxcrew.interfaces.transform.TransformType
 import com.noxcrew.interfaces.utilities.IncrementingInteger
 
 /** Assists in creating a new interface. */
@@ -25,19 +24,21 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
     /** Adds a new transform to the interface that updates whenever [triggers] change. */
     public fun withTransform(
         vararg triggers: Trigger,
-        type: TransformType = TransformType.REGULAR,
+        /** Whether the contents of this transform should prevent the initial render from completing. */
+        blocking: Boolean = true,
         debugId: String = (idCounter++).toString(),
         transform: Transform<P>
     ) {
-        _transforms += AppliedTransform(debugId, type, transformCounter, triggers.toSet(), transform)
+        _transforms += AppliedTransform(debugId, blocking, transformCounter, triggers.toSet(), transform)
     }
 
     /** Adds a new reactive transform to the interface. */
     public fun addTransform(
         reactiveTransform: ReactiveTransform<P>,
-        type: TransformType = TransformType.REGULAR,
+        /** Whether the contents of this transform should prevent the initial render from completing. */
+        blocking: Boolean = true,
         debugId: String = (idCounter++).toString()
     ) {
-        _transforms += AppliedTransform(debugId, type, transformCounter, reactiveTransform.triggers.toSet(), reactiveTransform)
+        _transforms += AppliedTransform(debugId, blocking, transformCounter, reactiveTransform.triggers.toSet(), reactiveTransform)
     }
 }

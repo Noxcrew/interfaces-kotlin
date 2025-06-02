@@ -5,6 +5,8 @@ import com.noxcrew.interfaces.InterfacesConstants.SCOPE
 import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.element.CompletedElement
 import com.noxcrew.interfaces.event.DrawPaneEvent
+import com.noxcrew.interfaces.exception.InterfacesExceptionContext
+import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.interfaces.Interface
 import com.noxcrew.interfaces.interfaces.InterfaceBuilder
@@ -37,7 +39,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /** The basis for the implementation of an interface view. */
 public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interface<T, P>, P : Pane>(
@@ -101,6 +102,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     override val isTreeOpened: Boolean
         get() = shouldStillBeOpened || children.keys.any { it.isTreeOpened }
 
+    /** Whether this menu type overlaps the player inventory. */
+    public open val overlapsPlayerInventory: Boolean
+        get() = false
+
     /** The pane of this view. */
     public val completedPane: CompletedPane?
         get() = if (::pane.isInitialized) pane else null
@@ -126,10 +131,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         changingView: Boolean = reason ==
             InventoryCloseEvent.Reason.OPEN_NEW,
     ) {
-        if (!changingView) {
-            // End a possible chat query with the listener (unless we're changing views)
-            InterfacesListeners.INSTANCE.abortQuery(player.uniqueId, this)
-        }
+        // Mark this view as closed with the listener
+        InterfacesListeners.INSTANCE.markViewClosed(player.uniqueId, this, abortQuery = !changingView)
 
         // Ensure that the menu does not open
         openIfClosed.set(false)
@@ -164,7 +167,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         supervisor.cancel()
     }
 
-    private fun setup() {
+    /** Registers weak listeners on all transforms of this menu to re-render this menu. */
+    private fun initialDraw() {
         // Determine for each trigger what transforms it updates
         val triggers = HashMultimap.create<Trigger, AppliedTransform<P>>()
         for (transform in builder.transforms) {
@@ -202,6 +206,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Don't open an interface for an offline player
         if (!player.isConnected || !coroutineContext.isActive) return
 
+        // Mark this menu as the one being rendered for the player, we cancel any previous menus
+        // being rendered when a new one is set.
+        InterfacesListeners.INSTANCE.setRenderView(player.uniqueId, this)
+
         // Indicate that the menu should be opened after the next time rendering completes
         // and that it should be open right now
         openIfClosed.set(true)
@@ -214,9 +222,13 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // If this menu overlaps the player inventory we always
         // need to do a brand new first paint every time!
-        if (firstPaint || this !is ChestInterfaceView) {
+        if (overlapsPlayerInventory) {
             firstPaint = true
-            setup()
+        }
+
+        // Perform the opening with a retry loop
+        if (firstPaint) {
+            initialDraw()
         } else {
             triggerRerender()
         }
@@ -245,6 +257,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
     }
 
+    /** Triggers a re-render of the inventory based on all currently completed panes. */
     private suspend fun triggerRerender() {
         // Don't update if closed
         if (!openIfClosed.get() && !isOpen()) return
@@ -258,12 +271,22 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Await to acquire the mutex before we start rendering
         paneMutex.lock()
         try {
-            withTimeout(6.seconds) {
-                pane = panes.collapse(backing.totalRows(), builder.fillMenuWithAir)
-                renderToInventory { createdNewInventory ->
-                    // send an update packet if necessary
-                    if (!createdNewInventory && requiresPlayerUpdate()) {
-                        player.updateInventory()
+            execute(
+                InterfacesExceptionContext(
+                    player,
+                    InterfacesOperation.RENDER_INVENTORY,
+                ),
+            ) {
+                withTimeout(builder.defaultTimeout) {
+                    // Collect the panes together and add air where necessary
+                    pane = panes.collapse(backing.totalRows(), builder.fillMenuWithAir)
+
+                    // Render the completed panes
+                    renderToInventory { createdNewInventory ->
+                        // send an update packet if necessary
+                        if (!createdNewInventory && requiresPlayerUpdate()) {
+                            player.updateInventory()
+                        }
                     }
                 }
             }
@@ -277,9 +300,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
     }
 
+    /** Applies the given [transforms] to the interface. */
     private fun applyTransforms(transforms: Collection<AppliedTransform<P>>): Boolean {
         // Check if the player is offline or the server stopping
-        if (Bukkit.isStopping() || !player.isOnline) return false
+        if (Bukkit.isStopping() || !player.isConnected) return false
 
         // Ignore if the transforms are empty
         if (transforms.isEmpty()) {
@@ -290,8 +314,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             return true
         }
 
-        val instantTransforms = transforms.filter { it.type.delayRender }
-        val lazyTransforms = transforms.filterNot { it.type.delayRender }
+        val instantTransforms = transforms.filter { it.blocking }
+        val lazyTransforms = transforms.filterNot { it.blocking }
 
         if (instantTransforms.isEmpty() || lazyTransforms.isEmpty()) {
             // If either category is empty we run everything immediately
@@ -323,10 +347,29 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                                 // Removes the first pending transform
                                 val transform = pendingTransforms.remove()
 
-                                // Don't run transforms for an offline player!
-                                if (!Bukkit.isStopping() && player.isOnline) {
-                                    withTimeout(6.seconds) {
-                                        runTransformAndApplyToPanes(transform)
+                                // Handle executions properly for rendering transforms
+                                execute(
+                                    InterfacesExceptionContext(
+                                        player,
+                                        InterfacesOperation.APPLY_TRANSFORM,
+                                    ),
+                                ) {
+                                    // Apply the transformation to the pane and build it within
+                                    // the allowed timeout!
+                                    val completedPane = withTimeout(builder.defaultTimeout) {
+                                        val pane = backing.createPane()
+                                        transform(pane, this@AbstractInterfaceView)
+                                        pane.complete(player)
+                                    }
+
+                                    // Access to the pane has to be shared through a semaphore
+                                    // for extra safety, but we are just storing it!
+                                    // Don't apply a timeout to waiting in this queue!
+                                    paneMutex.lock()
+                                    try {
+                                        panes[transform.priority] = completedPane
+                                    } finally {
+                                        paneMutex.unlock()
                                     }
                                 }
                             }
@@ -369,19 +412,26 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                             // Determine which element needs to be updated
                             val element = normalInventoryLazy.poll() ?: playerInventoryLazy.poll() ?: break
 
-                            // We cap decorations at 6 seconds per item!
-                            withTimeout(6.seconds) {
-                                val item = element.itemStack?.clone() ?: ItemStack.empty()
-                                element.pendingLazy?.decorate(player, item)
-                                element.pendingLazy = null
-                                element.itemStack = if (item.isEmpty) null else item
+                            execute(
+                                InterfacesExceptionContext(
+                                    player,
+                                    InterfacesOperation.DECORATING_ELEMENT,
+                                ),
+                            ) {
+                                // With the timeout execute the lazy decoration task
+                                withTimeout(builder.defaultTimeout) {
+                                    val item = element.itemStack?.clone() ?: ItemStack.empty()
+                                    element.pendingLazy?.decorate(player, item)
+                                    element.pendingLazy = null
+                                    element.itemStack = if (item.isEmpty) null else item
+                                }
 
                                 // If we're already rendering we simply queue up the re-render but
                                 // continue in this coroutine so we can hopefully get multiple
                                 // elements decorated before to debounce is done.
                                 if (paneMutex.isLocked) {
                                     debouncedRender.set(true)
-                                    return@withTimeout
+                                    return@execute
                                 }
 
                                 // Trigger a re-rendering of the menu after each
@@ -400,31 +450,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 }
             } finally {
                 decorationMutex.unlock()
-            }
-        }
-    }
-
-    private suspend fun runTransformAndApplyToPanes(transform: AppliedTransform<P>) {
-        val pane = backing.createPane()
-        try {
-            transform(pane, this@AbstractInterfaceView)
-            val completedPane = pane.complete(player)
-
-            // Access to the pane has to be shared through a semaphore
-            paneMutex.lock()
-            try {
-                panes[transform.priority] = completedPane
-            } finally {
-                paneMutex.unlock()
-            }
-        } catch (x: Exception) {
-            logger.error("Encountered exception while drawing transform ${transform.debugId}", x)
-
-            // To prevent the player getting stuck in an unknown state we close the menu
-            // so they can possibly return to some player inventory open below. If your player
-            // inventory has issues you are on your own.
-            if (transform.type.closeOnError) {
-                close(InventoryCloseEvent.Reason.UNKNOWN)
             }
         }
     }
@@ -598,4 +623,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     override fun runChatQuery(timeout: Duration, onCancel: suspend () -> Unit, onComplete: suspend (Component) -> Boolean) {
         InterfacesListeners.INSTANCE.startChatQuery(this, timeout, onCancel, onComplete)
     }
+
+    /** Executes [function], reporting any errors to the [InterfacesExceptionHandler] being used. */
+    public suspend fun <T> execute(context: InterfacesExceptionContext, function: suspend () -> T): T? =
+        builder.exceptionHandler.execute(context.copy(view = this), function)
 }

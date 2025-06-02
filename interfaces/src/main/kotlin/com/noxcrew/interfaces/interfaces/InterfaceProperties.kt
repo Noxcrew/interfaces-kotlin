@@ -1,10 +1,14 @@
 package com.noxcrew.interfaces.interfaces
 
 import com.noxcrew.interfaces.click.ClickHandler
+import com.noxcrew.interfaces.exception.InterfacesExceptionHandler
+import com.noxcrew.interfaces.exception.StandardInterfacesExceptionHandler
 import com.noxcrew.interfaces.pane.Pane
 import org.bukkit.event.block.Action
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /** Stores all shared properties of an interface. */
 public open class InterfaceProperties<P : Pane> {
@@ -70,6 +74,12 @@ public open class InterfaceProperties<P : Pane> {
 
     /** Whether to place empty air elements in all background slots. */
     public var fillMenuWithAir: Boolean = false
+
+    /** The timeout to apply to all coroutines for this menu. */
+    public var defaultTimeout: Duration = 2.5.seconds
+
+    /** The exception handler to use for this interface. */
+    public var exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler
 
     /** Adds a new close handler [closeHandler] that triggers whenever the inventory is closed for any of the given [reasons]. */
     public fun addCloseHandler(reasons: Collection<InventoryCloseEvent.Reason> = DEFAULT_REASONS, closeHandler: CloseHandler) {

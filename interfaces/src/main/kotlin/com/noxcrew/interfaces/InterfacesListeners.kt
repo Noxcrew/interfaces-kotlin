@@ -48,6 +48,7 @@ import org.bukkit.plugin.Plugin
 import org.slf4j.LoggerFactory
 import java.util.EnumSet
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
@@ -151,20 +152,23 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         .build()
 
     /** A map of all ongoing chat queries. */
-    private val queries = mutableMapOf<UUID, ChatQuery>()
+    private val queries = ConcurrentHashMap<UUID, ChatQuery>()
 
     /** A map of player interfaces that should be opened again in the future. */
-    private val backgroundPlayerInterfaceViews = mutableMapOf<UUID, PlayerInterfaceView>()
+    private val backgroundPlayerInterfaceViews = ConcurrentHashMap<UUID, PlayerInterfaceView>()
 
     /** A map of actively open player interfaces. */
-    private val openPlayerInterfaceViews = mutableMapOf<UUID, PlayerInterfaceView>()
+    private val openPlayerInterfaceViews = ConcurrentHashMap<UUID, PlayerInterfaceView>()
+
+    /** A map of interfaces being rendered for each player. */
+    private val renderingPlayerInterfaceViews = ConcurrentHashMap<UUID, InterfaceView>()
 
     /** Re-opens the current background interface of [player]. */
     public fun reopenInventory(player: Player) {
         (getOpenPlayerInterface(player.uniqueId) ?: getBackgroundPlayerInterface(player.uniqueId))?.also {
             SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
                 if (!it.reopen()) {
-                    closePlayerInterface(player.uniqueId, it)
+                    markViewClosed(player.uniqueId, it)
                 }
             }
         }
@@ -193,28 +197,34 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         return null
     }
 
+    /** Sets the view currently being rendered for [playerId] to [view]. */
+    public suspend fun setRenderView(playerId: UUID, view: InterfaceView) {
+        renderingPlayerInterfaceViews.put(playerId, view)?.close(Reason.OPEN_NEW)
+    }
+
+    /** Moves any currently open player interface to the background view. */
+    public fun demoteOpenView(playerId: UUID) {
+        val view = openPlayerInterfaceViews.remove(playerId) ?: return
+        backgroundPlayerInterfaceViews[playerId] = view
+    }
+
     /** Marks the given [view] as the opened player interface. */
-    public fun openPlayerInterface(playerId: UUID, view: PlayerInterfaceView) {
-        backgroundPlayerInterfaceViews -= playerId
+    public fun setOpenView(playerId: UUID, view: PlayerInterfaceView) {
+        renderingPlayerInterfaceViews.remove(playerId, view)
+        backgroundPlayerInterfaceViews.remove(playerId, view)
         openPlayerInterfaceViews[playerId] = view
     }
 
-    /** Sets the background view for [playerId] to [view]. */
-    public fun setBackgroundView(playerId: UUID, view: PlayerInterfaceView?) {
-        if (view == null) {
-            backgroundPlayerInterfaceViews -= playerId
-        } else {
-            backgroundPlayerInterfaceViews[playerId] = view
+    /** Marks the given [view] of a player to be closed. */
+    public fun markViewClosed(playerId: UUID, view: InterfaceView?, abortQuery: Boolean = true) {
+        if (abortQuery) {
+            abortQuery(playerId, view)
         }
-    }
-
-    /** Closes the given [view] of a player interface. */
-    public fun closePlayerInterface(playerId: UUID, view: PlayerInterfaceView?) {
-        abortQuery(playerId, view)
         if (view == null) {
             backgroundPlayerInterfaceViews -= playerId
             openPlayerInterfaceViews -= playerId
         } else {
+            renderingPlayerInterfaceViews.remove(playerId, view)
             backgroundPlayerInterfaceViews.remove(playerId, view)
             openPlayerInterfaceViews.remove(playerId, view)
         }
@@ -244,9 +254,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Move the current open inventory to the background to indicate
         // it is no longer the actually opened inventory!
-        openPlayerInterfaceViews.remove(event.player.uniqueId)?.also {
-            setBackgroundView(event.player.uniqueId, it)
-        }
+        demoteOpenView(event.player.uniqueId)
 
         // Abort any previous query the player had
         abortQuery(event.player.uniqueId, null)
@@ -276,7 +284,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             // If possible, open back up a previous interface
             if (shouldReopen) {
                 if (!requireNotNull(backgroundInterface).reopen()) {
-                    closePlayerInterface(event.player.uniqueId, backgroundInterface)
+                    markViewClosed(event.player.uniqueId, backgroundInterface)
                 }
             }
         }
@@ -418,7 +426,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler
     public fun onPlayerQuit(event: PlayerQuitEvent) {
-        closePlayerInterface(event.player.uniqueId, null)
+        markViewClosed(event.player.uniqueId, null)
     }
 
     /** Returns whether [block] will trigger some interaction if clicked with [item]. */
@@ -698,7 +706,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             view.player.closeInventory(Reason.OPEN_NEW)
 
             // Ensure the view is allowed to be opened again after we're done
-            if (reopen) (view as AbstractInterfaceView<*, *, *>).markAsReopenable()
+            if (reopen) {
+                (view as AbstractInterfaceView<*, *, *>).markAsReopenable()
+            }
 
             // Clear the inventory
             view.player.inventory.clear()
