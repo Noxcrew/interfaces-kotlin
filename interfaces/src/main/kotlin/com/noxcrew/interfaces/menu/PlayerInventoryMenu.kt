@@ -4,6 +4,7 @@ import com.noxcrew.interfaces.exception.InterfacesExceptionContext
 import com.noxcrew.interfaces.exception.InterfacesExceptionHandler
 import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.exception.StandardInterfacesExceptionHandler
+import com.noxcrew.interfaces.interfaces.PlayerInterface
 import com.noxcrew.interfaces.interfaces.PlayerInterfaceBuilder
 import com.noxcrew.interfaces.interfaces.buildPlayerInterface
 import com.noxcrew.interfaces.view.InterfaceView
@@ -18,17 +19,18 @@ public abstract class PlayerInventoryMenu : BaseInventoryMenu {
     /** Configures the GUI for the given [player]. */
     protected abstract suspend fun PlayerInterfaceBuilder.configure(player: Player)
 
+    /** Builds the menu. */
+    protected open suspend fun buildMenu(player: Player): PlayerInterface = buildPlayerInterface {
+        configure(player)
+    }
+
     override suspend fun open(player: Player, parent: InterfaceView?): PlayerInterfaceView? {
         val menu = exceptionHandler.execute(
             InterfacesExceptionContext(
                 player,
                 InterfacesOperation.BUILDING_PLAYER,
             ),
-        ) {
-            buildPlayerInterface {
-                configure(player)
-            }
-        } ?: return null
+        ) { buildMenu(player) } ?: return null
         return openMenu(player, parent, menu) as PlayerInterfaceView
     }
 }
