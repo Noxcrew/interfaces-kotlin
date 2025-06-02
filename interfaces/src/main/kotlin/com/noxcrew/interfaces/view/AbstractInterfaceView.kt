@@ -102,7 +102,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     private var decoratingJob: Job? = null
     private val decorationMutex = Mutex()
 
-    private val panes = CollapsablePaneMap.create(backing.createPane())
+    private val panes = CollapsablePaneMap.create()
     private lateinit var pane: CompletedPane
 
     private var normalInventoryLazy: ConcurrentLinkedQueue<CompletedElement> = ConcurrentLinkedQueue()
