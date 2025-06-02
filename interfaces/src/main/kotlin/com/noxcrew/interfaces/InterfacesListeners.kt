@@ -281,6 +281,17 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val view = holder as? AbstractInterfaceView<*, *, *> ?: return
         val reason = event.reason
 
+        /*
+            For reasons incomprehensible to the human mind, when you open a new inventory
+            it calls a close event on that inventory when opening. It recognises that you
+            switched from the player inventory to a new inventory, but it passes you the
+            new inventory instead of the old one?
+
+            So we just ignore a close event on a view that we are currently rendering as
+            that is clearly the one we are currently opening, not the previous one.
+         */
+        if (reason == Reason.OPEN_NEW && renderingPlayerInterfaceViews[event.player.uniqueId] == view) return
+
         // Saves any persistent items stored in the given inventory, then close it
         view.savePersistentItems(event.inventory)
         view.markClosed(SCOPE, reason)

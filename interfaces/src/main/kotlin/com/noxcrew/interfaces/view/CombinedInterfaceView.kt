@@ -39,8 +39,8 @@ public class CombinedInterfaceView internal constructor(
     )
 
     override fun openInventory() {
-        InterfacesListeners.INSTANCE.completeRendering(player.uniqueId, this)
         player.openInventory(this.inventory)
+        InterfacesListeners.INSTANCE.completeRendering(player.uniqueId, this)
     }
 
     override fun requiresPlayerUpdate(): Boolean = false
