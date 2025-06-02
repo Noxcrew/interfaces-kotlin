@@ -2,7 +2,6 @@ package com.noxcrew.interfaces.grid.mapping
 
 import com.noxcrew.interfaces.grid.mapping.GridMapper.PlayerInventory.Companion.PLAYER_INV_ROWS
 import com.noxcrew.interfaces.utilities.gridPointToBukkitIndex
-import com.noxcrew.interfaces.view.AbstractInterfaceView
 import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
 
 /** Handles [com.noxcrew.interfaces.grid.GridPoint] mapping for containers combining Chest and Player inventory. */

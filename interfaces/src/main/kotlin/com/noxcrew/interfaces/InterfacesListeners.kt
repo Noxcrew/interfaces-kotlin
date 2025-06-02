@@ -9,7 +9,6 @@ import com.noxcrew.interfaces.click.ClickContext
 import com.noxcrew.interfaces.click.ClickHandler
 import com.noxcrew.interfaces.click.CompletableClickHandler
 import com.noxcrew.interfaces.grid.GridPoint
-import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.view.AbstractInterfaceView

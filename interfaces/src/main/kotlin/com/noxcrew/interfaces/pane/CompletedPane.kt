@@ -8,7 +8,6 @@ import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.grid.HashGridMap
 import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.utilities.forEachInGrid
-import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
 import org.bukkit.entity.Player
 
 /** A grid map of completed elements. */
