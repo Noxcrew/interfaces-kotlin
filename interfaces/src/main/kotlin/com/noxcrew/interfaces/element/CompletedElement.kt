@@ -7,7 +7,7 @@ import org.bukkit.inventory.ItemStack
 /** A drawn element that includes an [itemStack] to show and a [clickHandler] to run. */
 public data class CompletedElement(
     public var itemStack: ItemStack?,
-    public val clickHandler: ClickHandler,
+    public val clickHandler: ClickHandler? = null,
     public var pendingLazy: LazyElement? = null,
 )
 

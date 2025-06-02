@@ -72,8 +72,8 @@ public open class InterfaceProperties<P : Pane> {
     /** Whether close handlers should be called when switching to a different view. */
     public var callCloseHandlerOnViewSwitch: Boolean = false
 
-    /** Whether to place empty air elements in all background slots. */
-    public var fillMenuWithAir: Boolean = false
+    /** Whether to trigger click events on all empty slots. */
+    public var allowClickingEmptySlots: Boolean = false
 
     /** The timeout to apply to all coroutines for this menu. */
     public var defaultTimeout: Duration = 2.5.seconds

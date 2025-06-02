@@ -27,9 +27,9 @@ internal suspend fun Pane.complete(player: Player): CompletedPane {
 }
 
 /** Fills up a completed pane with empty elements. */
-internal fun Pane.convertToEmptyCompletedPaneAndFill(mapper: GridMapper): CompletedPane {
+internal fun Pane.convertToEmptyCompletedPaneAndFill(mapper: GridMapper, allowClickingEmptySlots: Boolean): CompletedPane {
     val pane = CompletedPane()
-    val airElement = CompletedElement(null, ClickHandler.EMPTY)
+    val airElement = CompletedElement(null, if (allowClickingEmptySlots) ClickHandler.EMPTY else null)
     mapper.forEachInGrid { row, column ->
         pane[row, column] = airElement
     }

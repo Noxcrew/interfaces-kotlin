@@ -30,12 +30,12 @@ internal class CollapsablePaneMap private constructor(
         return internal.put(key, value)
     }
 
-    internal fun collapse(mapper: GridMapper, fill: Boolean): CompletedPane {
+    internal fun collapse(mapper: GridMapper, allowClickingEmptySlots: Boolean): CompletedPane {
         cachedPane?.let { pane ->
             return pane
         }
 
-        val pane = if (fill) basePane.convertToEmptyCompletedPaneAndFill(mapper) else CompletedPane()
+        val pane = basePane.convertToEmptyCompletedPaneAndFill(mapper, allowClickingEmptySlots)
         val current = internal.toMap().values
 
         current.forEach { layer ->
