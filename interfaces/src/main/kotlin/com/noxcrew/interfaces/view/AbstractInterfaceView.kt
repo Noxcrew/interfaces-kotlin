@@ -36,12 +36,24 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.slf4j.LoggerFactory
 import java.util.WeakHashMap
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 
-/** The basis for the implementation of an interface view. */
+/**
+ * The basis for the implementation of an interface view. A view holds a lot of information in memory, so
+ * it should be weakly referenced anywhere that it is not held as the currently opened menu or as a parent
+ * of a currently open menu. Any interface held in memory listens for changes, but no updates are processed
+ * until the menu is re-opened.
+ *
+ * It is critical to ensure your views are properly garbage collected when they are discarded. Avoid keeping
+ * references to views anywhere and make sure the open view stays referenced (done in InterfacesListeners) to
+ * prevent them being collected before they are ready.
+ *
+ * For non-player inventories this object is used as the inventory holder so Bukkit retains the reference.
+ */
 public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interface<T, P>, P : Pane>(
     override val player: Player,
     /** The interface backing this view. */
@@ -78,10 +90,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     private val shouldBeOpened = AtomicBoolean(false)
     private val openIfClosed = AtomicBoolean(false)
 
-    private val supervisor = SupervisorJob()
+    private var supervisor = SupervisorJob()
 
     private val pendingTransforms = ConcurrentLinkedQueue<AppliedTransform<P>>()
     private var lazyPending = ConcurrentLinkedQueue<AppliedTransform<P>>()
+    private var queuedTransforms = ConcurrentHashMap.newKeySet<AppliedTransform<P>>()
 
     private var transformingJob: Job? = null
     private val transformMutex = Mutex()
@@ -110,6 +123,25 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     /** The pane of this view. */
     public val completedPane: CompletedPane?
         get() = if (::pane.isInitialized) pane else null
+
+    init {
+        // Determine for each trigger what transforms it updates
+        val triggers = HashMultimap.create<Trigger, AppliedTransform<P>>()
+        for (transform in builder.transforms) {
+            for (trigger in transform.triggers) {
+                triggers.put(trigger, transform)
+            }
+        }
+
+        // Add listeners to all triggers and update its transforms
+        for ((trigger, transforms) in triggers.asMap()) {
+            if (transforms.isEmpty()) continue
+            trigger.addListener(this) {
+                // Apply the transforms for the new ones
+                applyTransforms(transforms)
+            }
+        }
+    }
 
     /** Creates a new inventory GUI. */
     public abstract fun createInventory(): I
@@ -164,8 +196,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             }
         }
 
-        // Cancel the supervisor job to cancel any rendering attempts
+        // Cancel the supervisor job to cancel any rendering attempts, create a new supervisor for
+        // any new tasks to run or if the menu is re-opened.
         supervisor.cancel()
+        supervisor = SupervisorJob()
 
         // Test if a background menu should be opened
         val backgroundInterface = InterfacesListeners.INSTANCE.getBackgroundPlayerInterface(player.uniqueId)
@@ -175,30 +209,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 backgroundInterface?.reopen()
             }
         }
-    }
-
-    /** Registers weak listeners on all transforms of this menu to re-render this menu. */
-    private fun initialDraw() {
-        // Determine for each trigger what transforms it updates
-        val triggers = HashMultimap.create<Trigger, AppliedTransform<P>>()
-        for (transform in builder.transforms) {
-            for (trigger in transform.triggers) {
-                triggers.put(trigger, transform)
-            }
-        }
-
-        // Add listeners to all triggers and update its transforms
-        for ((trigger, transforms) in triggers.asMap()) {
-            if (transforms.isEmpty()) continue
-            trigger.addListener(this) {
-                // Apply the transforms for the new ones
-                applyTransforms(transforms)
-            }
-        }
-
-        // Run a complete update which draws all transforms
-        // and then opens the menu again
-        redrawComplete()
     }
 
     override fun redrawComplete() {
@@ -242,17 +252,18 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             parent.children[this] = Unit
         }
 
-        // If this menu overlaps the player inventory we always
-        // need to do a brand new first paint every time!
-        if (overlapsPlayerInventory) {
-            firstPaint = true
-        }
-
-        // Perform the opening with a retry loop
+        // Either draw the entire interface or just re-render it
         if (firstPaint) {
-            initialDraw()
+            redrawComplete()
         } else {
-            triggerRerender()
+            // Run any queued transforms while the menu was not shown if applicable
+            val queued = queuedTransforms
+            if (queued.isNotEmpty()) {
+                queuedTransforms = ConcurrentHashMap.newKeySet()
+                applyTransforms(queued)
+            } else {
+                triggerRerender()
+            }
         }
     }
 
@@ -327,6 +338,13 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Check if the player is offline or the server stopping
         if (Bukkit.isStopping() || !player.isConnected) return false
 
+        // Ignore drawing transforms if the menu should be closed, but store them as
+        // queued so we can execute them if we are asked to re-open!
+        if (!shouldStillBeOpened) {
+            queuedTransforms += transforms
+            return false
+        }
+
         // Ignore if the transforms are empty
         if (transforms.isEmpty()) {
             // If there are no transforms we still need to open it!
@@ -336,8 +354,12 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             return true
         }
 
-        val instantTransforms = transforms.filter { it.blocking }
-        val lazyTransforms = transforms.filterNot { it.blocking }
+        // Determine only the transforms that are not already pending!
+        val alreadyQueuedTransforms = pendingTransforms.plus(lazyPending).toSet()
+        val newTransforms = transforms.minus(alreadyQueuedTransforms)
+        if (newTransforms.isEmpty()) return true
+        val instantTransforms = newTransforms.filter { it.blocking }
+        val lazyTransforms = newTransforms.filterNot { it.blocking }
 
         if (instantTransforms.isEmpty() || lazyTransforms.isEmpty()) {
             // If either category is empty we run everything immediately
