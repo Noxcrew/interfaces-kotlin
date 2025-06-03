@@ -623,6 +623,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Prevent clicking on a decoration that is still loading!
         if (raw.pendingLazy?.requireDecorationToClick == true) {
+            // Ensure decorations are running right now!
+            view.ensureDecorating()
             return true
         }
 

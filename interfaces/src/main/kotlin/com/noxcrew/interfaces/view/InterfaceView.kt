@@ -71,6 +71,9 @@ public interface InterfaceView {
     /** Redraws all transforms in this view. */
     public fun redrawComplete()
 
+    /** Ensures the decoration task is running. */
+    public fun ensureDecorating()
+
     /**
      * Sends a chat query for this player. This view will temporarily close, allowing the player
      * to send a chat message. After a chat message is sent the result is passed to a predicate

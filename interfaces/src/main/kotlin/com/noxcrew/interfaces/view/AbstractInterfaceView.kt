@@ -7,6 +7,7 @@ import com.noxcrew.interfaces.InterfacesListeners.Companion.REOPEN_REASONS
 import com.noxcrew.interfaces.element.CompletedElement
 import com.noxcrew.interfaces.event.DrawPaneEvent
 import com.noxcrew.interfaces.exception.InterfacesExceptionContext
+import com.noxcrew.interfaces.exception.InterfacesExceptionResolution
 import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.interfaces.Interface
@@ -14,12 +15,10 @@ import com.noxcrew.interfaces.interfaces.InterfaceBuilder
 import com.noxcrew.interfaces.inventory.InterfacesInventory
 import com.noxcrew.interfaces.pane.CompletedPane
 import com.noxcrew.interfaces.pane.Pane
-import com.noxcrew.interfaces.pane.complete
 import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.utilities.CollapsablePaneMap
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
-import com.noxcrew.interfaces.utilities.forEachInGrid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -92,8 +91,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     private var supervisor = SupervisorJob()
 
+    /** All transforms to process, split between blocking and non-blocking. */
     private val pendingTransforms = ConcurrentLinkedQueue<AppliedTransform<P>>()
-    private var lazyPending = ConcurrentLinkedQueue<AppliedTransform<P>>()
+    private var pendingNonBlockingTransforms = ConcurrentLinkedQueue<AppliedTransform<P>>()
+
+    /** All transforms queued for a future open of the menu. */
     private var queuedTransforms = ConcurrentHashMap.newKeySet<AppliedTransform<P>>()
 
     private var transformingJob: Job? = null
@@ -105,8 +107,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     private val panes = CollapsablePaneMap.create()
     private lateinit var pane: CompletedPane
 
-    private var normalInventoryLazy: ConcurrentLinkedQueue<CompletedElement> = ConcurrentLinkedQueue()
-    private var playerInventoryLazy: ConcurrentLinkedQueue<CompletedElement> = ConcurrentLinkedQueue()
+    /** All elements that need to be lazily updated. */
+    private var lazyElements: ConcurrentLinkedQueue<CompletedElement> = ConcurrentLinkedQueue()
 
     protected lateinit var currentInventory: I
 
@@ -137,7 +139,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         for ((trigger, transforms) in triggers.asMap()) {
             if (transforms.isEmpty()) continue
             trigger.addListener(this) {
-                // Apply the transforms for the new ones
+                // Inform the transform that the trigger has occurred
+                transforms.forEach { it.handleChange(trigger) }
                 applyTransforms(transforms)
             }
         }
@@ -355,7 +358,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
 
         // Determine only the transforms that are not already pending!
-        val alreadyQueuedTransforms = pendingTransforms.plus(lazyPending).toSet()
+        val alreadyQueuedTransforms = pendingTransforms.plus(pendingNonBlockingTransforms).toSet()
         val newTransforms = transforms.minus(alreadyQueuedTransforms)
         if (newTransforms.isEmpty()) return true
         val instantTransforms = newTransforms.filter { it.blocking }
@@ -367,7 +370,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         } else {
             // Both categories must be filled so we separate them
             pendingTransforms.addAll(instantTransforms)
-            lazyPending.addAll(lazyTransforms)
+            pendingNonBlockingTransforms.addAll(lazyTransforms)
         }
 
         // Ignore if we know there is already a job as it will go through all pending transforms
@@ -400,11 +403,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                                 ) {
                                     // Apply the transformation to the pane and build it within
                                     // the allowed timeout!
-                                    val completedPane = withTimeout(builder.defaultTimeout) {
-                                        val pane = backing.createPane()
-                                        transform(pane, this@AbstractInterfaceView)
-                                        pane.complete(player)
-                                    }
+                                    val completedPane =
+                                        transform.completePane(backing.createPane(), player, builder, this@AbstractInterfaceView)
 
                                     // Access to the pane has to be shared through a semaphore
                                     // for extra safety, but we are just storing it!
@@ -424,8 +424,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
                             // After we complete a render we add any lazy transforms to the pending
                             // list which may cause us to keep rendering even after the re-render
-                            val oldLazy = lazyPending
-                            lazyPending = ConcurrentLinkedQueue<AppliedTransform<P>>()
+                            val oldLazy = pendingNonBlockingTransforms
+                            pendingNonBlockingTransforms = ConcurrentLinkedQueue<AppliedTransform<P>>()
                             pendingTransforms += oldLazy
                         }
                     }
@@ -437,10 +437,19 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         return true
     }
 
+    override fun ensureDecorating() {
+        // Updates the current list of lazy elements to mirror all currently lazy elements
+        val lazyElements = ConcurrentLinkedQueue<CompletedElement>()
+        completedPane?.forEach { _, _, element ->
+            element.pendingLazy?.also { lazyElements += element }
+        }
+        this.lazyElements = lazyElements
+    }
+
     /** Starts a task to lazily decorate items. */
     private fun lazilyDecorateItems() {
         // Try to start decorating if there is not already a job running
-        if (decoratingJob != null && decoratingJob?.isCompleted == false) return
+        if (decoratingJob?.isCompleted != true) return
 
         SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering lazy draw") + supervisor) {
             try {
@@ -448,27 +457,44 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 decorationMutex.lock()
 
                 // Start the job if it's not running currently!
-                if (decoratingJob == null || decoratingJob?.isCompleted == true) {
+                if (decoratingJob?.isCompleted != true) {
                     decoratingJob = SCOPE.launch(
                         InterfacesCoroutineDetails(player.uniqueId, "lazily decorating items") + supervisor,
                     ) {
                         while (true) {
                             // Determine which element needs to be updated
-                            val element = normalInventoryLazy.poll() ?: playerInventoryLazy.poll() ?: break
-
+                            val element = lazyElements.poll() ?: break
+                            if (element.pendingLazy == null) continue
                             execute(
                                 InterfacesExceptionContext(
                                     player,
                                     InterfacesOperation.DECORATING_ELEMENT,
                                 ),
+                                onException = { _, resolution ->
+                                    when (resolution) {
+                                        InterfacesExceptionResolution.CLOSE -> return@execute
+
+                                        InterfacesExceptionResolution.RETRY -> {
+                                            // If the element was not finished we re-add it to the lazy list!
+                                            if (element.pendingLazy != null) {
+                                                lazyElements += element
+                                            }
+                                        }
+
+                                        InterfacesExceptionResolution.IGNORE -> {
+                                            // Don't attempt to run the lazy logic!
+                                            element.pendingLazy = null
+                                        }
+                                    }
+                                },
                             ) {
                                 // With the timeout execute the lazy decoration task
+                                val item = element.itemStack?.clone() ?: ItemStack.empty()
                                 withTimeout(builder.defaultTimeout) {
-                                    val item = element.itemStack?.clone() ?: ItemStack.empty()
                                     element.pendingLazy?.decorate(player, item)
-                                    element.pendingLazy = null
-                                    element.itemStack = if (item.isEmpty) null else item
                                 }
+                                element.pendingLazy = null
+                                element.itemStack = if (item.isEmpty) null else item
 
                                 // If we're already rendering we simply queue up the re-render but
                                 // continue in this coroutine so we can hopefully get multiple
@@ -511,6 +537,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         var madeChanges = false
         val lazyElements = ConcurrentLinkedQueue<CompletedElement>()
         completedPane?.forEach { row, column, element ->
+            // Add all lazy elements to the list
+            element.pendingLazy?.also { lazyElements += element }
+
             // We defer drawing of any elements in the player inventory itself
             // for later unless the inventory is already open.
             val isPlayerInventory = mapper.isPlayerInventory(row, column)
@@ -521,7 +550,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 column,
                 element.itemStack.apply { this?.let { builder.itemPostProcessor?.invoke(it) } },
             )
-            element.pendingLazy?.also { lazyElements += element }
             leftovers -= row to column
             madeChanges = true
         }
@@ -531,14 +559,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // This prevents us from continuing to lazily decorate items that are
         // no longer drawn to the screen! (if players browse away from loading
         // pages)
-        if (drawNormalInventory) {
-            normalInventoryLazy = lazyElements
-            if (drawPlayerInventory) {
-                playerInventoryLazy = ConcurrentLinkedQueue()
-            }
-        } else if (drawPlayerInventory) {
-            playerInventoryLazy = lazyElements
-        }
+        this.lazyElements = lazyElements
         if (lazyElements.isNotEmpty()) {
             lazilyDecorateItems()
         }
@@ -673,6 +694,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     /** Executes [function], reporting any errors to the [InterfacesExceptionHandler] being used. */
-    public suspend fun <T> execute(context: InterfacesExceptionContext, function: suspend () -> T): T? =
-        builder.exceptionHandler.execute(context.copy(view = this), function)
+    public suspend fun <T> execute(
+        context: InterfacesExceptionContext,
+        onException: suspend (Exception, InterfacesExceptionResolution) -> Unit = { _, _ -> },
+        function: suspend () -> T,
+    ): T? =
+        builder.exceptionHandler.execute(context.copy(view = this), onException, function)
 }

@@ -25,7 +25,7 @@ public abstract class PagedTransformation<P : Pane>(
     protected var page: Int by boundPage
 
     override suspend fun invoke(pane: P, view: InterfaceView) {
-        if (boundPage.hasPreceeding()) {
+        if (boundPage.hasPreceding()) {
             applyButton(pane, back)
         }
 

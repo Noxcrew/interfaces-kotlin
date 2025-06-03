@@ -11,7 +11,11 @@ public fun interface InterfacesExceptionHandler {
     public suspend fun handleException(exception: Exception, context: InterfacesExceptionContext): InterfacesExceptionResolution
 
     /** Executes [function], reporting any errors to the [InterfacesExceptionHandler] being used. */
-    public suspend fun <T> execute(context: InterfacesExceptionContext, function: suspend () -> T,): T? {
+    public suspend fun <T> execute(
+        context: InterfacesExceptionContext,
+        onException: suspend (Exception, InterfacesExceptionResolution) -> Unit = { _, _ -> },
+        function: suspend () -> T,
+    ): T? {
         try {
             return function()
         } catch (x: CancellationException) {
@@ -19,13 +23,14 @@ public fun interface InterfacesExceptionHandler {
             return null
         } catch (x: Exception) {
             val resolution = handleException(x, context)
+            onException(x, resolution)
             when (resolution) {
                 InterfacesExceptionResolution.RETRY -> {
                     // If the player has disconnected, always stop trying!
                     // If an implementation returns retry for a disconnected player assume
                     // they meant ignore.
                     if (Bukkit.isStopping() || !context.player.isConnected) return null
-                    return execute(context.copy(retries = context.retries + 1), function)
+                    return execute(context.copy(retries = context.retries + 1), onException, function)
                 }
 
                 InterfacesExceptionResolution.CLOSE -> {

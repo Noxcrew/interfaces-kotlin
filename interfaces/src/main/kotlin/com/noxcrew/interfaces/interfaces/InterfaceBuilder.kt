@@ -4,6 +4,7 @@ import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.transform.ReactiveTransform
+import com.noxcrew.interfaces.transform.StatefulTransform
 import com.noxcrew.interfaces.transform.Transform
 import com.noxcrew.interfaces.utilities.IncrementingInteger
 
@@ -12,7 +13,6 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
 
     private val transformCounter by IncrementingInteger()
     private val _transforms: MutableCollection<AppliedTransform<P>> = mutableListOf()
-    private var idCounter = 0
 
     /** All transforms in this builder. */
     public val transforms: Collection<AppliedTransform<P>>
@@ -26,10 +26,9 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
         vararg triggers: Trigger,
         /** Whether the contents of this transform should prevent the initial render from completing. */
         blocking: Boolean = true,
-        debugId: String = (idCounter++).toString(),
-        transform: Transform<P>
+        transform: Transform<P>,
     ) {
-        _transforms += AppliedTransform(debugId, blocking, transformCounter, triggers.toSet(), transform)
+        _transforms += AppliedTransform(blocking, transformCounter, triggers.toSet(), transform)
     }
 
     /** Adds a new reactive transform to the interface. */
@@ -37,8 +36,17 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
         reactiveTransform: ReactiveTransform<P>,
         /** Whether the contents of this transform should prevent the initial render from completing. */
         blocking: Boolean = true,
-        debugId: String = (idCounter++).toString()
     ) {
-        _transforms += AppliedTransform(debugId, blocking, transformCounter, reactiveTransform.triggers.toSet(), reactiveTransform)
+        _transforms += AppliedTransform(blocking, transformCounter, reactiveTransform.triggers.toSet(), reactiveTransform)
+    }
+
+    /** Adds a new stateful transform to the interface. */
+    public fun <T> addTransform(
+        statefulTransform: StatefulTransform<P, T>,
+        vararg triggers: Trigger,
+        /** Whether the contents of this transform should prevent the initial render from completing. */
+        blocking: Boolean = true,
+    ) {
+        _transforms += AppliedTransform(blocking, transformCounter, setOf(statefulTransform.property).plus(triggers.toSet()), statefulTransform)
     }
 }
