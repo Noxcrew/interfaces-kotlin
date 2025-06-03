@@ -698,6 +698,5 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         context: InterfacesExceptionContext,
         onException: suspend (Exception, InterfacesExceptionResolution) -> Unit = { _, _ -> },
         function: suspend () -> T,
-    ): T? =
-        builder.exceptionHandler.execute(context.copy(view = this), onException, function)
+    ): T? = builder.exceptionHandler.execute(context.copy(view = this), onException, function)
 }

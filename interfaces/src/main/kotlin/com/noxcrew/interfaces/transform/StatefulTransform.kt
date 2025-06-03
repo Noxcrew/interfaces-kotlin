@@ -2,7 +2,6 @@ package com.noxcrew.interfaces.transform
 
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.properties.InterfaceProperty
-import com.noxcrew.interfaces.properties.Trigger
 
 /**
  * A transform whose state solely relies on a singular property

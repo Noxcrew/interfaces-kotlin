@@ -47,6 +47,11 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
         /** Whether the contents of this transform should prevent the initial render from completing. */
         blocking: Boolean = true,
     ) {
-        _transforms += AppliedTransform(blocking, transformCounter, setOf(statefulTransform.property).plus(triggers.filterNotNull().toSet()), statefulTransform)
+        _transforms += AppliedTransform(
+            blocking,
+            transformCounter,
+            setOf(statefulTransform.property).plus(triggers.filterNotNull().toSet()),
+            statefulTransform,
+        )
     }
 }

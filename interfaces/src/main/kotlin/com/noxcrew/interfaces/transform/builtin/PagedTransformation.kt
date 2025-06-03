@@ -5,8 +5,6 @@ import com.noxcrew.interfaces.element.StaticElement
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.properties.InterfaceProperty
-import com.noxcrew.interfaces.properties.Trigger
-import com.noxcrew.interfaces.transform.ReactiveTransform
 import com.noxcrew.interfaces.transform.StatefulTransform
 import com.noxcrew.interfaces.utilities.BoundInteger
 import com.noxcrew.interfaces.view.InterfaceView
