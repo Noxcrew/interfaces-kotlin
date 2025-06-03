@@ -159,6 +159,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 applyTransforms(transforms)
             }
         }
+
+        // Add this view to the parent
+        if (birthParent is AbstractInterfaceView<*, *, *>) {
+            birthParent.children[this] = Unit
+        }
     }
 
     /** Creates a new inventory GUI. */
