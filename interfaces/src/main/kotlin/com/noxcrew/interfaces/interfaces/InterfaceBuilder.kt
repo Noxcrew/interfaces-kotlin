@@ -23,12 +23,12 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
 
     /** Adds a new transform to the interface that updates whenever [triggers] change. */
     public fun withTransform(
-        vararg triggers: Trigger,
+        vararg triggers: Trigger?,
         /** Whether the contents of this transform should prevent the initial render from completing. */
         blocking: Boolean = true,
         transform: Transform<P>,
     ) {
-        _transforms += AppliedTransform(blocking, transformCounter, triggers.toSet(), transform)
+        _transforms += AppliedTransform(blocking, transformCounter, triggers.filterNotNull().toSet(), transform)
     }
 
     /** Adds a new reactive transform to the interface. */
@@ -43,10 +43,10 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
     /** Adds a new stateful transform to the interface. */
     public fun <T> addTransform(
         statefulTransform: StatefulTransform<P, T>,
-        vararg triggers: Trigger,
+        vararg triggers: Trigger?,
         /** Whether the contents of this transform should prevent the initial render from completing. */
         blocking: Boolean = true,
     ) {
-        _transforms += AppliedTransform(blocking, transformCounter, setOf(statefulTransform.property).plus(triggers.toSet()), statefulTransform)
+        _transforms += AppliedTransform(blocking, transformCounter, setOf(statefulTransform.property).plus(triggers.filterNotNull().toSet()), statefulTransform)
     }
 }
