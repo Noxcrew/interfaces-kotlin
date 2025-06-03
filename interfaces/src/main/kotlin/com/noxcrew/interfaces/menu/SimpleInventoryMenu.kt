@@ -34,6 +34,6 @@ public abstract class SimpleInventoryMenu<B : InterfaceBuilder<out Pane, *>> : B
             }
         } ?: return null
 
-        return openMenu(player, parent, menu)
+        return open(player, parent, menu)
     }
 }

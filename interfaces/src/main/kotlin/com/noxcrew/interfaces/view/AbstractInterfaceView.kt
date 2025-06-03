@@ -57,7 +57,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     override val player: Player,
     /** The interface backing this view. */
     public val backing: T,
-    private val parent: InterfaceView?,
+    birthParent: InterfaceView?,
 ) : InterfaceView {
 
     public companion object {
@@ -85,6 +85,21 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     /** Whether a click is being processed. */
     public var isProcessingClick: Boolean = false
+
+    /** The current parent of this view. */
+    private var parent: InterfaceView? = birthParent
+        set(value) {
+            val oldValue = field
+            field = value
+
+            // Update the children maps of the parents!
+            if (oldValue is AbstractInterfaceView<*, *, *>) {
+                oldValue.children -= this
+            }
+            if (value is AbstractInterfaceView<*, *, *>) {
+                value.children[this] = Unit
+            }
+        }
 
     private val shouldBeOpened = AtomicBoolean(false)
     private val openIfClosed = AtomicBoolean(false)
@@ -153,7 +168,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     public abstract fun openInventory()
 
     /** Marks down that this menu should be re-opened. */
-    internal fun markAsReopenable() {
+    public fun markAsReopenable() {
         shouldBeOpened.set(true)
     }
 
@@ -209,7 +224,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         val shouldReopen = reason in REOPEN_REASONS && !player.isDead && backgroundInterface != null
         if (shouldReopen) {
             SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
-                backgroundInterface?.reopen()
+                backgroundInterface?.reopen(null)
             }
         }
     }
@@ -218,21 +233,28 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         applyTransforms(builder.transforms)
     }
 
-    override suspend fun reopen(): Boolean {
-        // This menu was already closed, in case this menu is somehow lingering we'll
-        // tell the listener again we already closed!
-        if (!shouldBeOpened.get()) {
-            InterfacesListeners.INSTANCE.markViewClosed(player.uniqueId, this)
+    override suspend fun reopen(newParent: InterfaceView?): Boolean {
+        // The player has since disconnected, close the menu properly!
+        if (Bukkit.isStopping() || !player.isConnected) {
+            if (shouldStillBeOpened) {
+                markClosed(SCOPE, InventoryCloseEvent.Reason.DISCONNECT)
+            }
             return false
         }
 
-        // The player has since disconnected, close the menu properly!
-        if (!player.isConnected) {
-            markClosed(SCOPE, InventoryCloseEvent.Reason.DISCONNECT)
+        // Don't open the menu if either it or its new parent is not meant
+        // to be opened anymore!
+        if (!(newParent?.isTreeOpened ?: shouldStillBeOpened)) {
+            if (shouldStillBeOpened) {
+                markClosed(SCOPE, InventoryCloseEvent.Reason.UNKNOWN)
+            }
             return false
         }
 
         // Open the menu as normal.
+        if (newParent != null) {
+            parent = newParent
+        }
         open()
         return true
     }
@@ -249,11 +271,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // and that it should be open right now
         openIfClosed.set(true)
         shouldBeOpened.set(true)
-
-        // Indicate to the parent that this child exists
-        if (parent is AbstractInterfaceView<*, *, *>) {
-            parent.children[this] = Unit
-        }
 
         // Either draw the entire interface or just re-render it
         if (firstPaint) {
@@ -286,6 +303,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     override fun parent(): InterfaceView? = parent
 
     override suspend fun back() {
+        val parent = parent()
         if (parent == null) {
             close()
         } else {
@@ -444,12 +462,15 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             element.pendingLazy?.also { lazyElements += element }
         }
         this.lazyElements = lazyElements
+
+        // Start the task!
+        lazilyDecorateItems()
     }
 
     /** Starts a task to lazily decorate items. */
     private fun lazilyDecorateItems() {
         // Try to start decorating if there is not already a job running
-        if (decoratingJob?.isCompleted != true) return
+        if (decoratingJob?.isCompleted == false) return
 
         SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering lazy draw") + supervisor) {
             try {
@@ -457,63 +478,62 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 decorationMutex.lock()
 
                 // Start the job if it's not running currently!
-                if (decoratingJob?.isCompleted != true) {
-                    decoratingJob = SCOPE.launch(
-                        InterfacesCoroutineDetails(player.uniqueId, "lazily decorating items") + supervisor,
-                    ) {
-                        while (true) {
-                            // Determine which element needs to be updated
-                            val element = lazyElements.poll() ?: break
-                            if (element.pendingLazy == null) continue
-                            execute(
-                                InterfacesExceptionContext(
-                                    player,
-                                    InterfacesOperation.DECORATING_ELEMENT,
-                                ),
-                                onException = { _, resolution ->
-                                    when (resolution) {
-                                        InterfacesExceptionResolution.CLOSE -> return@execute
+                if (decoratingJob?.isCompleted == false) return@launch
+                decoratingJob = SCOPE.launch(
+                    InterfacesCoroutineDetails(player.uniqueId, "lazily decorating items") + supervisor,
+                ) {
+                    while (true) {
+                        // Determine which element needs to be updated
+                        val element = lazyElements.poll() ?: break
+                        if (element.pendingLazy == null) continue
+                        execute(
+                            InterfacesExceptionContext(
+                                player,
+                                InterfacesOperation.DECORATING_ELEMENT,
+                            ),
+                            onException = { _, resolution ->
+                                when (resolution) {
+                                    InterfacesExceptionResolution.CLOSE -> return@execute
 
-                                        InterfacesExceptionResolution.RETRY -> {
-                                            // If the element was not finished we re-add it to the lazy list!
-                                            if (element.pendingLazy != null) {
-                                                lazyElements += element
-                                            }
-                                        }
-
-                                        InterfacesExceptionResolution.IGNORE -> {
-                                            // Don't attempt to run the lazy logic!
-                                            element.pendingLazy = null
+                                    InterfacesExceptionResolution.RETRY -> {
+                                        // If the element was not finished we re-add it to the lazy list!
+                                        if (element.pendingLazy != null) {
+                                            lazyElements += element
                                         }
                                     }
-                                },
+
+                                    InterfacesExceptionResolution.IGNORE -> {
+                                        // Don't attempt to run the lazy logic!
+                                        element.pendingLazy = null
+                                    }
+                                }
+                            },
+                        ) {
+                            // With the timeout execute the lazy decoration task
+                            val item = element.itemStack?.clone() ?: ItemStack.empty()
+                            withTimeout(builder.defaultTimeout) {
+                                element.pendingLazy?.decorate(player, item)
+                            }
+                            element.pendingLazy = null
+                            element.itemStack = if (item.isEmpty) null else item
+
+                            // If we're already rendering we simply queue up the re-render but
+                            // continue in this coroutine so we can hopefully get multiple
+                            // elements decorated before to debounce is done.
+                            if (paneMutex.isLocked) {
+                                debouncedRender.set(true)
+                                return@execute
+                            }
+
+                            // Trigger a re-rendering of the menu after each
+                            // individual item stack has finished rendering!
+                            SCOPE.launch(
+                                InterfacesCoroutineDetails(
+                                    player.uniqueId,
+                                    "triggering re-render after lazy draw",
+                                ) + supervisor,
                             ) {
-                                // With the timeout execute the lazy decoration task
-                                val item = element.itemStack?.clone() ?: ItemStack.empty()
-                                withTimeout(builder.defaultTimeout) {
-                                    element.pendingLazy?.decorate(player, item)
-                                }
-                                element.pendingLazy = null
-                                element.itemStack = if (item.isEmpty) null else item
-
-                                // If we're already rendering we simply queue up the re-render but
-                                // continue in this coroutine so we can hopefully get multiple
-                                // elements decorated before to debounce is done.
-                                if (paneMutex.isLocked) {
-                                    debouncedRender.set(true)
-                                    return@execute
-                                }
-
-                                // Trigger a re-rendering of the menu after each
-                                // individual item stack has finished rendering!
-                                SCOPE.launch(
-                                    InterfacesCoroutineDetails(
-                                        player.uniqueId,
-                                        "triggering re-render after lazy draw",
-                                    ) + supervisor,
-                                ) {
-                                    triggerRerender()
-                                }
+                                triggerRerender()
                             }
                         }
                     }
@@ -548,7 +568,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             currentInventory.set(
                 row,
                 column,
-                element.itemStack.apply { this?.let { builder.itemPostProcessor?.invoke(it) } },
+                element.itemStack?.also { builder.itemPostProcessor?.invoke(it) },
             )
             leftovers -= row to column
             madeChanges = true

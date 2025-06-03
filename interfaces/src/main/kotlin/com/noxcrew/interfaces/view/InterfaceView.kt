@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.view
 
+import com.noxcrew.interfaces.InterfacesListeners
 import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
@@ -35,14 +36,25 @@ public interface InterfaceView {
     /** Opens up this view. */
     public suspend fun open()
 
-    /** Re-opens this view, if it hasn't yet been closed. */
-    public suspend fun reopen(): Boolean
+    /**
+     * Re-opens this view, if it hasn't yet been closed.
+     *
+     * If no parent is given the view is only re-opened if it
+     * was still meant to be open itself.
+     *
+     * If a new parent is given the menu is re-opened
+     * only if the new parent is still open.
+     */
+    public suspend fun reopen(
+        newParent: InterfaceView? =
+            InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false)),
+    ): Boolean
 
     /** Closes this view. */
     public suspend fun close(
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
         changingView: Boolean = reason ==
-            InventoryCloseEvent.Reason.OPEN_NEW
+            InventoryCloseEvent.Reason.OPEN_NEW,
     ): Unit = close(CoroutineScope(coroutineContext), reason, changingView)
 
     /** Closes this view immediately, running any closing handling on [coroutineScope]. */
@@ -50,7 +62,7 @@ public interface InterfaceView {
         coroutineScope: CoroutineScope,
         reason: InventoryCloseEvent.Reason = InventoryCloseEvent.Reason.UNKNOWN,
         changingView: Boolean = reason ==
-            InventoryCloseEvent.Reason.OPEN_NEW
+            InventoryCloseEvent.Reason.OPEN_NEW,
     )
 
     /** Returns whether this view is opened based on the player's current shown inventory. */

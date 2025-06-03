@@ -18,8 +18,8 @@ public interface BaseInventoryMenu {
             InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false)),
     ): InterfaceView?
 
-    /** Opens a rendered menu. */
-    public suspend fun openMenu(player: Player, parent: InterfaceView?, menu: Interface<*, *>): InterfaceView? {
+    /** Opens a rendered [menu] for the given [player]. */
+    public suspend fun open(player: Player, parent: InterfaceView?, menu: Interface<*, *>): InterfaceView? {
         // Quit if the coroutine is no longer active
         if (!coroutineContext.isActive) return null
 

@@ -32,6 +32,6 @@ public abstract class PlayerInventoryMenu : BaseInventoryMenu {
                 InterfacesOperation.BUILDING_PLAYER,
             ),
         ) { buildMenu(player) } ?: return null
-        return openMenu(player, parent, menu) as PlayerInterfaceView
+        return open(player, parent, menu) as PlayerInterfaceView
     }
 }

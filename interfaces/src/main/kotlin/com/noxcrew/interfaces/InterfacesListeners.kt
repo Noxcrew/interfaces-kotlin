@@ -148,6 +148,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         .expireAfterWrite(200.toLong(), TimeUnit.MILLISECONDS)
         .build()
 
+    /** The inventory currently opened by players, we track this internally because the [InventoryCloseEvent] has the wrong parameters. */
+    private val openInventory = ConcurrentHashMap<HumanEntity, AbstractInterfaceView<*, *, *>>()
+
     /** A map of all ongoing chat queries. */
     private val queries = ConcurrentHashMap<UUID, ChatQuery>()
 
@@ -164,7 +167,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     public fun reopenInventory(player: Player) {
         (getOpenPlayerInterface(player.uniqueId) ?: getBackgroundPlayerInterface(player.uniqueId))?.also {
             SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
-                it.reopen()
+                it.reopen(null)
             }
         }
     }
@@ -266,6 +269,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val holder = event.inventory.getHolder(false)
         val view = convertHolderToInterfaceView(holder) ?: return
 
+        // Close the previous view first with open new as the reason, unless we
+        // are currently opening this view!
+        if (openInventory[event.player] != view) {
+            openInventory.put(event.player, view)?.markClosed(SCOPE, Reason.OPEN_NEW)
+        }
+
         // Move the current open inventory to the background to indicate
         // it is no longer the actually opened inventory!
         demoteOpenView(event.player.uniqueId)
@@ -277,24 +286,20 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler
     public fun onClose(event: InventoryCloseEvent) {
-        val holder = event.inventory.getHolder(false)
-        val view = holder as? AbstractInterfaceView<*, *, *> ?: return
+        // Don't listen to close events unless we have an inventory open
+        if (!openInventory.containsKey(event.player)) return
         val reason = event.reason
 
-        /*
-            For reasons incomprehensible to the human mind, when you open a new inventory
-            it calls a close event on that inventory when opening. It recognises that you
-            switched from the player inventory to a new inventory, but it passes you the
-            new inventory instead of the old one?
+        // Save previous inventory contents before we open the new one
+        saveInventoryContentsIfOpened(event.player)
 
-            So we just ignore a close event on a view that we are currently rendering as
-            that is clearly the one we are currently opening, not the previous one.
-         */
-        if (reason == Reason.OPEN_NEW && renderingPlayerInterfaceViews[event.player.uniqueId] == view) return
+        // When opening a new inventory we ignore the close event as it wrongly
+        // reports the actual menu being closed! We rely entirely on the open event
+        // and what we have previously stored as the open inventory.
+        if (reason == Reason.OPEN_NEW) return
 
-        // Saves any persistent items stored in the given inventory, then close it
-        view.savePersistentItems(event.inventory)
-        view.markClosed(SCOPE, reason)
+        // Mark whatever inventory was open as closed!
+        openInventory.remove(event.player)?.markClosed(SCOPE, reason)
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
@@ -433,6 +438,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler
     public fun onPlayerQuit(event: PlayerQuitEvent) {
+        openInventory.remove(event.player)?.markClosed(SCOPE, Reason.DISCONNECT)
+
+        // Technically this is not necessary but we do it anyway!
         markViewClosed(event.player.uniqueId, null)
     }
 
@@ -556,7 +564,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Complete the query and re-open the view
         SCOPE.launch(InterfacesCoroutineDetails(event.player.uniqueId, "completing chat query")) {
             if (query.onComplete(event.message())) {
-                query.view.reopen()
+                query.view.reopen(null)
             }
         }
 
@@ -743,7 +751,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 queries -= playerId
                 SCOPE.launch(InterfacesCoroutineDetails(playerId, "cancelling chat query due to timeout")) {
                     onCancel()
-                    view.reopen()
+                    view.reopen(null)
                 }
             },
             timeout.inWholeMilliseconds / 50,
