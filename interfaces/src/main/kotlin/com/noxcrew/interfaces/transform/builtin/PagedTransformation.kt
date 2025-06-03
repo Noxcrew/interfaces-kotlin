@@ -4,8 +4,10 @@ import com.noxcrew.interfaces.drawable.Drawable
 import com.noxcrew.interfaces.element.StaticElement
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.pane.Pane
+import com.noxcrew.interfaces.properties.InterfaceProperty
 import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.ReactiveTransform
+import com.noxcrew.interfaces.transform.StatefulTransform
 import com.noxcrew.interfaces.utilities.BoundInteger
 import com.noxcrew.interfaces.view.InterfaceView
 import org.bukkit.entity.Player
@@ -13,10 +15,9 @@ import org.bukkit.event.inventory.ClickType
 
 /** A transform that adds multiple pages which can be clicked through using pagination buttons. */
 public abstract class PagedTransformation<P : Pane>(
-    private val back: PaginationButton,
-    private val forward: PaginationButton,
-    extraTriggers: Array<Trigger> = emptyArray()
-) : ReactiveTransform<P> {
+    private val back: PaginationButton? = null,
+    private val forward: PaginationButton? = null,
+) : StatefulTransform<P, Int> {
 
     /** The current page of this transform, bound between 0 and the integer limit. */
     protected val boundPage: BoundInteger = BoundInteger(0, 0, Integer.MAX_VALUE)
@@ -24,12 +25,15 @@ public abstract class PagedTransformation<P : Pane>(
     /** The current page of the transform. */
     protected var page: Int by boundPage
 
+    // Use the current page as the main state of the interface, persisting its state if pages are returned to!
+    override val property: InterfaceProperty<Int> = boundPage
+
     override suspend fun invoke(pane: P, view: InterfaceView) {
-        if (boundPage.hasPreceding()) {
+        if (back != null && boundPage.hasPreceding()) {
             applyButton(pane, back)
         }
 
-        if (boundPage.hasSucceeding()) {
+        if (forward != null && boundPage.hasSucceeding()) {
             applyButton(pane, forward)
         }
     }
@@ -43,8 +47,6 @@ public abstract class PagedTransformation<P : Pane>(
             button.clickHandler(player)
         }
     }
-
-    override val triggers: Array<Trigger> = arrayOf<Trigger>(boundPage).plus(extraTriggers)
 }
 
 /** A button used by a [PagedTransformation]. */

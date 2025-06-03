@@ -1,25 +1,44 @@
 package com.noxcrew.interfaces.transform.builtin
 
 import com.noxcrew.interfaces.element.Element
+import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.grid.GridPositionGenerator
 import com.noxcrew.interfaces.pane.Pane
-import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.view.InterfaceView
-import kotlin.math.ceil
 import kotlin.properties.Delegates
 
 /** A [PagedTransformation] where the positions of the elements are determined by [positionGenerator]. */
-public open class PaginationTransformation<P : Pane>(
+public abstract class PaginationTransformation<P : Pane, E>(
     private val positionGenerator: GridPositionGenerator,
-    default: Collection<Element>,
-    back: PaginationButton,
-    forward: PaginationButton,
-    extraTriggers: Array<Trigger> = emptyArray()
-) : PagedTransformation<P>(back, forward, extraTriggers) {
-
-    private val values by Delegates.observable(default.toList()) { _, _, _ ->
-        boundPage.max = maxPages()
+    default: Collection<E>,
+    back: PaginationButton? = null,
+    forward: PaginationButton? = null,
+) : PagedTransformation<P>(back, forward) {
+    /** A simple pagination transformation where the elements in the list are interfaces elements. */
+    public open class Simple<P : Pane, E : Element>(
+        positionGenerator: GridPositionGenerator,
+        default: Collection<E>,
+        back: PaginationButton? = null,
+        forward: PaginationButton? = null,
+    ) : PaginationTransformation<P, E>(positionGenerator, default, back, forward) {
+        override suspend fun drawElement(index: Int, element: E): Element = element
     }
+
+    /** A list of positions for this transformation. */
+    protected val positions: List<GridPoint> = positionGenerator.generate()
+
+    /** The number of slots. */
+    protected val slots: Int = positions.size
+
+    /** The values this transformation is displaying. */
+    protected val values: List<E> by Delegates.observable(default.toList()) { _, _, _ ->
+        boundPage.max = maxPages()
+        boundPage.trigger()
+    }
+
+    /** The number of entries that need pages available to them. */
+    protected open val entryCount: Int
+        get() = values.lastIndex
 
     init {
         boundPage.max = maxPages()
@@ -38,20 +57,17 @@ public open class PaginationTransformation<P : Pane>(
                 return@forEachIndexed
             }
 
-            pane[point] = values[currentIndex]
+            pane[point] = drawElement(index, values[currentIndex])
         }
 
         super.invoke(pane, view)
     }
 
-    private fun maxPages(): Int {
-        val amount = values.size
-        val slotsPerPage = positionGenerator.generate().size
-        val rawPages = (amount.toDouble() / slotsPerPage.toDouble())
+    /** Draws an element. */
+    protected abstract suspend fun drawElement(index: Int, element: E): Element
 
-        // Round up the amount so we find the amount of pages needed
-        // then we do - 1 because we zero-index the pages. Ensure the
-        // value is at least 0 in case rawPages is 0.0.
-        return (ceil(rawPages).toInt() - 1).coerceAtLeast(0)
+    /** Returns the maximum number of pages required to accommodate all the entries in [values]. */
+    private fun maxPages(): Int {
+        return entryCount.floorDiv(positionGenerator.generate().size).coerceAtLeast(0)
     }
 }
