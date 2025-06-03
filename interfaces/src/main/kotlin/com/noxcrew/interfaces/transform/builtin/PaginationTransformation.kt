@@ -15,13 +15,13 @@ public abstract class PaginationTransformation<P : Pane, E>(
     forward: PaginationButton? = null,
 ) : PagedTransformation<P>(back, forward) {
     /** A simple pagination transformation where the elements in the list are interfaces elements. */
-    public open class Simple<P : Pane, E : Element>(
+    public open class Simple<P : Pane>(
         positionGenerator: GridPositionGenerator,
-        default: Collection<E>,
+        default: Collection<Element>,
         back: PaginationButton? = null,
         forward: PaginationButton? = null,
-    ) : PaginationTransformation<P, E>(positionGenerator, default, back, forward) {
-        override suspend fun drawElement(index: Int, element: E): Element = element
+    ) : PaginationTransformation<P, Element>(positionGenerator, default, back, forward) {
+        override suspend fun drawElement(index: Int, element: Element): Element = element
     }
 
     /** A list of positions for this transformation. */
@@ -31,7 +31,7 @@ public abstract class PaginationTransformation<P : Pane, E>(
     protected val slots: Int = positions.size
 
     /** The values this transformation is displaying. */
-    protected val values: List<E> by Delegates.observable(default.toList()) { _, _, _ ->
+    protected var values: List<E> by Delegates.observable(default.toList()) { _, _, _ ->
         boundPage.max = maxPages()
         boundPage.trigger()
     }
