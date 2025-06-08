@@ -10,5 +10,7 @@ public enum class InterfacesOperation(
 
     RENDER_INVENTORY("rendering to inventory"),
     APPLY_TRANSFORM("applying transforms to interface"),
-    DECORATING_ELEMENT("decorating inventory element")
+    DECORATING_ELEMENT("decorating inventory element"),
+
+    UPDATING_STATE("updating state property")
 }
