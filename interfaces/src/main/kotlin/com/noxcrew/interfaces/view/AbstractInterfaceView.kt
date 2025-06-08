@@ -699,7 +699,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             if (this is PlayerInterfaceView) {
                 // If this is a player inventory we can't update the inventory without
                 // opening it, so we trigger opening it properly.
-                if (!isOpen && player.isConnected) {
+                if (openIfClosed.get() && !isOpen && player.isConnected) {
                     openInventory()
                 }
             } else {
