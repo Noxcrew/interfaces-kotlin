@@ -17,6 +17,7 @@ import com.noxcrew.interfaces.pane.CompletedPane
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
+import com.noxcrew.interfaces.transform.BlockingMode
 import com.noxcrew.interfaces.utilities.CollapsablePaneMap
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import kotlinx.coroutines.CoroutineScope
@@ -156,7 +157,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             trigger.addListener(this) {
                 // Inform the transform that the trigger has occurred
                 transforms.forEach { it.handleChange(trigger) }
-                applyTransforms(transforms)
+                applyTransforms(transforms, initial = false, renderIfEmpty = false)
             }
         }
 
@@ -235,7 +236,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     override fun redrawComplete() {
-        applyTransforms(builder.transforms)
+        applyTransforms(builder.transforms, initial = true, renderIfEmpty = true)
     }
 
     override suspend fun reopen(newParent: InterfaceView?): Boolean {
@@ -281,11 +282,12 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         if (firstPaint) {
             redrawComplete()
         } else {
-            // Run any queued transforms while the menu was not shown if applicable
-            val queued = queuedTransforms
+            // Run any queued transforms while the menu was not shown if applicable, including any
+            // non-stale transforms (which need updating on re-open)
+            val queued = queuedTransforms.toSet() + builder.transforms.filterNot { it.stale }
             if (queued.isNotEmpty()) {
                 queuedTransforms = ConcurrentHashMap.newKeySet()
-                applyTransforms(queued)
+                applyTransforms(queued, initial = false, renderIfEmpty = true)
             } else {
                 triggerRerender()
             }
@@ -360,7 +362,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     /** Applies the given [transforms] to the interface. */
-    private fun applyTransforms(transforms: Collection<AppliedTransform<P>>): Boolean {
+    private fun applyTransforms(transforms: Collection<AppliedTransform<P>>, initial: Boolean, renderIfEmpty: Boolean): Boolean {
         // Check if the player is offline or the server stopping
         if (Bukkit.isStopping() || !player.isConnected) return false
 
@@ -374,8 +376,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Ignore if the transforms are empty
         if (transforms.isEmpty()) {
             // If there are no transforms we still need to open it!
-            SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering re-render with no transforms") + supervisor) {
-                triggerRerender()
+            if (renderIfEmpty) {
+                SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering re-render with no transforms") + supervisor) {
+                    triggerRerender()
+                }
             }
             return true
         }
@@ -384,12 +388,27 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         val alreadyQueuedTransforms = pendingTransforms.plus(pendingNonBlockingTransforms).toSet()
         val newTransforms = transforms.minus(alreadyQueuedTransforms)
         if (newTransforms.isEmpty()) return true
-        val instantTransforms = newTransforms.filter { it.blocking }
-        val lazyTransforms = newTransforms.filterNot { it.blocking }
+        val instantTransforms = if (initial) {
+            newTransforms.filter { it.blocking != BlockingMode.NONE }
+        } else {
+            newTransforms.filter { it.blocking == BlockingMode.ALWAYS }
+        }
+        val lazyTransforms = if (initial) {
+            newTransforms.filter { it.blocking == BlockingMode.NONE }
+        } else {
+            newTransforms.filter { it.blocking != BlockingMode.ALWAYS }
+        }
 
         if (instantTransforms.isEmpty() || lazyTransforms.isEmpty()) {
             // If either category is empty we run everything immediately
             pendingTransforms.addAll(transforms)
+
+            // If only the instant transforms are empty, we render first!
+            if (instantTransforms.isEmpty() && renderIfEmpty) {
+                SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering re-render with no instant transforms") + supervisor) {
+                    triggerRerender()
+                }
+            }
         } else {
             // Both categories must be filled so we separate them
             pendingTransforms.addAll(instantTransforms)

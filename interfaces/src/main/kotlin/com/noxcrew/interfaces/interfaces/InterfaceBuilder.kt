@@ -3,6 +3,7 @@ package com.noxcrew.interfaces.interfaces
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
+import com.noxcrew.interfaces.transform.BlockingMode
 import com.noxcrew.interfaces.transform.ReactiveTransform
 import com.noxcrew.interfaces.transform.StatefulTransform
 import com.noxcrew.interfaces.transform.Transform
@@ -25,19 +26,23 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
     public fun withTransform(
         vararg triggers: Trigger?,
         /** Whether the contents of this transform should prevent the initial render from completing. */
-        blocking: Boolean = true,
+        blocking: BlockingMode = BlockingMode.INITIAL,
+        /** Whether this transform can be left the same when re-opening a menu. */
+        stale: Boolean = false,
         transform: Transform<P>,
     ) {
-        _transforms += AppliedTransform(blocking, transformCounter, triggers.filterNotNull().toSet(), transform)
+        _transforms += AppliedTransform(blocking, stale, transformCounter, triggers.filterNotNull().toSet(), transform)
     }
 
     /** Adds a new reactive transform to the interface. */
     public fun addTransform(
         reactiveTransform: ReactiveTransform<P>,
         /** Whether the contents of this transform should prevent the initial render from completing. */
-        blocking: Boolean = true,
+        blocking: BlockingMode = BlockingMode.INITIAL,
+        /** Whether this transform can be left the same when re-opening a menu. */
+        stale: Boolean = false,
     ) {
-        _transforms += AppliedTransform(blocking, transformCounter, reactiveTransform.triggers.toSet(), reactiveTransform)
+        _transforms += AppliedTransform(blocking, stale, transformCounter, reactiveTransform.triggers.toSet(), reactiveTransform)
     }
 
     /** Adds a new stateful transform to the interface. */
@@ -45,10 +50,13 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
         statefulTransform: StatefulTransform<P, T>,
         vararg triggers: Trigger?,
         /** Whether the contents of this transform should prevent the initial render from completing. */
-        blocking: Boolean = true,
+        blocking: BlockingMode = BlockingMode.INITIAL,
+        /** Whether this transform can be left the same when re-opening a menu. */
+        stale: Boolean = false,
     ) {
         _transforms += AppliedTransform(
             blocking,
+            stale,
             transformCounter,
             setOf(statefulTransform.property).plus(triggers.filterNotNull().toSet()),
             statefulTransform,
