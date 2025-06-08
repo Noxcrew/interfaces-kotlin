@@ -15,7 +15,7 @@ public open class StandardInterfacesExceptionHandler(
         // Optionally gracefully let decorations fail without issue! This defaults to true because we also
         // allow items to be clicked without their decorations.
         if (allowDecorationFailure && context.operation == InterfacesOperation.DECORATING_ELEMENT) {
-            logger.warn("Failed to decorate interface elements for ${context.player.name}")
+            logger.warn("Failed to decorate interface elements for ${context.player.name}", exception)
             return InterfacesExceptionResolution.IGNORE
         }
 

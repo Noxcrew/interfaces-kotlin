@@ -36,11 +36,14 @@ public interface InterfaceView {
     /** Opens up this view. */
     public suspend fun open()
 
+    /** Re-opens only if this menu should still be. */
+    public suspend fun reopenIfIntended(): Boolean {
+        if (!shouldStillBeOpened) return false
+        return reopen(null)
+    }
+
     /**
      * Re-opens this view, if it hasn't yet been closed.
-     *
-     * If no parent is given the view is only re-opened if it
-     * was still meant to be open itself.
      *
      * If a new parent is given the menu is re-opened
      * only if the new parent is still open.

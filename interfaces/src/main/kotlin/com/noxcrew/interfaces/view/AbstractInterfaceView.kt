@@ -230,7 +230,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         val shouldReopen = reason in REOPEN_REASONS && !player.isDead && backgroundInterface != null
         if (shouldReopen) {
             SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
-                backgroundInterface?.reopen(null)
+                backgroundInterface?.reopenIfIntended()
             }
         }
     }
@@ -250,7 +250,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // Don't open the menu if either it or its new parent is not meant
         // to be opened anymore!
-        if (!(newParent?.isTreeOpened ?: shouldStillBeOpened)) {
+        if (newParent?.isTreeOpened == false) {
             if (shouldStillBeOpened) {
                 markClosed(SCOPE, InventoryCloseEvent.Reason.UNKNOWN)
             }

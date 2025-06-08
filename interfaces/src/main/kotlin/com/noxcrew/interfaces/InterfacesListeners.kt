@@ -167,7 +167,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     public fun reopenInventory(player: Player) {
         (getOpenPlayerInterface(player.uniqueId) ?: getBackgroundPlayerInterface(player.uniqueId))?.also {
             SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
-                it.reopen(null)
+                it.reopenIfIntended()
             }
         }
     }
@@ -564,7 +564,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Complete the query and re-open the view
         SCOPE.launch(InterfacesCoroutineDetails(event.player.uniqueId, "completing chat query")) {
             if (query.onComplete(event.message())) {
-                query.view.reopen(null)
+                query.view.reopenIfIntended()
             }
         }
 
@@ -751,7 +751,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 queries -= playerId
                 SCOPE.launch(InterfacesCoroutineDetails(playerId, "cancelling chat query due to timeout")) {
                     onCancel()
-                    view.reopen(null)
+                    view.reopenIfIntended()
                 }
             },
             timeout.inWholeMilliseconds / 50,

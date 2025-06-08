@@ -39,7 +39,12 @@ public abstract class StateProperty(
 
     /** Performs a refresh of this property before its transform is rendered. Skips refresh if update was very recent.  */
     public suspend fun initialize() {
-        if (lastRefresh.plus(minimumRefreshTime.toJavaDuration()) > Instant.now()) return
+        if (lastRefresh.plus(minimumRefreshTime.toJavaDuration()) > Instant.now()) {
+            if (updateJob != null) {
+                updateJob?.await()
+            }
+            return
+        }
         performUpdate()
     }
 
@@ -48,7 +53,12 @@ public abstract class StateProperty(
      * Ignored if last refresh was within [debounce].
      */
     public suspend fun refresh(debounce: Duration = Duration.ZERO) {
-        if (lastRefresh.plus(debounce.toJavaDuration()) > Instant.now()) return
+        if (lastRefresh.plus(debounce.toJavaDuration()) > Instant.now()) {
+            if (updateJob != null) {
+                updateJob?.await()
+            }
+            return
+        }
         performUpdate {
             trigger()
         }
@@ -76,8 +86,9 @@ public abstract class StateProperty(
                 }
             }
             updateJob = null
-            callback()
         }
+        updateJob?.await()
+        callback()
     }
 
     /** Updates the state. */
