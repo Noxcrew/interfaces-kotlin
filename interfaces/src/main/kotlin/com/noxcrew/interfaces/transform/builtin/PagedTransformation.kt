@@ -4,7 +4,9 @@ import com.noxcrew.interfaces.drawable.Drawable
 import com.noxcrew.interfaces.element.StaticElement
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.pane.Pane
+import com.noxcrew.interfaces.properties.DelegateTrigger
 import com.noxcrew.interfaces.properties.InterfaceProperty
+import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.StatefulTransform
 import com.noxcrew.interfaces.utilities.BoundInteger
 import com.noxcrew.interfaces.view.InterfaceView
@@ -17,6 +19,9 @@ public abstract class PagedTransformation<P : Pane>(
     private val forward: PaginationButton? = null,
 ) : StatefulTransform<P, Int> {
 
+    /** The trigger to refresh page contents. */
+    protected val refreshTrigger: Trigger = DelegateTrigger()
+
     /** The current page of this transform, bound between 0 and the integer limit. */
     protected val boundPage: BoundInteger = BoundInteger(0, 0, Integer.MAX_VALUE)
 
@@ -25,6 +30,9 @@ public abstract class PagedTransformation<P : Pane>(
 
     // Use the current page as the main state of the interface, persisting its state if pages are returned to!
     override val property: InterfaceProperty<Int> = boundPage
+
+    // Add the refresh trigger as a trigger
+    override val triggers: Array<Trigger> = arrayOf(refreshTrigger)
 
     override suspend fun invoke(pane: P, view: InterfaceView) {
         if (back != null && boundPage.hasPreceding()) {

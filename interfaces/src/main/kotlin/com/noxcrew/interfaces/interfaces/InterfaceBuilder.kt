@@ -58,7 +58,7 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
             blocking,
             stale,
             transformCounter,
-            setOf(statefulTransform.property).plus(triggers.filterNotNull().toSet()),
+            setOf(statefulTransform.property).plus(statefulTransform.triggers.toSet()).plus(triggers.filterNotNull().toSet()),
             statefulTransform,
         )
     }
