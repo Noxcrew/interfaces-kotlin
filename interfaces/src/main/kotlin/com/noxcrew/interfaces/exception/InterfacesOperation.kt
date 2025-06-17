@@ -8,9 +8,10 @@ public enum class InterfacesOperation(
     BUILDING_PLAYER("building player interface"),
     BUILDING_REGULAR("building regular interface"),
 
+    SYNC_DRAW_INVENTORY("drawing inventory on main thread"),
     RENDER_INVENTORY("rendering to inventory"),
     APPLY_TRANSFORM("applying transforms to interface"),
     DECORATING_ELEMENT("decorating inventory element"),
 
-    UPDATING_STATE("updating state property")
+    UPDATING_STATE("updating state property"),
 }

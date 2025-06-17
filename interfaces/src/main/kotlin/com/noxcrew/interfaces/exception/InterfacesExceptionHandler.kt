@@ -1,7 +1,9 @@
 package com.noxcrew.interfaces.exception
 
+import com.noxcrew.interfaces.InterfacesConstants
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.launch
 import org.bukkit.Bukkit
 import org.bukkit.event.inventory.InventoryCloseEvent
 
@@ -10,6 +12,48 @@ public fun interface InterfacesExceptionHandler {
 
     /** Handles the given [exception]. */
     public suspend fun handleException(exception: Exception, context: InterfacesExceptionContext): InterfacesExceptionResolution
+
+    /** Executes [function] synchronously. */
+    public fun <T> executeSync(
+        context: InterfacesExceptionContext,
+        onException: (Exception, InterfacesExceptionResolution) -> Unit = { _, _ -> },
+        function: () -> T,
+    ): T? {
+        try {
+            return function()
+        } catch (x: TimeoutCancellationException) {
+            // Timeout cancellation exceptions should trigger the handler!
+            handleSync(x, context, onException)
+        } catch (x: CancellationException) {
+            // Silently ignore job cancellation!
+        } catch (x: Exception) {
+            handleSync(x, context, onException)
+        }
+        return null
+    }
+
+    /** Handles [exception] having occurred. */
+    private fun handleSync(
+        exception: Exception,
+        context: InterfacesExceptionContext,
+        onException: (Exception, InterfacesExceptionResolution) -> Unit = { _, _ -> },
+    ) {
+        InterfacesConstants.SCOPE.launch {
+            val resolution = handleException(exception, context)
+            onException(exception, resolution)
+            when (resolution) {
+                InterfacesExceptionResolution.RETRY -> {
+                    // We can't retry in this mode!
+                }
+
+                InterfacesExceptionResolution.CLOSE -> {
+                    context.view?.close(InventoryCloseEvent.Reason.PLUGIN)
+                }
+
+                InterfacesExceptionResolution.IGNORE -> {}
+            }
+        }
+    }
 
     /** Executes [function], reporting any errors to the [InterfacesExceptionHandler] being used. */
     public suspend fun <T> execute(

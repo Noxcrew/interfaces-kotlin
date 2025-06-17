@@ -588,19 +588,19 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         var madeChanges = false
         val lazyElements = ConcurrentLinkedQueue<CompletedElement>()
-        completedPane?.forEach { row, column, element ->
+        completedPane?.forEach inner@ { row, column, element ->
             // Add all lazy elements to the list
             element.pendingLazy?.also { lazyElements += element }
 
             // We defer drawing of any elements in the player inventory itself
             // for later unless the inventory is already open.
             val isPlayerInventory = mapper.isPlayerInventory(row, column)
-            if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) return@forEach
+            if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) return@inner
 
             currentInventory.set(
                 row,
                 column,
-                element.itemStack?.also { builder.itemPostProcessor?.invoke(it) },
+                element.itemStack?.takeUnless { it.isEmpty }?.also { builder.itemPostProcessor?.invoke(it) },
             )
             leftovers -= row to column
             madeChanges = true
@@ -707,38 +707,45 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // we don't want it to happen in between ticks and show
         // a half-finished inventory.
         InterfacesListeners.INSTANCE.runSync {
-            // If the menu has since been requested to close we ignore all this
-            if (!shouldBeOpened.get()) return@runSync
+            executeSync(
+                InterfacesExceptionContext(
+                    player,
+                    InterfacesOperation.SYNC_DRAW_INVENTORY
+                )
+            ) {
+                // If the menu has since been requested to close we ignore all this
+                if (!shouldBeOpened.get()) return@executeSync
 
-            // Save persistent items if the view is currently opened
-            if (player.openInventory.topInventory.getHolder(false) == this) {
-                savePersistentItems(player.openInventory.topInventory)
-            }
-
-            // Determine if the inventory is currently open or being opened immediately,
-            // otherwise we never draw to player inventories. This ensures lingering
-            // updates on menus that have closed do not affect future menus that actually
-            // ended up being opened.
-            val isOpen = isOpen()
-            drawPaneToInventory(drawNormalInventory = true, drawPlayerInventory = isOpen)
-            callback(createdInventory)
-
-            if (this is PlayerInterfaceView) {
-                // If this is a player inventory we can't update the inventory without
-                // opening it, so we trigger opening it properly.
-                if (openIfClosed.get() && !isOpen && player.isConnected) {
-                    openInventory()
+                // Save persistent items if the view is currently opened
+                if (player.openInventory.topInventory.getHolder(false) == this) {
+                    savePersistentItems(player.openInventory.topInventory)
                 }
-            } else {
-                if ((openIfClosed.get() && !isOpen) || createdInventory) {
-                    if (player.isConnected) {
+
+                // Determine if the inventory is currently open or being opened immediately,
+                // otherwise we never draw to player inventories. This ensures lingering
+                // updates on menus that have closed do not affect future menus that actually
+                // ended up being opened.
+                val isOpen = isOpen()
+                drawPaneToInventory(drawNormalInventory = true, drawPlayerInventory = isOpen)
+                callback(createdInventory)
+
+                if (this is PlayerInterfaceView) {
+                    // If this is a player inventory we can't update the inventory without
+                    // opening it, so we trigger opening it properly.
+                    if (openIfClosed.get() && !isOpen && player.isConnected) {
                         openInventory()
                     }
+                } else {
+                    if ((openIfClosed.get() && !isOpen) || createdInventory) {
+                        if (player.isConnected) {
+                            openInventory()
+                        }
+                    }
                 }
+                openIfClosed.set(false)
+                firstPaint = false
+                drawToFreshInventory = false
             }
-            openIfClosed.set(false)
-            firstPaint = false
-            drawToFreshInventory = false
         }
     }
 
@@ -752,4 +759,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         onException: suspend (Exception, InterfacesExceptionResolution) -> Unit = { _, _ -> },
         function: suspend () -> T,
     ): T? = builder.exceptionHandler.execute(context.copy(view = this), onException, function)
+
+    /** Executes [function], reporting any errors to the [InterfacesExceptionHandler] being used. */
+    public fun <T> executeSync(
+        context: InterfacesExceptionContext,
+        onException: (Exception, InterfacesExceptionResolution) -> Unit = { _, _ -> },
+        function: () -> T,
+    ): T? = builder.exceptionHandler.executeSync(context.copy(view = this), onException, function)
 }
