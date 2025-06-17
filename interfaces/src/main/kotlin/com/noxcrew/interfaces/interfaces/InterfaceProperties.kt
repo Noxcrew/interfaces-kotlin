@@ -81,6 +81,9 @@ public open class InterfaceProperties<P : Pane> {
     /** The exception handler to use for this interface. */
     public var exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler()
 
+    /** Whether to redraw the title when re-opening a menu, defaults to true for legacy compatibility. */
+    public var redrawTitleOnReopen: Boolean = true
+
     /** Adds a new close handler [closeHandler] that triggers whenever the inventory is closed for any of the given [reasons]. */
     public fun addCloseHandler(reasons: Collection<InventoryCloseEvent.Reason> = DEFAULT_REASONS, closeHandler: CloseHandler) {
         reasons.forEach {

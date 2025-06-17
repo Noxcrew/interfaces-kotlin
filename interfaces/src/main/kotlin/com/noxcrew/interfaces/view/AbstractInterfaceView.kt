@@ -84,6 +84,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     /** Whether the view is being painted for the first time. */
     protected var firstPaint: Boolean = true
 
+    /** Whether the view should be painted to a fresh inventory. */
+    protected var drawToFreshInventory: Boolean = true
+
     /** Whether a click is being processed. */
     public var isProcessingClick: Boolean = false
 
@@ -277,6 +280,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // and that it should be open right now
         openIfClosed.set(true)
         shouldBeOpened.set(true)
+
+        // If we want to redraw the title we use a new inventory always
+        if (backing.builder.redrawTitleOnReopen) {
+            drawToFreshInventory = true
+        }
 
         // Either draw the entire interface or just re-render it
         if (firstPaint) {
@@ -671,7 +679,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         drawPaneToInventory(drawNormalInventory = false, drawPlayerInventory = true)
     }
 
-    protected open fun requiresNewInventory(): Boolean = firstPaint
+    protected open fun requiresNewInventory(): Boolean = drawToFreshInventory
 
     protected open fun requiresPlayerUpdate(): Boolean = false
 
@@ -730,6 +738,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             }
             openIfClosed.set(false)
             firstPaint = false
+            drawToFreshInventory = false
         }
     }
 
