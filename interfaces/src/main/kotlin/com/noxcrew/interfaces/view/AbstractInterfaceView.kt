@@ -588,7 +588,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         var madeChanges = false
         val lazyElements = ConcurrentLinkedQueue<CompletedElement>()
-        completedPane?.forEach inner@ { row, column, element ->
+        completedPane?.forEach inner@{ row, column, element ->
             // Add all lazy elements to the list
             element.pendingLazy?.also { lazyElements += element }
 
