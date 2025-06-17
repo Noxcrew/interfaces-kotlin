@@ -63,6 +63,13 @@ public abstract class PaginationTransformation<P : Pane, E>(
         super.invoke(pane, view)
     }
 
+    /** Changes the contents to [values], only if they are different. */
+    public fun setContentsIfDifferent(values: List<E>) {
+        if (values.size != this.values.size || values != this.values) {
+            this.values = values
+        }
+    }
+
     /** Draws an element. */
     protected abstract suspend fun drawElement(index: Int, element: E): Element
 
