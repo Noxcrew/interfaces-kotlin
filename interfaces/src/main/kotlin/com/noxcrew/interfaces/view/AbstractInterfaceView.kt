@@ -84,8 +84,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     /** Whether the view is being painted for the first time. */
     protected var firstPaint: Boolean = true
 
-    /** Whether the view should be painted to a fresh inventory. */
-    protected var drawToFreshInventory: Boolean = true
+    /** Whether the title of the inventory should be re-painted. */
+    protected var refreshTitle: Boolean = true
 
     /** Whether a click is being processed. */
     public var isProcessingClick: Boolean = false
@@ -283,7 +283,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // If we want to redraw the title we use a new inventory always
         if (backing.builder.redrawTitleOnReopen) {
-            drawToFreshInventory = true
+            refreshTitle = true
         }
 
         // Either draw the entire interface or just re-render it
@@ -679,13 +679,22 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         drawPaneToInventory(drawNormalInventory = false, drawPlayerInventory = true)
     }
 
-    protected open fun requiresNewInventory(): Boolean = drawToFreshInventory
+    /** Hook for updating the title of the inventory. */
+    protected open suspend fun updateTitle() {
+    }
+
+    protected open fun requiresNewInventory(): Boolean = firstPaint
 
     protected open fun requiresPlayerUpdate(): Boolean = false
 
     protected open suspend fun renderToInventory(callback: (Boolean) -> Unit) {
         // If the menu has since been requested to close we ignore all this
         if (!shouldBeOpened.get()) return
+
+        // Try to update the title
+        if (firstPaint || refreshTitle) {
+            updateTitle()
+        }
 
         // If a new inventory is required we create one
         // and mark that the current one is not to be used!
@@ -744,7 +753,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 }
                 openIfClosed.set(false)
                 firstPaint = false
-                drawToFreshInventory = false
+                refreshTitle = false
             }
         }
     }

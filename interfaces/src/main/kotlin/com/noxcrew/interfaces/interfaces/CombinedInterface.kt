@@ -10,7 +10,7 @@ import org.bukkit.entity.Player
 /** An interface that uses a chest GUI and the player's inventory below. */
 public class CombinedInterface internal constructor(
     override val rows: Int,
-    override val initialTitle: Component?,
+    override val titleSupplier: (suspend (Player) -> Component?)?,
     override val builder: CombinedInterfaceBuilder,
 ) : Interface<CombinedInterface, CombinedPane>, TitledInterface {
 

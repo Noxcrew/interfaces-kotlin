@@ -22,7 +22,7 @@ public class DelayedRequestExampleInterface : RegistrableInterface {
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun create(): Interface<*, *> = buildChestInterface {
-        initialTitle = text(subcommand)
+        titleSupplier = { text(subcommand) }
         rows = 2
 
         withTransform { pane, _ ->

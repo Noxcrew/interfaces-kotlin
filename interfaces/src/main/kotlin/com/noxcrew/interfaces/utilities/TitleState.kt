@@ -3,7 +3,7 @@ package com.noxcrew.interfaces.utilities
 import net.kyori.adventure.text.Component
 
 /** Manages the state of a title. */
-public class TitleState(initialState: Component?) {
+public class TitleState(initialState: Component? = null) {
 
     /** The current value of the title. */
     public var current: Component? = initialState
