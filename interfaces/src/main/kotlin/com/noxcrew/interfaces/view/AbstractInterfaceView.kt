@@ -7,6 +7,7 @@ import com.noxcrew.interfaces.InterfacesListeners.Companion.REOPEN_REASONS
 import com.noxcrew.interfaces.element.CompletedElement
 import com.noxcrew.interfaces.event.DrawPaneEvent
 import com.noxcrew.interfaces.exception.InterfacesExceptionContext
+import com.noxcrew.interfaces.exception.InterfacesExceptionHandler
 import com.noxcrew.interfaces.exception.InterfacesExceptionResolution
 import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.grid.GridPoint
@@ -59,7 +60,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     /** The interface backing this view. */
     public val backing: T,
     birthParent: InterfaceView?,
-) : InterfaceView {
+) : InterfaceView, InterfacesExceptionHandler by backing.builder.exceptionHandler {
 
     public companion object {
         /** The amount of columns a chest inventory has. */
@@ -778,18 +779,4 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     override fun runChatQuery(timeout: Duration, onCancel: suspend () -> Unit, onComplete: suspend (Component) -> Boolean) {
         InterfacesListeners.INSTANCE.startChatQuery(this, timeout, onCancel, onComplete)
     }
-
-    /** Executes [function], reporting any errors to the [InterfacesExceptionHandler] being used. */
-    public suspend fun <T> execute(
-        context: InterfacesExceptionContext,
-        onException: suspend (Exception, InterfacesExceptionResolution) -> Unit = { _, _ -> },
-        function: suspend () -> T,
-    ): T? = builder.exceptionHandler.execute(context.copy(view = this), onException, function)
-
-    /** Executes [function], reporting any errors to the [InterfacesExceptionHandler] being used. */
-    public fun <T> executeSync(
-        context: InterfacesExceptionContext,
-        onException: (Exception, InterfacesExceptionResolution) -> Unit = { _, _ -> },
-        function: () -> T,
-    ): T? = builder.exceptionHandler.executeSync(context.copy(view = this), onException, function)
 }
