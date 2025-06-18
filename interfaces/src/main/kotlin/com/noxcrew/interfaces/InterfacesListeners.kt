@@ -574,7 +574,6 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     query.view.reopenIfIntended()
                 }
             }
-
         }
 
         // Prevent the message from sending
@@ -655,18 +654,28 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Forward this click to all pre-processors
         val clickContext = ClickContext(view.player, view, click, slot, interact)
-        view.builder.clickPreprocessors
-            .forEach { handler -> ClickHandler.process(handler, clickContext) }
 
         // Run the click handler and deal with its result
-        val completedClickHandler = handler
-            .run { CompletableClickHandler().apply { handle(clickContext) } }
-            .onComplete { ex ->
-                if (ex != null) {
-                    logger.error("Failed to run click handler for ${view.player.name}", ex)
+        val completedClickHandler = view.executeSync(
+            InterfacesExceptionContext(
+                view.player,
+                InterfacesOperation.RUNNING_CLICK_HANDLER
+            )
+        ) {
+            // Run any pre-processors
+            view.builder.clickPreprocessors
+                .forEach { handler -> ClickHandler.process(handler, clickContext) }
+
+            // Run the click handler itself
+            handler
+                .run { CompletableClickHandler().apply { handle(clickContext) } }
+                .onComplete { ex ->
+                    if (ex != null) {
+                        logger.error("Failed to run click handler for ${view.player.name}", ex)
+                    }
+                    view.isProcessingClick = false
                 }
-                view.isProcessingClick = false
-            }
+        } ?: return true
 
         if (!completedClickHandler.completingLater) {
             completedClickHandler.complete()
