@@ -9,9 +9,16 @@ public enum class InterfacesOperation(
     BUILDING_REGULAR("building regular interface"),
 
     SYNC_DRAW_INVENTORY("drawing inventory on main thread"),
+
     RENDER_INVENTORY("rendering to inventory"),
     APPLY_TRANSFORM("applying transforms to interface"),
     DECORATING_ELEMENT("decorating inventory element"),
 
+    CLOSE_HANDLER("running close handler"),
     UPDATING_STATE("updating state property"),
+
+    MARK_CLOSED("marking inventory as closed"),
+
+    CHAT_QUERY_CANCELLATION("cancelling chat query"),
+    CHAT_QUERY_COMPLETION("completing chat query"),
 }

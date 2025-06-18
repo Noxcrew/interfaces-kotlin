@@ -8,6 +8,8 @@ import com.noxcrew.interfaces.InterfacesConstants.SCOPE
 import com.noxcrew.interfaces.click.ClickContext
 import com.noxcrew.interfaces.click.ClickHandler
 import com.noxcrew.interfaces.click.CompletableClickHandler
+import com.noxcrew.interfaces.exception.InterfacesExceptionContext
+import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
@@ -233,18 +235,13 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     }
 
     /** Marks the given [view] of a player to be closed. */
-    public fun markViewClosed(playerId: UUID, view: InterfaceView?, abortQuery: Boolean = true) {
+    public fun markViewClosed(playerId: UUID, view: InterfaceView, abortQuery: Boolean = true) {
         if (abortQuery) {
             abortQuery(playerId, view)
         }
-        if (view == null) {
-            backgroundPlayerInterfaceViews -= playerId
-            openPlayerInterfaceViews -= playerId
-        } else {
-            renderingPlayerInterfaceViews.remove(playerId, view)
-            backgroundPlayerInterfaceViews.remove(playerId, view)
-            openPlayerInterfaceViews.remove(playerId, view)
-        }
+        renderingPlayerInterfaceViews.remove(playerId, view)
+        backgroundPlayerInterfaceViews.remove(playerId, view)
+        openPlayerInterfaceViews.remove(playerId, view)
     }
 
     /**
@@ -436,12 +433,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         }
     }
 
-    @EventHandler
+    /** Clean up everything for a player on disconnect. */
+    @EventHandler(priority = EventPriority.HIGH)
     public fun onPlayerQuit(event: PlayerQuitEvent) {
+        val playerId = event.player.uniqueId
         openInventory.remove(event.player)?.markClosed(SCOPE, Reason.DISCONNECT)
-
-        // Technically this is not necessary but we do it anyway!
-        markViewClosed(event.player.uniqueId, null)
+        abortQuery(playerId, null)
+        renderingPlayerInterfaceViews.remove(playerId)?.close(SCOPE, Reason.DISCONNECT)
+        backgroundPlayerInterfaceViews.remove(playerId)?.close(SCOPE, Reason.DISCONNECT)
+        openPlayerInterfaceViews.remove(playerId)?.close(SCOPE, Reason.DISCONNECT)
     }
 
     /** Returns whether [block] will trigger some interaction if clicked with [item]. */
@@ -563,9 +563,18 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Complete the query and re-open the view
         SCOPE.launch(InterfacesCoroutineDetails(event.player.uniqueId, "completing chat query")) {
-            if (query.onComplete(event.message())) {
-                query.view.reopenIfIntended()
+            val abstractView = (query.view as AbstractInterfaceView<*, *, *>)
+            abstractView.execute(
+                InterfacesExceptionContext(
+                    abstractView.player,
+                    InterfacesOperation.CHAT_QUERY_COMPLETION,
+                ),
+            ) {
+                if (query.onComplete(event.message())) {
+                    query.view.reopenIfIntended()
+                }
             }
+
         }
 
         // Prevent the message from sending
@@ -750,7 +759,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 // Remove the query, run the cancel handler, and re-open the view
                 queries -= playerId
                 SCOPE.launch(InterfacesCoroutineDetails(playerId, "cancelling chat query due to timeout")) {
-                    onCancel()
+                    val abstractView = (view as AbstractInterfaceView<*, *, *>)
+                    abstractView.execute(
+                        InterfacesExceptionContext(
+                            abstractView.player,
+                            InterfacesOperation.CHAT_QUERY_CANCELLATION,
+                        ),
+                    ) {
+                        onCancel()
+                    }
                     view.reopenIfIntended()
                 }
             },
@@ -766,14 +783,22 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         SCOPE.launch(InterfacesCoroutineDetails(playerId, "aborting chat query")) {
             // Run the cancellation handler
-            query.onCancel()
+            val abstractView = (query.view as AbstractInterfaceView<*, *, *>)
+            abstractView.execute(
+                InterfacesExceptionContext(
+                    abstractView.player,
+                    InterfacesOperation.CHAT_QUERY_CANCELLATION,
+                ),
+            ) {
+                query.onCancel()
+            }
 
             // If a view is given we are already in a markClosed call
             // and we can leave it here!
             if (view != null) return@launch
 
             // Mark the view as properly closed
-            (query.view as AbstractInterfaceView<*, *, *>).markClosed(SCOPE, Reason.PLAYER)
+            abstractView.markClosed(SCOPE, Reason.PLAYER)
         }
     }
 

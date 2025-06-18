@@ -191,49 +191,66 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         changingView: Boolean = reason ==
             InventoryCloseEvent.Reason.OPEN_NEW,
     ) {
-        // Mark this view as closed with the listener
-        InterfacesListeners.INSTANCE.markViewClosed(player.uniqueId, this, abortQuery = !changingView)
-
-        // Ensure that the menu does not open
-        openIfClosed.set(false)
-
-        // Run a generic close handler if it's still opened and if the inventory was actually opened at any point
-        if (shouldBeOpened.compareAndSet(true, false) &&
-            (!changingView || builder.callCloseHandlerOnViewSwitch) &&
-            ::currentInventory.isInitialized
+        executeSync(
+            InterfacesExceptionContext(
+                player,
+                InterfacesOperation.MARK_CLOSED,
+            ),
         ) {
-            builder.closeHandlers[reason]?.forEach {
-                coroutineScope.launch {
-                    it.invoke(reason, this@AbstractInterfaceView)
+            // Mark this view as closed with the listener
+            InterfacesListeners.INSTANCE.markViewClosed(player.uniqueId, this, abortQuery = !changingView)
+
+            // Ensure that the menu does not open
+            openIfClosed.set(false)
+
+            // Run a generic close handler if it's still opened and if the inventory was actually opened at any point
+            if (shouldBeOpened.compareAndSet(true, false) &&
+                (!changingView || builder.callCloseHandlerOnViewSwitch) &&
+                ::currentInventory.isInitialized
+            ) {
+                builder.closeHandlers[reason]?.forEach {
+                    // Run each close handler individually with an exception context and timeout
+                    coroutineScope.launch {
+                        execute(
+                            InterfacesExceptionContext(
+                                player,
+                                InterfacesOperation.CLOSE_HANDLER,
+                            ),
+                        ) {
+                            withTimeout(builder.defaultTimeout) {
+                                it.invoke(reason, this@AbstractInterfaceView)
+                            }
+                        }
+                    }
                 }
             }
-        }
 
-        // Don't close children when changing views!
-        if (!changingView) {
-            // Close any children, this is a bit of a lossy system,
-            // we don't particularly care if this happens nicely we
-            // just want to make sure the ones that need closing get
-            // closed. The hashmap is weak so children can get GC'd
-            // properly.
-            for ((child) in children) {
-                if (child.shouldBeOpened.get()) {
-                    child.close(coroutineScope, reason, false)
+            // Don't close children when changing views!
+            if (!changingView) {
+                // Close any children, this is a bit of a lossy system,
+                // we don't particularly care if this happens nicely we
+                // just want to make sure the ones that need closing get
+                // closed. The hashmap is weak so children can get GC'd
+                // properly.
+                for ((child) in children) {
+                    if (child.shouldBeOpened.get()) {
+                        child.close(coroutineScope, reason, false)
+                    }
                 }
             }
-        }
 
-        // Cancel the supervisor job to cancel any rendering attempts, create a new supervisor for
-        // any new tasks to run or if the menu is re-opened.
-        supervisor.cancel()
-        supervisor = SupervisorJob()
+            // Cancel the supervisor job to cancel any rendering attempts, create a new supervisor for
+            // any new tasks to run or if the menu is re-opened.
+            supervisor.cancel()
+            supervisor = SupervisorJob()
 
-        // Test if a background menu should be opened
-        val backgroundInterface = InterfacesListeners.INSTANCE.getBackgroundPlayerInterface(player.uniqueId)
-        val shouldReopen = reason in REOPEN_REASONS && !player.isDead && backgroundInterface != null
-        if (shouldReopen) {
-            SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
-                backgroundInterface?.reopenIfIntended()
+            // Test if a background menu should be opened
+            val backgroundInterface = InterfacesListeners.INSTANCE.getBackgroundPlayerInterface(player.uniqueId)
+            val shouldReopen = reason in REOPEN_REASONS && !player.isDead && backgroundInterface != null
+            if (shouldReopen) {
+                SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
+                    backgroundInterface?.reopenIfIntended()
+                }
             }
         }
     }
@@ -719,8 +736,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             executeSync(
                 InterfacesExceptionContext(
                     player,
-                    InterfacesOperation.SYNC_DRAW_INVENTORY
-                )
+                    InterfacesOperation.SYNC_DRAW_INVENTORY,
+                ),
             ) {
                 // If the menu has since been requested to close we ignore all this
                 if (!shouldBeOpened.get()) return@executeSync
