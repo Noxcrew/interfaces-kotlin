@@ -3,10 +3,11 @@ package com.noxcrew.interfaces.grid
 /** An implementation of [GridMap] based by a nested [MutableMap]. */
 public class HashGridMap<V>(
     private val backing: MutableMap<Int, MutableMap<Int, V>> = mutableMapOf(),
-    private val innerConstructor: () -> MutableMap<Int, V> = { mutableMapOf() }
+    private val innerConstructor: () -> MutableMap<Int, V> = { mutableMapOf() },
 ) : GridMap<V> {
 
     override fun set(row: Int, column: Int, value: V) {
+        require(row >= 0 && column >= 0) { "Cannot put an item in a negative index slot" }
         val rowView = backing.computeIfAbsent(row) { innerConstructor() }
         rowView[column] = value
     }
