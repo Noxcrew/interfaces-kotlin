@@ -246,12 +246,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             supervisor = SupervisorJob()
 
             // Test if a background menu should be opened
-            val backgroundInterface = InterfacesListeners.INSTANCE.getBackgroundPlayerInterface(player.uniqueId)
-            val shouldReopen = reason in REOPEN_REASONS && !player.isDead && backgroundInterface != null
-            if (shouldReopen) {
-                SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
-                    backgroundInterface?.reopenIfIntended()
-                }
+            if (reason in REOPEN_REASONS && !player.isDead) {
+                InterfacesListeners.INSTANCE.reopenInventory(player)
             }
         }
     }

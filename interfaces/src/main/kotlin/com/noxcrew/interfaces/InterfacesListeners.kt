@@ -150,6 +150,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         .expireAfterWrite(200.toLong(), TimeUnit.MILLISECONDS)
         .build()
 
+    private var dontReopen: Boolean = false
+
     /** The inventory currently opened by players, we track this internally because the [InventoryCloseEvent] has the wrong parameters. */
     private val openInventory = ConcurrentHashMap<HumanEntity, AbstractInterfaceView<*, *, *>>()
 
@@ -165,8 +167,18 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     /** A map of interfaces being rendered for each player. */
     private val renderingPlayerInterfaceViews = ConcurrentHashMap<UUID, InterfaceView>()
 
+    /** Runs [function] without reopening a new menu. */
+    public fun withoutReopen(function: () -> Unit) {
+        val oldValue = dontReopen
+        dontReopen = true
+        function()
+        dontReopen = oldValue
+    }
+
     /** Re-opens the current background interface of [player]. */
     public fun reopenInventory(player: Player) {
+        // Don't re-open the background inventory when we're coming from the open event.
+        if (dontReopen) return
         (getOpenPlayerInterface(player.uniqueId) ?: getBackgroundPlayerInterface(player.uniqueId))?.also {
             SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
                 it.reopenIfIntended()
@@ -269,10 +281,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Close the previous view first with open new as the reason, unless we
         // are currently opening this view!
         if (openInventory[event.player] != view) {
+            dontReopen = true
             openInventory.put(event.player, view)?.markClosed(SCOPE, Reason.OPEN_NEW)
+            dontReopen = false
         }
 
-        // Move the current open inventory to the background to indicate
+        // Move any currently open player inventory to the background to indicate
         // it is no longer the actually opened inventory!
         demoteOpenView(event.player.uniqueId)
 
@@ -283,12 +297,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler
     public fun onClose(event: InventoryCloseEvent) {
-        // Don't listen to close events unless we have an inventory open
-        if (!openInventory.containsKey(event.player)) return
         val reason = event.reason
 
-        // Save previous inventory contents before we open the new one
-        saveInventoryContentsIfOpened(event.player)
+        // Save previous inventory contents before we open the new one (only if we have one open!)
+        if (openInventory.containsKey(event.player)) {
+            saveInventoryContentsIfOpened(event.player)
+        }
 
         // When opening a new inventory we ignore the close event as it wrongly
         // reports the actual menu being closed! We rely entirely on the open event
@@ -296,7 +310,13 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         if (reason == Reason.OPEN_NEW) return
 
         // Mark whatever inventory was open as closed!
-        openInventory.remove(event.player)?.markClosed(SCOPE, reason)
+        val opened = openInventory.remove(event.player)
+        if (opened != null) {
+            opened.markClosed(SCOPE, reason)
+        } else if (reason in REOPEN_REASONS && !event.player.isDead) {
+            // If the opened menu didn't trigger a re-open, do it manually!
+            reopenInventory(event.player as Player)
+        }
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
@@ -659,8 +679,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val completedClickHandler = view.executeSync(
             InterfacesExceptionContext(
                 view.player,
-                InterfacesOperation.RUNNING_CLICK_HANDLER
-            )
+                InterfacesOperation.RUNNING_CLICK_HANDLER,
+            ),
         ) {
             // Run any pre-processors
             view.builder.clickPreprocessors
@@ -734,7 +754,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         runSync {
             // Close the current inventory to open another to avoid close reasons
             val reopen = view.shouldStillBeOpened
-            view.player.closeInventory(Reason.OPEN_NEW)
+            INSTANCE.withoutReopen {
+                view.player.closeInventory(Reason.OPEN_NEW)
+            }
 
             // Ensure the view is allowed to be opened again after we're done
             if (reopen) {

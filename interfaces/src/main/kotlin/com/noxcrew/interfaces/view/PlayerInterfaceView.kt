@@ -40,7 +40,9 @@ public class PlayerInterfaceView internal constructor(
             // Remove this inventory from the background interface before closing so it
             // doesn't automatically re-open!
             InterfacesListeners.INSTANCE.markViewClosed(player.uniqueId, this)
-            player.closeInventory()
+            InterfacesListeners.INSTANCE.withoutReopen {
+                player.closeInventory()
+            }
         }
 
         // Open this player interface for the player
