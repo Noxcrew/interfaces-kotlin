@@ -43,7 +43,7 @@ public abstract class StateProperty(
      * Refreshes this property, updating before triggering the state.
      * Ignored if last refresh was within [debounce].
      */
-    public suspend fun refresh(debounce: Duration = 50.milliseconds) {
+    public suspend fun refresh(debounce: Duration = 200.milliseconds) {
         if (lastRefresh.plus(debounce.toJavaDuration()) > Instant.now()) {
             if (updateJob != null) {
                 updateJob?.await()

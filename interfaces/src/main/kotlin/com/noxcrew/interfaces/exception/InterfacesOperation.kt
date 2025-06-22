@@ -15,8 +15,6 @@ public enum class InterfacesOperation(
     DECORATING_ELEMENT("decorating inventory element"),
 
     CLOSE_HANDLER("running close handler"),
-    UPDATING_STATE("updating state property"),
-
     MARK_CLOSED("marking inventory as closed"),
 
     CHAT_QUERY_CANCELLATION("cancelling chat query"),
@@ -24,5 +22,7 @@ public enum class InterfacesOperation(
 
     RUNNING_CLICK_HANDLER("running click handler"),
 
+    UPDATING_STATE("updating state property"),
+    UPDATING_LAZY("updating lazy property"),
     UPDATING_PROPERTIES("updating trigger properties"),
 }
