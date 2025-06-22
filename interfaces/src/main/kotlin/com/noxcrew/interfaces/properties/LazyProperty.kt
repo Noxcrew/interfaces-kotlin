@@ -72,7 +72,7 @@ public abstract class LazyProperty<T : Any>(
 
         // If we have recently refreshed, re-use the value!
         if (lastRefresh.plus(debounce.toJavaDuration()) > Instant.now()) {
-            return value!!
+            return value ?: load(reload)
         }
         lastRefresh = Instant.now()
 
@@ -95,7 +95,7 @@ public abstract class LazyProperty<T : Any>(
             updateJob = null
         }
         updateJob?.await()
-        return value!!
+        return value ?: load(reload)
     }
 
     /** Returns the value of this property. */
