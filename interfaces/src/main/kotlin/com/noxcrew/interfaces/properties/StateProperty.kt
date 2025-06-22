@@ -36,6 +36,14 @@ public abstract class StateProperty(
 
     private var updateJob: Deferred<Unit>? = null
     private var lastRefresh: Instant = Instant.MIN
+    private var initialized: Boolean = false
+
+    /** Initializes this property if it hasn't already. */
+    public suspend fun initialize() {
+        if (!initialized) {
+            refresh()
+        }
+    }
 
     /**
      * Refreshes this property, updating before triggering the state.
@@ -50,7 +58,6 @@ public abstract class StateProperty(
 
         // Avoid refreshing too often
         if (lastRefresh.plus(debounce.toJavaDuration()) > Instant.now()) return
-        lastRefresh = Instant.now()
 
         updateJob = InterfacesConstants.SCOPE.async(InterfacesCoroutineDetails(player.uniqueId, "running state property update")) {
             exceptionHandler.execute(
@@ -64,6 +71,10 @@ public abstract class StateProperty(
                     update()
                 }
             }
+
+            // Start the timeout after we finish!
+            initialized = true
+            lastRefresh = Instant.now()
             updateJob = null
         }
         updateJob?.await()

@@ -68,13 +68,13 @@ public abstract class LazyProperty<T : Any>(
         // Await any job if we are already updating
         if (updateJob != null) {
             updateJob?.await()
+            return value ?: load(reload)
         }
 
         // If we have recently refreshed, re-use the value!
         if (lastRefresh.plus(debounce.toJavaDuration()) > Instant.now()) {
             return value ?: load(reload)
         }
-        lastRefresh = Instant.now()
 
         updateJob = InterfacesConstants.SCOPE.async(InterfacesCoroutineDetails(player.uniqueId, "running state property update")) {
             exceptionHandler.execute(
@@ -92,6 +92,7 @@ public abstract class LazyProperty<T : Any>(
                     }
                 }
             }
+            lastRefresh = Instant.now()
             updateJob = null
         }
         updateJob?.await()
