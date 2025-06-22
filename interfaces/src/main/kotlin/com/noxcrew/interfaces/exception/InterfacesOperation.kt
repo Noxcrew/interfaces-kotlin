@@ -23,4 +23,6 @@ public enum class InterfacesOperation(
     CHAT_QUERY_COMPLETION("completing chat query"),
 
     RUNNING_CLICK_HANDLER("running click handler"),
+
+    UPDATING_PROPERTIES("updating trigger properties"),
 }

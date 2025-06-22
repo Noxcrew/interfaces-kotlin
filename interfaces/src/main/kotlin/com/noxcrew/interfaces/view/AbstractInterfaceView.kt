@@ -16,6 +16,8 @@ import com.noxcrew.interfaces.interfaces.InterfaceBuilder
 import com.noxcrew.interfaces.inventory.InterfacesInventory
 import com.noxcrew.interfaces.pane.CompletedPane
 import com.noxcrew.interfaces.pane.Pane
+import com.noxcrew.interfaces.properties.LazyProperty
+import com.noxcrew.interfaces.properties.StateProperty
 import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.transform.BlockingMode
@@ -300,6 +302,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             refreshTitle = true
         }
 
+        // Trigger all properties first
+        triggerProperties()
+
         // Either draw the entire interface or just re-render it
         if (firstPaint) {
             redrawComplete()
@@ -337,6 +342,26 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             close()
         } else {
             parent.open()
+        }
+    }
+
+    /** Triggers all lazy and state properties to refresh, only runs on (re-)open. */
+    private suspend fun triggerProperties() {
+        execute(
+            InterfacesExceptionContext(
+                player,
+                InterfacesOperation.UPDATING_PROPERTIES,
+            )
+        ) {
+            for (transform in builder.transforms) {
+                // Run the initialize method on any state properties first!
+                // This triggers a refresh of possible main state objects being
+                // shown in this menu.
+                transform.triggers.filterIsInstance<StateProperty>().forEach { it.initialize() }
+
+                // Also re-evaluate all lazy properties!
+                transform.triggers.filterIsInstance<LazyProperty<*>>().forEach { it.reevaluate() }
+            }
         }
     }
 

@@ -26,8 +26,6 @@ import kotlin.time.toJavaDuration
 public abstract class StateProperty(
     /** The player this property is for. */
     public val player: Player,
-    /** The minimum time to wait between automatic refreshes. */
-    private val minimumRefreshTime: Duration = 30.seconds,
     /** The maximum time an update can take. */
     private val updateTimeout: Duration = 2.5.seconds,
     private val exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler(),
@@ -39,10 +37,8 @@ public abstract class StateProperty(
 
     /** Performs a refresh of this property before its transform is rendered. Skips refresh if update was very recent.  */
     public suspend fun initialize() {
-        if (lastRefresh.plus(minimumRefreshTime.toJavaDuration()) > Instant.now()) {
-            if (updateJob != null) {
-                updateJob?.await()
-            }
+        if (updateJob != null) {
+            updateJob?.await()
             return
         }
         performUpdate()
@@ -59,18 +55,15 @@ public abstract class StateProperty(
             }
             return
         }
-        performUpdate {
-            trigger()
-        }
+        performUpdate()
     }
 
     /** Performs the update, re-using the same job. */
-    private suspend fun performUpdate(callback: () -> Unit = {}) {
+    private suspend fun performUpdate() {
         lastRefresh = Instant.now()
 
         if (updateJob != null) {
             updateJob?.await()
-            callback()
             return
         }
 
@@ -88,7 +81,7 @@ public abstract class StateProperty(
             updateJob = null
         }
         updateJob?.await()
-        callback()
+        trigger()
     }
 
     /** Updates the state. */

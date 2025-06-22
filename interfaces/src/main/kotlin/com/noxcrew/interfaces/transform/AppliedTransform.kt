@@ -4,7 +4,6 @@ import com.noxcrew.interfaces.interfaces.InterfaceBuilder
 import com.noxcrew.interfaces.pane.CompletedPane
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.pane.complete
-import com.noxcrew.interfaces.properties.StateProperty
 import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.view.AbstractInterfaceView
 import kotlinx.coroutines.withTimeout
@@ -39,11 +38,6 @@ public class AppliedTransform<P : Pane>(
         builder: InterfaceBuilder<P, *>,
         view: AbstractInterfaceView<*, *, P>,
     ): CompletedPane {
-        // Run the initialize method on any state properties first!
-        // This triggers a refresh of possible main state objects being
-        // shown in this menu.
-        triggers.filterIsInstance<StateProperty>().forEach { it.initialize() }
-
         // Determine the property of a possible stateful transform
         val property = (backing as? StatefulTransform<*, *>)?.property
 
