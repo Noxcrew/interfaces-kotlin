@@ -239,7 +239,15 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     public fun setOpenView(playerId: UUID, view: PlayerInterfaceView) {
         completeRendering(playerId, view)
         backgroundPlayerInterfaceViews.remove(playerId, view)
-        openPlayerInterfaceViews[playerId] = view
+        withoutReopen {
+            if (openPlayerInterfaceViews[playerId] != view) {
+                openPlayerInterfaceViews.put(playerId, view)?.close(SCOPE, Reason.OPEN_NEW)
+            }
+            val player = Bukkit.getPlayer(playerId) ?: return@withoutReopen
+            if (openInventory[player] != view) {
+                openInventory.put(player, view)?.close(SCOPE, Reason.OPEN_NEW)
+            }
+        }
     }
 
     /** Marks the given [view] of a player to be closed. */
@@ -282,13 +290,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             // the background interface and gracefully close it while marking it as re-openable
             // again after we're done.
             if (openView is PlayerInterfaceView && openPlayerInterfaceViews.remove(event.player.uniqueId, openView)) {
-                backgroundPlayerInterfaceViews[event.player.uniqueId] = openView
-
                 val reopen = openView.shouldStillBeOpened
                 withoutReopen {
                     openView.markClosed(SCOPE, Reason.OPEN_NEW)
                 }
                 if (reopen) {
+                    backgroundPlayerInterfaceViews[event.player.uniqueId] = openView
                     openView.markAsReopenable()
                 }
             } else {
@@ -325,6 +332,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // reports the actual menu being closed! We rely entirely on the open event
         // and what we have previously stored as the open inventory.
         if (reason == Reason.OPEN_NEW) return
+
+        // Ignore if the only open interface is a player inventory (you cannot close a player inventory)
+        if (openInventory[event.player] is PlayerInterfaceView) return
 
         // Mark whatever inventory was open as closed!
         val opened = openInventory.remove(event.player)

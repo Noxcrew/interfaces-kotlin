@@ -37,9 +37,7 @@ public class PlayerInterfaceView internal constructor(
         // Close whatever inventory the player has open so they can look at their normal inventory!
         // This will only continue if the menu hasn't been closed yet.
         if (!isOpen()) {
-            // Remove this inventory from the background interface before closing so it
-            // doesn't automatically re-open!
-            InterfacesListeners.INSTANCE.markViewClosed(player.uniqueId, this)
+            // Close the currently open inventory without re-opening anything!
             InterfacesListeners.INSTANCE.withoutReopen {
                 player.closeInventory()
             }
