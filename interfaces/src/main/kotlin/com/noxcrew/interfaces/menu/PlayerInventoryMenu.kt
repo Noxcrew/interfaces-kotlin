@@ -30,6 +30,7 @@ public abstract class PlayerInventoryMenu : BaseInventoryMenu {
             InterfacesExceptionContext(
                 player,
                 InterfacesOperation.BUILDING_PLAYER,
+                null,
             ),
         ) { buildMenu(player) } ?: return null
         return open(player, parent, menu) as PlayerInterfaceView

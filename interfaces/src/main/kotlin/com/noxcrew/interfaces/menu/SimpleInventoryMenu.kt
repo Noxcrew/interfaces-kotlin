@@ -26,6 +26,7 @@ public abstract class SimpleInventoryMenu<B : InterfaceBuilder<out Pane, *>> : B
             InterfacesExceptionContext(
                 player,
                 InterfacesOperation.BUILDING_REGULAR,
+                null,
             ),
         ) {
             build(player) {

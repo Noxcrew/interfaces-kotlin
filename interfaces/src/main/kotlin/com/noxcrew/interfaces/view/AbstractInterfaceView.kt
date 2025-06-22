@@ -203,6 +203,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             InterfacesExceptionContext(
                 player,
                 InterfacesOperation.MARK_CLOSED,
+                this,
             ),
         ) {
             // Mark this view as closed with the listener
@@ -223,6 +224,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                             InterfacesExceptionContext(
                                 player,
                                 InterfacesOperation.CLOSE_HANDLER,
+                                this@AbstractInterfaceView,
                             ),
                         ) {
                             withTimeout(builder.defaultTimeout) {
@@ -346,6 +348,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 InterfacesExceptionContext(
                     player,
                     InterfacesOperation.UPDATING_PROPERTIES,
+                    this,
                 ),
             ) {
                 // Run the initialize method on any state properties to refresh them,
@@ -353,14 +356,14 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 // times!
                 builder.transforms.flatMap { it.triggers }.filterIsInstance<StateProperty>().distinct().forEach {
                     withTimeout(builder.defaultTimeout) {
-                        it.initialize()
+                        it.refresh(view = this@AbstractInterfaceView)
                     }
                 }
 
                 // Also re-evaluate all lazy properties!
                 builder.transforms.flatMap { it.triggers }.filterIsInstance<LazyProperty<*>>().distinct().forEach {
                     withTimeout(builder.defaultTimeout) {
-                        it.reevaluate()
+                        it.reevaluate(view = this@AbstractInterfaceView)
                     }
                 }
             }
@@ -403,6 +406,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 InterfacesExceptionContext(
                     player,
                     InterfacesOperation.RENDER_INVENTORY,
+                    this,
                 ),
             ) {
                 withTimeout(builder.defaultTimeout) {
@@ -501,6 +505,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                     InterfacesExceptionContext(
                         player,
                         InterfacesOperation.APPLY_TRANSFORM,
+                        this,
                     ),
                 ) {
                     // Apply the transformation to the pane and build it within
@@ -554,6 +559,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 InterfacesExceptionContext(
                     player,
                     InterfacesOperation.DECORATING_ELEMENT,
+                    this,
                 ),
                 onException = { _, resolution ->
                     when (resolution) {
@@ -770,6 +776,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 InterfacesExceptionContext(
                     player,
                     InterfacesOperation.SYNC_DRAW_INVENTORY,
+                    this,
                 ),
             ) {
                 // If the menu has since been requested to close we ignore all this

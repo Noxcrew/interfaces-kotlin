@@ -6,6 +6,7 @@ import com.noxcrew.interfaces.exception.InterfacesExceptionHandler
 import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.exception.StandardInterfacesExceptionHandler
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
+import com.noxcrew.interfaces.view.InterfaceView
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withTimeout
@@ -36,37 +37,27 @@ public abstract class StateProperty(
     private var updateJob: Deferred<Unit>? = null
     private var lastRefresh: Instant = Instant.MIN
 
-    /** Performs a refresh of this property before its transform is rendered. Skips refresh if update was very recent.  */
-    public suspend fun initialize(): Unit = refresh()
-
     /**
      * Refreshes this property, updating before triggering the state.
      * Ignored if last refresh was within [debounce].
      */
-    public suspend fun refresh(debounce: Duration = 200.milliseconds) {
-        if (lastRefresh.plus(debounce.toJavaDuration()) > Instant.now()) {
-            if (updateJob != null) {
-                updateJob?.await()
-            }
-            return
-        }
-        performUpdate()
-    }
-
-    /** Performs the update, re-using the same job. */
-    private suspend fun performUpdate() {
-        lastRefresh = Instant.now()
-
+    public suspend fun refresh(debounce: Duration = 200.milliseconds, view: InterfaceView? = null) {
+        // Await any existing job if one is running
         if (updateJob != null) {
             updateJob?.await()
             return
         }
+
+        // Avoid refreshing too often
+        if (lastRefresh.plus(debounce.toJavaDuration()) > Instant.now()) return
+        lastRefresh = Instant.now()
 
         updateJob = InterfacesConstants.SCOPE.async(InterfacesCoroutineDetails(player.uniqueId, "running state property update")) {
             exceptionHandler.execute(
                 InterfacesExceptionContext(
                     player,
                     InterfacesOperation.UPDATING_STATE,
+                    view,
                 ),
             ) {
                 withTimeout(updateTimeout) {

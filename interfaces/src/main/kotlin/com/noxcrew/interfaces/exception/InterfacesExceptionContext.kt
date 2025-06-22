@@ -9,8 +9,8 @@ public data class InterfacesExceptionContext(
     public val player: Player,
     /** The operation being attempted. */
     public val operation: InterfacesOperation,
+    /** The view involved in the exception. */
+    public val view: InterfaceView?,
     /** How often this particular action has been retried. */
     public val retries: Int = 0,
-    /** The view involved in the exception. */
-    public val view: InterfaceView? = null,
 )

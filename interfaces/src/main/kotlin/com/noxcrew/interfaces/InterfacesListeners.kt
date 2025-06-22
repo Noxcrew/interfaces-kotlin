@@ -615,6 +615,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 InterfacesExceptionContext(
                     abstractView.player,
                     InterfacesOperation.CHAT_QUERY_COMPLETION,
+                    abstractView,
                 ),
             ) {
                 if (query.onComplete(event.message())) {
@@ -707,6 +708,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             InterfacesExceptionContext(
                 view.player,
                 InterfacesOperation.RUNNING_CLICK_HANDLER,
+                view,
             ),
         ) {
             // Run any pre-processors
@@ -822,6 +824,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                         InterfacesExceptionContext(
                             abstractView.player,
                             InterfacesOperation.CHAT_QUERY_CANCELLATION,
+                            abstractView,
                         ),
                     ) {
                         onCancel()
@@ -846,6 +849,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 InterfacesExceptionContext(
                     abstractView.player,
                     InterfacesOperation.CHAT_QUERY_CANCELLATION,
+                    abstractView,
                 ),
             ) {
                 query.onCancel()

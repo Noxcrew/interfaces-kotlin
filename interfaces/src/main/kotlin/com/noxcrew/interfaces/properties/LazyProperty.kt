@@ -6,6 +6,7 @@ import com.noxcrew.interfaces.exception.InterfacesExceptionHandler
 import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.exception.StandardInterfacesExceptionHandler
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
+import com.noxcrew.interfaces.view.InterfaceView
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withTimeout
@@ -52,19 +53,24 @@ public abstract class LazyProperty<T : Any>(
      * Triggers a re-evaluation of the property.
      * If [reload] is given, all data should be fully reloaded.
      */
-    public suspend fun reevaluate(reload: Boolean = true): T {
-        if (lastRefresh.plus(200.milliseconds.toJavaDuration()) > Instant.now()) {
-            if (updateJob != null) {
-                updateJob?.await()
-            }
+    public suspend fun reevaluate(reload: Boolean = true, debounce: Duration = 200.milliseconds, view: InterfaceView? = null): T {
+        // Await any job if we are already updating
+        if (updateJob != null) {
+            updateJob?.await()
+        }
+
+        // If we have recently refreshed, re-use the value!
+        if (lastRefresh.plus(debounce.toJavaDuration()) > Instant.now()) {
             return value!!
         }
+        lastRefresh = Instant.now()
 
         updateJob = InterfacesConstants.SCOPE.async(InterfacesCoroutineDetails(player.uniqueId, "running state property update")) {
             exceptionHandler.execute(
                 InterfacesExceptionContext(
                     player,
                     InterfacesOperation.UPDATING_LAZY,
+                    view,
                 ),
             ) {
                 withTimeout(updateTimeout) {
