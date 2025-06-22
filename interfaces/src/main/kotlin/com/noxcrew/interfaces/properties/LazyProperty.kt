@@ -54,7 +54,12 @@ public abstract class LazyProperty<T : Any>(
      * Triggers a re-evaluation of the property.
      * If [reload] is given, all data should be fully reloaded.
      */
-    public suspend fun reevaluate(reload: Boolean = true, trigger: Boolean = true, debounce: Duration = 200.milliseconds, view: InterfaceView? = null): T {
+    public suspend fun reevaluate(
+        reload: Boolean = true,
+        trigger: Boolean = true,
+        debounce: Duration = 200.milliseconds,
+        view: InterfaceView? = null
+    ): T {
         // Mark down if we want an update to happen
         if (trigger) {
             triggeringUpdate = true
