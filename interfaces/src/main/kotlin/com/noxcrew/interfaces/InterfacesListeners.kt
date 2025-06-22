@@ -219,12 +219,6 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         return true
     }
 
-    /** Moves any currently open player interface to the background view. */
-    public fun demoteOpenView(playerId: UUID) {
-        val view = openPlayerInterfaceViews.remove(playerId) ?: return
-        backgroundPlayerInterfaceViews[playerId] = view
-    }
-
     /** Marks that rendering has completed. */
     public fun completeRendering(playerId: UUID, view: InterfaceView) {
         renderingPlayerInterfaceViews.remove(playerId, view)
@@ -235,6 +229,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         if (view == null) {
             backgroundPlayerInterfaceViews -= playerId
         } else {
+            // For something to be the background view it has to be openable!
+            view.markAsReopenable()
             backgroundPlayerInterfaceViews[playerId] = view
         }
     }
@@ -280,15 +276,36 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Close the previous view first with open new as the reason, unless we
         // are currently opening this view!
-        if (openInventory[event.player] != view) {
-            dontReopen = true
-            openInventory.put(event.player, view)?.markClosed(SCOPE, Reason.OPEN_NEW)
-            dontReopen = false
+        val openView = openInventory[event.player]
+        if (openView != null && openView != view) {
+            // If the previously opened view is a player interface, attempt to demote it to
+            // the background interface and gracefully close it while marking it as re-openable
+            // again after we're done.
+            if (openView is PlayerInterfaceView && openPlayerInterfaceViews.remove(event.player.uniqueId, openView)) {
+                backgroundPlayerInterfaceViews[event.player.uniqueId] = openView
+
+                val reopen = openView.shouldStillBeOpened
+                withoutReopen {
+                    openView.markClosed(SCOPE, Reason.OPEN_NEW)
+                }
+                if (reopen) {
+                    openView.markAsReopenable()
+                }
+            } else {
+                // Close whatever was previously opened completely
+                withoutReopen {
+                    openView.markClosed(SCOPE, Reason.OPEN_NEW)
+                }
+            }
         }
 
-        // Move any currently open player inventory to the background to indicate
-        // it is no longer the actually opened inventory!
-        demoteOpenView(event.player.uniqueId)
+        // Set the new open inventory
+        openInventory[event.player] = view
+
+        // If there is an open view left, destroy it as something went wrong!
+        withoutReopen {
+            openPlayerInterfaceViews.remove(event.player.uniqueId)?.markClosed(SCOPE, Reason.OPEN_NEW)
+        }
 
         // Abort any previous query the player had
         abortQuery(event.player.uniqueId, null)
@@ -754,7 +771,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         runSync {
             // Close the current inventory to open another to avoid close reasons
             val reopen = view.shouldStillBeOpened
-            INSTANCE.withoutReopen {
+            withoutReopen {
                 view.player.closeInventory(Reason.OPEN_NEW)
             }
 
