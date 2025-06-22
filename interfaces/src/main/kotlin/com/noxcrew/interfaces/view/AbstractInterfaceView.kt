@@ -302,23 +302,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             refreshTitle = true
         }
 
-        // Trigger all properties first
+        // Start by triggering all valid properties
         triggerProperties()
-
-        // Either draw the entire interface or just re-render it
-        if (firstPaint) {
-            redrawComplete()
-        } else {
-            // Run any queued transforms while the menu was not shown if applicable, including any
-            // non-stale transforms (which need updating on re-open)
-            val queued = queuedTransforms.toSet() + builder.transforms.filterNot { it.stale }
-            if (queued.isNotEmpty()) {
-                queuedTransforms = ConcurrentHashMap.newKeySet()
-                applyTransforms(queued, initial = false, renderIfEmpty = true)
-            } else {
-                triggerRerender()
-            }
-        }
     }
 
     override fun close(coroutineScope: CoroutineScope, reason: InventoryCloseEvent.Reason, changingView: Boolean) {
@@ -346,21 +331,46 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     /** Triggers all lazy and state properties to refresh, only runs on (re-)open. */
-    private suspend fun triggerProperties() {
-        execute(
-            InterfacesExceptionContext(
-                player,
-                InterfacesOperation.UPDATING_PROPERTIES,
-            )
-        ) {
-            for (transform in builder.transforms) {
-                // Run the initialize method on any state properties first!
-                // This triggers a refresh of possible main state objects being
-                // shown in this menu.
-                transform.triggers.filterIsInstance<StateProperty>().forEach { it.initialize() }
+    private fun triggerProperties() {
+        SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "triggering properties") + supervisor) {
+            execute(
+                InterfacesExceptionContext(
+                    player,
+                    InterfacesOperation.UPDATING_PROPERTIES,
+                )
+            ) {
+                for (transform in builder.transforms) {
+                    // Run the initialize method on any state properties first!
+                    // This triggers a refresh of possible main state objects being
+                    // shown in this menu.
+                    transform.triggers.filterIsInstance<StateProperty>().forEach {
+                        withTimeout(builder.defaultTimeout) {
+                            it.initialize()
+                        }
+                    }
 
-                // Also re-evaluate all lazy properties!
-                transform.triggers.filterIsInstance<LazyProperty<*>>().forEach { it.reevaluate() }
+                    // Also re-evaluate all lazy properties!
+                    transform.triggers.filterIsInstance<LazyProperty<*>>().forEach {
+                        withTimeout(builder.defaultTimeout) {
+                            it.reevaluate()
+                        }
+                    }
+                }
+            }
+
+            // Either draw the entire interface or just re-render it
+            if (firstPaint) {
+                redrawComplete()
+            } else {
+                // Run any queued transforms while the menu was not shown if applicable, including any
+                // non-stale transforms (which need updating on re-open)
+                val queued = queuedTransforms.toSet() + builder.transforms.filterNot { it.stale }
+                if (queued.isNotEmpty()) {
+                    queuedTransforms = ConcurrentHashMap.newKeySet()
+                    applyTransforms(queued, initial = false, renderIfEmpty = true)
+                } else {
+                    triggerRerender()
+                }
             }
         }
     }
