@@ -12,6 +12,7 @@ import kotlinx.coroutines.withTimeout
 import org.bukkit.entity.Player
 import java.time.Instant
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
@@ -36,19 +37,13 @@ public abstract class StateProperty(
     private var lastRefresh: Instant = Instant.MIN
 
     /** Performs a refresh of this property before its transform is rendered. Skips refresh if update was very recent.  */
-    public suspend fun initialize() {
-        if (updateJob != null) {
-            updateJob?.await()
-            return
-        }
-        performUpdate()
-    }
+    public suspend fun initialize(): Unit = refresh()
 
     /**
      * Refreshes this property, updating before triggering the state.
      * Ignored if last refresh was within [debounce].
      */
-    public suspend fun refresh(debounce: Duration = Duration.ZERO) {
+    public suspend fun refresh(debounce: Duration = 50.milliseconds) {
         if (lastRefresh.plus(debounce.toJavaDuration()) > Instant.now()) {
             if (updateJob != null) {
                 updateJob?.await()
