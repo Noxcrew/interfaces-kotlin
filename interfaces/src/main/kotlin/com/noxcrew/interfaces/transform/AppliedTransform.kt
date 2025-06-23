@@ -22,6 +22,11 @@ public class AppliedTransform<P : Pane>(
     /** Stores different pre-completed states of this pane for different values of a stateful transform. */
     private val paneStates = ConcurrentHashMap<Any, CompletedPane>()
 
+    /** Resets this transform. */
+    public fun reset() {
+        paneStates.clear()
+    }
+
     /** Handles [trigger] being modified. */
     public fun handleChange(trigger: Trigger) {
         // Clear out the pane states whenever anything other than the main

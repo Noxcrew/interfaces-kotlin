@@ -379,6 +379,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             // Run any queued transforms while the menu was not shown if applicable, including any
             // non-stale transforms (which need updating on re-open)
             val queued = queuedTransforms.toSet() + builder.transforms.filterNot { it.stale }
+                .onEach {
+                    // Reset any transforms that are not stale so they properly re-render!
+                    it.reset()
+                }
             if (queued.isNotEmpty()) {
                 queuedTransforms = ConcurrentHashMap.newKeySet()
                 applyTransforms(queued, initial = false, renderIfEmpty = true)
