@@ -8,7 +8,7 @@ public abstract class CachedInterfacesInventory : InterfacesInventory {
     final override fun set(row: Int, column: Int, item: ItemStack?): Boolean {
         val current = get(row, column)
 
-        if (current == item) {
+        if (current == item || (item == null && current?.isEmpty != false)) {
             return false
         }
 

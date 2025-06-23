@@ -16,6 +16,7 @@ import com.noxcrew.interfaces.interfaces.InterfaceBuilder
 import com.noxcrew.interfaces.inventory.InterfacesInventory
 import com.noxcrew.interfaces.pane.CompletedPane
 import com.noxcrew.interfaces.pane.Pane
+import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.properties.LazyProperty
 import com.noxcrew.interfaces.properties.StateProperty
 import com.noxcrew.interfaces.properties.Trigger
@@ -677,32 +678,27 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
 
         // Apply the overlay of persistent items on top
-        if (builder.persistAddedItems) {
-            for ((point, item) in addedItems) {
-                val row = point.x
-                val column = point.y
-                val isPlayerInventory = mapper.isPlayerInventory(row, column)
-                if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
+        for ((point, item) in addedItems) {
+            val row = point.x
+            val column = point.y
+            val isPlayerInventory = mapper.isPlayerInventory(row, column)
+            if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
 
-                currentInventory.set(
-                    row,
-                    column,
-                    item,
-                )
-                leftovers -= row to column
-                madeChanges = true
-            }
+            currentInventory.set(
+                row,
+                column,
+                item,
+            )
+            leftovers -= row to column
+            madeChanges = true
         }
 
-        // If we inherit existing items we don't clear here!
-        if (!builder.inheritExistingItems) {
-            // Empty any slots that are not otherwise edited
-            for ((row, column) in leftovers) {
-                val isPlayerInventory = mapper.isPlayerInventory(row, column)
-                if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
-                currentInventory.set(row, column, ItemStack(Material.AIR))
-                madeChanges = true
-            }
+        // Empty any slots that are not otherwise edited
+        for ((row, column) in leftovers) {
+            val isPlayerInventory = mapper.isPlayerInventory(row, column)
+            if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
+            currentInventory.set(row, column, null)
+            madeChanges = true
         }
 
         if (madeChanges) {
@@ -712,7 +708,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     /** Saves any persistent items based on [inventory]. */
     public fun savePersistentItems(inventory: Inventory) {
-        if (!builder.persistAddedItems) return
+        // We can only save items added to the player interface!
+        if (this !is PlayerInterfaceView) return
 
         addedItems.clear()
         val contents = inventory.contents
@@ -722,10 +719,18 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             if (stack.type == Material.AIR) continue
 
             // Find the slot that this item is in
-            val point = GridPoint.fromBukkitChestSlot(index) ?: continue
+            val point = if (index == 40) {
+                PlayerPane.OFF_HAND_SLOT
+            } else if (index >= 36) {
+                GridPoint(PlayerPane.EXTRA_ROW, 5 + (index - 36))
+            } else if (index < 9) {
+                GridPoint(3, index)
+            } else {
+                GridPoint.fromBukkitChestSlot(index - 9) ?: continue
+            }
 
             // Ignore any items that are in the pane itself
-            if (completedPane?.getRaw(point) != null) continue
+            if (completedPane?.getRaw(point)?.itemStack != null) continue
 
             // Store this item
             addedItems[point] = stack
@@ -787,8 +792,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 if (!shouldBeOpened.get()) return@executeSync
 
                 // Save persistent items if the view is currently opened
-                if (player.openInventory.topInventory.getHolder(false) == this) {
-                    savePersistentItems(player.openInventory.topInventory)
+                if (isOpen() || builder.inheritExistingItems) {
+                    savePersistentItems(player.inventory)
                 }
 
                 // Determine if the inventory is currently open or being opened immediately,

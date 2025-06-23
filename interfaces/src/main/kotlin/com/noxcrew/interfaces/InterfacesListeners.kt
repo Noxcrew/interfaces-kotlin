@@ -270,7 +270,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val currentlyShown = convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false))
             ?: getBackgroundPlayerInterface(player.uniqueId)
         if (currentlyShown != null && currentlyShown !is ChestInterfaceView) {
-            currentlyShown.savePersistentItems(player.inventory)
+            if (currentlyShown.builder.persistAddedItems) {
+                currentlyShown.savePersistentItems(player.inventory)
+            }
         }
     }
 

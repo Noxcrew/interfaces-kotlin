@@ -46,16 +46,14 @@ public class PlayerInterfaceView internal constructor(
         // Open this player interface for the player
         InterfacesListeners.INSTANCE.setOpenView(player.uniqueId, this)
 
-        if (!builder.inheritExistingItems) {
-            // Clear the player's inventory!
-            player.inventory.clear()
-            if (player.openInventory.topInventory.type == InventoryType.CRAFTING ||
-                player.openInventory.topInventory.type == InventoryType.CREATIVE
-            ) {
-                player.openInventory.topInventory.clear()
-            }
-            player.openInventory.setCursor(null)
+        // Clear the player's inventory!
+        player.inventory.clear()
+        if (player.openInventory.topInventory.type == InventoryType.CRAFTING ||
+            player.openInventory.topInventory.type == InventoryType.CREATIVE
+        ) {
+            player.openInventory.topInventory.clear()
         }
+        player.openInventory.setCursor(null)
 
         // Trigger onOpen manually because there is no real inventory being opened,
         // this will also re-draw the player inventory parts!
