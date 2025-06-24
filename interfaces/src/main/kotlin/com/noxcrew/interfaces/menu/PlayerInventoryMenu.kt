@@ -25,7 +25,7 @@ public abstract class PlayerInventoryMenu : BaseInventoryMenu {
         configure(player)
     }
 
-    override suspend fun open(player: Player, parent: InterfaceView?): PlayerInterfaceView? {
+    override suspend fun open(player: Player, parent: InterfaceView?, reload: Boolean): PlayerInterfaceView? {
         val menu = exceptionHandler.execute(
             InterfacesExceptionContext(
                 player,
@@ -33,6 +33,6 @@ public abstract class PlayerInventoryMenu : BaseInventoryMenu {
                 null,
             ),
         ) { buildMenu(player) } ?: return null
-        return open(player, parent, menu) as PlayerInterfaceView
+        return open(player, parent, menu, reload) as PlayerInterfaceView
     }
 }

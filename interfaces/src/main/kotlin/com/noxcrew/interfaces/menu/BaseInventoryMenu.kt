@@ -16,10 +16,11 @@ public interface BaseInventoryMenu {
         player: Player,
         parent: InterfaceView? =
             InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false)),
+        reload: Boolean = true,
     ): InterfaceView?
 
     /** Opens a rendered [menu] for the given [player]. */
-    public suspend fun open(player: Player, parent: InterfaceView?, menu: Interface<*, *>): InterfaceView? {
+    public suspend fun open(player: Player, parent: InterfaceView?, menu: Interface<*, *>, reload: Boolean = true): InterfaceView? {
         // Quit if the coroutine is no longer active
         if (!coroutineContext.isActive) return null
 
@@ -31,6 +32,6 @@ public interface BaseInventoryMenu {
         if (parent?.isTreeOpened == false) return null
 
         // Finally open the actual menu!
-        return menu.open(player, parent)
+        return menu.open(player, parent, reload)
     }
 }

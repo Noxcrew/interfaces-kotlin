@@ -24,9 +24,9 @@ public class ChestInterface internal constructor(
 
     override fun createPane(): Pane = Pane()
 
-    override suspend fun open(player: Player, parent: InterfaceView?): ChestInterfaceView {
+    override suspend fun open(player: Player, parent: InterfaceView?, reload: Boolean): ChestInterfaceView {
         val view = ChestInterfaceView(player, this, parent)
-        view.open()
+        view.open(reload)
         return view
     }
 }

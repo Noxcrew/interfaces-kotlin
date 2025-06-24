@@ -34,7 +34,7 @@ public interface InterfaceView {
     public val isTreeOpened: Boolean
 
     /** Opens up this view. */
-    public suspend fun open()
+    public suspend fun open(reload: Boolean = true)
 
     /** Re-opens only if this menu should still be. */
     public suspend fun reopenIfIntended(): Boolean {
@@ -51,6 +51,7 @@ public interface InterfaceView {
     public suspend fun reopen(
         newParent: InterfaceView? =
             InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false)),
+        reload: Boolean = true,
     ): Boolean
 
     /** Closes this view. */

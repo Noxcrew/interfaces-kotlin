@@ -21,7 +21,7 @@ public abstract class SimpleInventoryMenu<B : InterfaceBuilder<out Pane, *>> : B
     /** Configures the GUI for the given [player]. */
     protected abstract suspend fun B.configure(player: Player)
 
-    override suspend fun open(player: Player, parent: InterfaceView?): InterfaceView? {
+    override suspend fun open(player: Player, parent: InterfaceView?, reload: Boolean): InterfaceView? {
         val menu = exceptionHandler.execute(
             InterfacesExceptionContext(
                 player,
@@ -35,6 +35,6 @@ public abstract class SimpleInventoryMenu<B : InterfaceBuilder<out Pane, *>> : B
             }
         } ?: return null
 
-        return open(player, parent, menu)
+        return open(player, parent, menu, reload)
     }
 }

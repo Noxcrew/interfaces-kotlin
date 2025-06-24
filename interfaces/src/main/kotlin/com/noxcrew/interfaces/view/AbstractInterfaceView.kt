@@ -92,6 +92,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     /** Whether the title of the inventory should be re-painted. */
     protected var refreshTitle: Boolean = true
 
+    /** Whether all properties should be fully reloaded. */
+    protected var fullyReload: Boolean = false
+
     /** Whether a click is being processed. */
     public var isProcessingClick: Boolean = false
 
@@ -269,7 +272,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         applyTransforms(builder.transforms, initial = true, renderIfEmpty = true)
     }
 
-    override suspend fun reopen(newParent: InterfaceView?): Boolean {
+    override suspend fun reopen(newParent: InterfaceView?, reload: Boolean): Boolean {
         // The player has since disconnected, close the menu properly!
         if (Bukkit.isStopping() || !player.isConnected) {
             if (shouldStillBeOpened) {
@@ -291,11 +294,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         if (newParent != null) {
             parent = newParent
         }
-        open()
+        open(reload)
         return true
     }
 
-    override suspend fun open() {
+    override suspend fun open(reload: Boolean) {
         // Don't open an interface for an offline player
         if (!player.isConnected || !coroutineContext.isActive) return
 
@@ -307,6 +310,12 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // and that it should be open right now
         openIfClosed.set(true)
         shouldBeOpened.set(true)
+
+        // Only fully re-evaluate all properties if this menu wants to, or if this menu is the first
+        // in a chain (parent is not there or this is the first non-player interface)
+        if (reload && (builder.alwaysReloadProperties || parent == null || parent is PlayerInterfaceView)) {
+            fullyReload = true
+        }
 
         // If we want to redraw the title we use a new inventory always
         if (backing.builder.redrawTitleOnReopen) {
@@ -337,7 +346,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         if (parent == null) {
             close()
         } else {
-            parent.open()
+            parent.open(reload = false)
         }
     }
 
@@ -352,10 +361,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                     this,
                 ),
             ) {
-                // Only fully re-evaluate all properties if this menu wants to, or if this menu is the first
-                // in a chain (parent is not there or this is the first non-player interface)
-                val fullyReload = builder.alwaysReloadProperties || parent == null || parent is PlayerInterfaceView
-
                 // Run the initialize method on any state properties to refresh them,
                 // ensure we only refresh every property once even if we need it multiple
                 // times!
@@ -379,6 +384,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                         }
                     }
                 }
+
+                // Mark that we have done a reload
+                fullyReload = false
             }
         } finally {
             queueAllTriggers.set(false)
