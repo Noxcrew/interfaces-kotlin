@@ -352,19 +352,31 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                     this,
                 ),
             ) {
+                // Only fully re-evaluate all properties if this menu wants to, or if this menu is the first
+                // in a chain (parent is not there or this is the first non-player interface)
+                val fullyReload = builder.alwaysReloadProperties || parent == null || parent is PlayerInterfaceView
+
                 // Run the initialize method on any state properties to refresh them,
                 // ensure we only refresh every property once even if we need it multiple
                 // times!
                 builder.transforms.flatMap { it.triggers }.filterIsInstance<StateProperty>().distinct().forEach {
                     withTimeout(builder.defaultTimeout) {
-                        it.refresh(view = this@AbstractInterfaceView)
+                        if (fullyReload) {
+                            it.refresh(view = this@AbstractInterfaceView)
+                        } else {
+                            it.initialize(view = this@AbstractInterfaceView)
+                        }
                     }
                 }
 
                 // Also re-evaluate all lazy properties!
                 builder.transforms.flatMap { it.triggers }.filterIsInstance<LazyProperty<*>>().distinct().forEach {
                     withTimeout(builder.defaultTimeout) {
-                        it.reevaluate(view = this@AbstractInterfaceView)
+                        if (fullyReload) {
+                            it.reevaluate(view = this@AbstractInterfaceView)
+                        } else {
+                            it.initialize(view = this@AbstractInterfaceView)
+                        }
                     }
                 }
             }

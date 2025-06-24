@@ -39,9 +39,9 @@ public abstract class StateProperty(
     private var initialized: Boolean = false
 
     /** Initializes this property if it hasn't already. */
-    public suspend fun initialize() {
+    public suspend fun initialize(view: InterfaceView? = null) {
         if (!initialized) {
-            refresh()
+            refresh(view = view)
         }
     }
 

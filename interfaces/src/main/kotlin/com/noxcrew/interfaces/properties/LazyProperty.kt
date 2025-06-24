@@ -28,6 +28,7 @@ public abstract class LazyProperty<T : Any>(
     private var updateJob: Deferred<Unit>? = null
     private var triggeringUpdate = false
     private var lastRefresh: Instant = Instant.MIN
+    private var initialized: Boolean = false
 
     /** A simple lazy property backed by [block]. */
     public class Simple<T : Any>(
@@ -49,6 +50,13 @@ public abstract class LazyProperty<T : Any>(
 
     /** Loads the value of this property. */
     public abstract suspend fun load(reload: Boolean = true): T
+
+    /** Initializes this property if it hasn't already. */
+    public suspend fun initialize(view: InterfaceView? = null) {
+        if (!initialized || value == null) {
+            reevaluate(reload = !initialized, view = view)
+        }
+    }
 
     /**
      * Triggers a re-evaluation of the property.
@@ -92,6 +100,7 @@ public abstract class LazyProperty<T : Any>(
                     }
                 }
             }
+            initialized = true
             lastRefresh = Instant.now()
             updateJob = null
         }

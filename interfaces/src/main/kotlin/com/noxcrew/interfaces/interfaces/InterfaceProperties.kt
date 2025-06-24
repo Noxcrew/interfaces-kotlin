@@ -46,6 +46,9 @@ public open class InterfaceProperties<P : Pane> {
     /** Whether clicking on empty slots should be cancelled. */
     public var preventClickingEmptySlots: Boolean = true
 
+    /** If `true`, lazy and state properties are always re-evaluated instead of only initialized. */
+    public var alwaysReloadProperties: Boolean = false
+
     /**
      * Whether the player's own inventory should be editable if [preventClickingEmptySlots] is `true`. Only allowed for
      * [ChestInterfaceBuilder].
