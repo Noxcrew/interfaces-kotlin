@@ -742,7 +742,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             val point = if (index == 40) {
                 PlayerPane.OFF_HAND_SLOT
             } else if (index >= 36) {
-                GridPoint(PlayerPane.EXTRA_ROW, 5 + (index - 36))
+                GridPoint(PlayerPane.EXTRA_ROW, 5 + (39 - index))
             } else if (index < 9) {
                 GridPoint(3, index)
             } else {
@@ -812,7 +812,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 if (!shouldBeOpened.get()) return@executeSync
 
                 // Save persistent items if the view is currently opened
-                if (isOpen() || builder.inheritExistingItems) {
+                if (isOpen() && builder.inheritExistingItems) {
                     savePersistentItems(player.inventory)
                 }
 
