@@ -22,6 +22,7 @@ import com.noxcrew.interfaces.properties.StateProperty
 import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.transform.BlockingMode
+import com.noxcrew.interfaces.transform.RefreshMode
 import com.noxcrew.interfaces.utilities.CollapsablePaneMap
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import kotlinx.coroutines.CoroutineScope
@@ -269,7 +270,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     override fun redrawComplete() {
-        applyTransforms(builder.transforms, initial = true, renderIfEmpty = true)
+        applyTransforms(builder.transforms.filter { it.refresh != RefreshMode.TRIGGER_ONLY }, initial = true, renderIfEmpty = true)
     }
 
     override suspend fun reopen(newParent: InterfaceView?, reload: Boolean): Boolean {
@@ -398,8 +399,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             redrawComplete()
         } else {
             // Run any queued transforms while the menu was not shown if applicable, including any
-            // non-stale transforms (which need updating on re-open)
-            val queued = queuedTransforms.toSet() + builder.transforms.filterNot { it.stale }
+            // transforms that always redraw
+            val queued = queuedTransforms.toSet() + builder.transforms.filter { it.refresh == RefreshMode.ALWAYS }
                 .onEach {
                     // Reset any transforms that are not stale so they properly re-render!
                     it.reset()

@@ -5,6 +5,7 @@ import com.noxcrew.interfaces.properties.Trigger
 import com.noxcrew.interfaces.transform.AppliedTransform
 import com.noxcrew.interfaces.transform.BlockingMode
 import com.noxcrew.interfaces.transform.ReactiveTransform
+import com.noxcrew.interfaces.transform.RefreshMode
 import com.noxcrew.interfaces.transform.StatefulTransform
 import com.noxcrew.interfaces.transform.Transform
 import com.noxcrew.interfaces.utilities.IncrementingInteger
@@ -23,43 +24,42 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
     public abstract fun build(): I
 
     /** Adds a new transform to the interface that updates whenever [triggers] change. */
-    public fun withTransform(
-        vararg triggers: Trigger?,
-        /** Whether the contents of this transform should prevent the initial render from completing. */
-        blocking: BlockingMode = BlockingMode.INITIAL,
-        /** Whether this transform can be left the same when re-opening a menu. */
-        stale: Boolean = false,
-        transform: Transform<P>,
-    ) {
-        _transforms += AppliedTransform(blocking, stale, transformCounter, triggers.filterNotNull().toSet(), transform)
-    }
-
-    /** Adds a new reactive transform to the interface. */
     public fun addTransform(
-        reactiveTransform: ReactiveTransform<P>,
-        /** Whether the contents of this transform should prevent the initial render from completing. */
-        blocking: BlockingMode = BlockingMode.INITIAL,
-        /** Whether this transform can be left the same when re-opening a menu. */
-        stale: Boolean = false,
-    ) {
-        _transforms += AppliedTransform(blocking, stale, transformCounter, reactiveTransform.triggers.toSet(), reactiveTransform)
-    }
-
-    /** Adds a new stateful transform to the interface. */
-    public fun <T> addTransform(
-        statefulTransform: StatefulTransform<P, T>,
+        /** The transform to add. */
+        transform: Transform<P>,
+        /** All additional triggers to refresh this transform. */
         vararg triggers: Trigger?,
-        /** Whether the contents of this transform should prevent the initial render from completing. */
-        blocking: BlockingMode = BlockingMode.INITIAL,
-        /** Whether this transform can be left the same when re-opening a menu. */
-        stale: Boolean = false,
+        /** The blocking mode to use for this transform. */
+        blocking: BlockingMode = defaultBlockMode,
+        /** The refreshing mode to use for this transform. */
+        refresh: RefreshMode = defaultRefreshMode,
+    ): Unit = withTransform(triggers = triggers, blocking = blocking, refresh = refresh, transform = transform)
+
+    /** Adds a new transform to the interface that updates whenever [triggers] change. */
+    public fun withTransform(
+        /** All additional triggers to refresh this transform. */
+        vararg triggers: Trigger?,
+        /** The blocking mode to use for this transform. */
+        blocking: BlockingMode = defaultBlockMode,
+        /** The refreshing mode to use for this transform. */
+        refresh: RefreshMode = defaultRefreshMode,
+        /** The transform to add. */
+        transform: Transform<P>,
     ) {
         _transforms += AppliedTransform(
             blocking,
-            stale,
+            refresh,
             transformCounter,
-            setOf(statefulTransform.property).plus(statefulTransform.triggers.toSet()).plus(triggers.filterNotNull().toSet()),
-            statefulTransform,
+            buildSet {
+                addAll(triggers.filterNotNull())
+                if (transform is ReactiveTransform) {
+                    addAll(transform.triggers.toList())
+                }
+                if (transform is StatefulTransform<*, *>) {
+                    add(transform.property)
+                }
+            },
+            transform,
         )
     }
 }

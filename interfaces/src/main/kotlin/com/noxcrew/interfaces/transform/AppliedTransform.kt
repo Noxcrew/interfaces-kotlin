@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 /** A transform that can been applied to a pane. */
 public class AppliedTransform<P : Pane>(
     internal val blocking: BlockingMode,
-    internal val stale: Boolean,
+    internal val refresh: RefreshMode,
     internal val priority: Int,
     internal val triggers: Set<Trigger>,
     internal val backing: Transform<P>,

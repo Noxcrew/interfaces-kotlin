@@ -2,7 +2,6 @@ package com.noxcrew.interfaces.transform
 
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.properties.InterfaceProperty
-import com.noxcrew.interfaces.properties.Trigger
 
 /**
  * A transform whose state solely relies on a singular property
@@ -16,7 +15,7 @@ import com.noxcrew.interfaces.properties.Trigger
  * value it previously had, the old state is re-used similar to
  * re-opening the menu.
  */
-public interface StatefulTransform<P : Pane, T> : Transform<P> {
+public interface StatefulTransform<P : Pane, T> : ReactiveTransform<P> {
 
     /**
      * The property this transform where each distinct value
@@ -24,7 +23,4 @@ public interface StatefulTransform<P : Pane, T> : Transform<P> {
      * a redraw of the menu.
      */
     public val property: InterfaceProperty<T>
-
-    /** The triggers this transform listens to. */
-    public val triggers: Array<Trigger>
 }
