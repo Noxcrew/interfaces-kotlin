@@ -32,6 +32,9 @@ public open class InterfaceProperties<P : Pane> {
     /** The timeout to apply to all coroutines for this menu. */
     public var defaultTimeout: Duration = 2.5.seconds
 
+    /** Enables debug logs for time spent on various actions. */
+    public var debugRenderingTime: Boolean = false
+
     // --- CACHING / EFFICIENCY ---
     /** Whether to redraw the title when re-opening a menu. */
     public var redrawTitleOnReopen: Boolean = true
@@ -108,6 +111,7 @@ public open class InterfaceProperties<P : Pane> {
     /** Sets all values to their simple defaults. This is the default type! */
     public fun useSimpleDefaults() {
         redrawTitleOnReopen = true
+        alwaysReloadProperties = true
         defaultRefreshMode = RefreshMode.ALWAYS
         defaultBlockMode = BlockingMode.ALWAYS
     }
@@ -115,6 +119,7 @@ public open class InterfaceProperties<P : Pane> {
     /** Sets all values to support efficient caching of components and minimize automatic refreshes. */
     public fun useCachingDefaults() {
         redrawTitleOnReopen = false
+        alwaysReloadProperties = false
         defaultRefreshMode = RefreshMode.INITIAL
         defaultBlockMode = BlockingMode.INITIAL
     }

@@ -25,6 +25,7 @@ import com.noxcrew.interfaces.transform.BlockingMode
 import com.noxcrew.interfaces.transform.RefreshMode
 import com.noxcrew.interfaces.utilities.CollapsablePaneMap
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
+import com.noxcrew.interfaces.utilities.InterfacesProfiler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -159,6 +160,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         get() = if (::pane.isInitialized) pane else null
 
     init {
+        // Log to the profiler
+        InterfacesProfiler.log(this, "interface being constructed")
+
         // Determine for each trigger what transforms it updates
         val triggers = HashMultimap.create<Trigger, AppliedTransform<P>>()
         for (transform in builder.transforms) {
@@ -355,6 +359,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     private suspend fun triggerProperties() {
         try {
             queueAllTriggers.set(true)
+            InterfacesProfiler.log(this, "starting to trigger properties")
             execute(
                 InterfacesExceptionContext(
                     player,
@@ -394,6 +399,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
 
         // Either draw the entire interface or just re-render it
+        InterfacesProfiler.log(this, "starting rendering")
         if (firstPaint) {
             queuedTransforms.clear()
             redrawComplete()
@@ -426,6 +432,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
 
         // Await to acquire the mutex before we start rendering
+        InterfacesProfiler.log(this, "starting re-rendering loop")
         paneMutex.lock()
         try {
             execute(
@@ -518,6 +525,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     /** Processes all pending transforms. */
     private suspend fun processTransforms() {
+        InterfacesProfiler.log(this, "starting transform processing")
+
         while (pendingTransforms.isNotEmpty()) {
             // Go through all pending transforms one at a time until
             // we're fully done with all of them. Other threads may
@@ -548,6 +557,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                     } finally {
                         paneMutex.unlock()
                     }
+                    InterfacesProfiler.log(this, "finished rendering transform")
                 }
             }
 
@@ -801,6 +811,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Draw the contents of the inventory synchronously because
         // we don't want it to happen in between ticks and show
         // a half-finished inventory.
+        InterfacesProfiler.log(this, "ready to render sync")
         InterfacesListeners.INSTANCE.runSync {
             executeSync(
                 InterfacesExceptionContext(
@@ -824,6 +835,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 val isOpen = isOpen()
                 drawPaneToInventory(drawNormalInventory = true, drawPlayerInventory = isOpen)
                 callback(createdInventory)
+                InterfacesProfiler.log(this, "finished rendering to inventory")
 
                 if (this is PlayerInterfaceView) {
                     // If this is a player inventory we can't update the inventory without
