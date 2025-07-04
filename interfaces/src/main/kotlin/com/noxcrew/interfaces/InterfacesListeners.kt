@@ -38,6 +38,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryCloseEvent.Reason
 import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.event.inventory.InventoryOpenEvent
+import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerQuitEvent
@@ -433,17 +434,52 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             // If it's a shift click we have to detect what slot is being edited
             if (event.click.isShiftClick && event.clickedInventory != null) {
                 val clickedInventory = event.clickedInventory!!
-                val otherInventory = if (clickedInventory == topInventory) bottomInventory else topInventory
+                var specialInventory = false
+                val otherInventory =
+                    if (clickedInventory == topInventory) {
+                        bottomInventory
+                    } else if (topInventory.type == InventoryType.CRAFTING) {
+                        specialInventory = true
+                        bottomInventory
+                    } else {
+                        topInventory
+                    }
 
                 // Ideally we predict which slot got shift clicked into! We start by finding any
                 // stack that this item can be added onto, after that we find the first empty slot.
                 val isMovingIntoPlayerInventory = otherInventory.getHolder(false) is Player
-                val firstEmptySlot = otherInventory.indexOfFirst {
-                    it != null && !it.isEmpty && it.isSimilar(event.currentItem ?: ItemStack.empty())
-                }.takeIf { it != -1 } ?: otherInventory.indexOfFirst { it == null || it.isEmpty }
+                val clickedItem = event.currentItem ?: ItemStack.empty()
+                val firstEmptySlot = if (specialInventory) {
+                    // If this is the player inventory you tab between the hotbar and the inventory's insides
+                    val allowedIndices = if (clickedPoint.x != 3) {
+                        // Moving into hotbar
+                        otherInventory.contents.indices.filter { it < 9 }
+                    } else {
+                        // Moving into main inventory
+                        otherInventory.contents.indices.filter { it in 9 until 36 }
+                    }
+
+                    allowedIndices.firstOrNull { index ->
+                        val it = otherInventory.contents[index]
+                        it != null && !it.isEmpty && it.isSimilar(clickedItem)
+                    }.takeIf { it != -1 } ?: allowedIndices.firstOrNull { index ->
+                        val it = otherInventory.contents[index]
+                        it == null || it.isEmpty
+                    } ?: -1
+                } else {
+                    otherInventory.indexOfFirst {
+                        it != null && !it.isEmpty && it.isSimilar(clickedItem)
+                    }.takeIf { it != -1 } ?: otherInventory.indexOfFirst { it == null || it.isEmpty }
+                }
 
                 if (firstEmptySlot != -1) {
-                    val targetSlot = requireNotNull(GridPoint.fromBukkitChestSlot(firstEmptySlot))
+                    val targetSlot = requireNotNull(
+                        if (isMovingIntoPlayerInventory) {
+                            GridPoint.fromBukkitPlayerSlot(firstEmptySlot)
+                        } else {
+                            GridPoint.fromBukkitChestSlot(firstEmptySlot)
+                        },
+                    )
 
                     if (!canFreelyMove(
                             view,
@@ -664,10 +700,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         }
 
         // If this inventory has no player inventory then the player inventory is always allowed to be edited
-        if (!view.backing.includesPlayerInventory && isPlayerInventory) return true
+        if (!view.backing.includesPlayerInventory && isPlayerInventory) {
+            return true
+        }
 
         // If there is no item here we allow editing
-        return view.completedPane?.getRaw(clickedPoint) == null
+        return view.completedPane?.getRaw(clickedPoint)?.itemStack == null
     }
 
     /** Handles a [view] being clicked at [clickedPoint] through some [event]. */

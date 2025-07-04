@@ -823,8 +823,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 // If the menu has since been requested to close we ignore all this
                 if (!shouldBeOpened.get()) return@executeSync
 
-                // Save persistent items if the view is currently opened
-                if (isOpen() && builder.inheritExistingItems) {
+                // Save persistent items before we render
+                if (builder.inheritExistingItems) {
                     savePersistentItems(player.inventory)
                 }
 
