@@ -8,6 +8,7 @@ import com.noxcrew.interfaces.transform.ReactiveTransform
 import com.noxcrew.interfaces.transform.RefreshMode
 import com.noxcrew.interfaces.transform.StatefulTransform
 import com.noxcrew.interfaces.transform.Transform
+import com.noxcrew.interfaces.transform.builtin.PaginationTransformation
 import com.noxcrew.interfaces.utilities.IncrementingInteger
 
 /** Assists in creating a new interface. */
@@ -61,5 +62,22 @@ public abstract class InterfaceBuilder<P : Pane, I : Interface<I, P>> : Interfac
             },
             transform,
         )
+    }
+
+    /** Helps with adding a paginated transform that should only re-render when its contents change. */
+    public fun <E> addLazyPaginatedTransform(
+        /** All additional triggers to refresh this transform. */
+        vararg triggers: Trigger?,
+        /** The blocking mode to use for this transform. */
+        blocking: BlockingMode = defaultBlockMode,
+        /** The transform to add. */
+        transform: PaginationTransformation<P, E>,
+        /** The reload method to update the values. */
+        determineContents: suspend () -> List<E>,
+    ) {
+        addTransform(transform, triggers = triggers, blocking = blocking, refresh = RefreshMode.TRIGGER_ONLY)
+        withTransform(blocking = blocking, refresh = RefreshMode.RELOAD) { _, _ ->
+            transform.setContentsIfDifferent(determineContents())
+        }
     }
 }
