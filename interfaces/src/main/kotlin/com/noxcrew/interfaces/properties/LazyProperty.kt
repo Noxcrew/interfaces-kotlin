@@ -114,7 +114,7 @@ public abstract class LazyProperty<T : Any>(
     }
 
     /** Returns the value of this property. */
-    public suspend fun getValue(): T = value ?: reevaluate(false)
+    public suspend fun getValue(): T = value ?: reevaluate(null, false)
 
     /** Returns the cached value of this property. */
     public fun getCachedValue(): T? = value
