@@ -39,6 +39,7 @@ public interface InterfaceView {
     /** Re-opens only if this menu should still be. */
     public suspend fun reopenIfIntended(): Boolean {
         if (!shouldStillBeOpened) return false
+        if (isOpen()) return false
         return reopen(null)
     }
 

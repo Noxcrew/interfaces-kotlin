@@ -269,6 +269,18 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             decoratingJob.set(null)
             transformingJob.set(null)
 
+            // Queue up any unfinished transforms back up!
+            queuedTransforms += pendingTransforms
+            pendingTransforms.clear()
+            val oldLazy = pendingNonBlockingTransforms
+            pendingNonBlockingTransforms = ConcurrentLinkedQueue()
+            queuedTransforms += oldLazy
+
+            // Clear up all the state that might be half-finished!
+            lazyElements.clear()
+            queueAllTriggers.set(false)
+            debouncedRender.set(false)
+
             // Test if a background menu should be opened
             if (reason in REOPEN_REASONS && !player.isDead) {
                 InterfacesListeners.INSTANCE.reopenInventory(player)
@@ -524,7 +536,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         if (instantTransforms.isEmpty() || lazyTransforms.isEmpty()) {
             // If either category is empty we run everything immediately
-            pendingTransforms.addAll(transforms)
+            pendingTransforms.addAll(newTransforms)
 
             // If only the instant transforms are empty, we render first!
             if (instantTransforms.isEmpty() && renderIfEmpty) {
@@ -587,7 +599,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             // After we complete a render we add any lazy transforms to the pending
             // list which may cause us to keep rendering even after the re-render
             val oldLazy = pendingNonBlockingTransforms
-            pendingNonBlockingTransforms = ConcurrentLinkedQueue<AppliedTransform<P>>()
+            pendingNonBlockingTransforms = ConcurrentLinkedQueue()
             pendingTransforms += oldLazy
         }
     }
