@@ -12,6 +12,27 @@ import kotlin.coroutines.coroutineContext
 public interface BaseInventoryMenu {
 
     /** Opens this menu for the given [player]. */
+    public suspend fun openOrThrow(
+        player: Player,
+        parent: InterfaceView? =
+            InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false)),
+        reload: Boolean = true,
+    ): InterfaceView =
+        open(player, parent, reload)
+            ?: throw RuntimeException(
+                """
+                Attempting to open menu returned `null` on the open method for ${player.name}
+                 - parentView null: ${parent == null}
+                 - parentView isOpen: ${parent?.isOpen()}
+                 - parentView isTreeOpen: ${parent?.isTreeOpened}
+                 - parentView shouldStillBeOpened: ${parent?.shouldStillBeOpened}
+                 - coroutine context active: ${coroutineContext.isActive}
+                 - stopping: ${Bukkit.isStopping()}
+                 - player connected: ${player.isConnected}
+                """.trimIndent(),
+            )
+
+    /** Opens this menu for the given [player]. */
     public suspend fun open(
         player: Player,
         parent: InterfaceView? =
