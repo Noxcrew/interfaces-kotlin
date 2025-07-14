@@ -30,7 +30,7 @@ public open class InterfaceProperties<P : Pane> {
     public var exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler()
 
     /** The timeout to apply to all coroutines for this menu. */
-    public var defaultTimeout: Duration = 2.5.seconds
+    public var defaultTimeout: Duration = 5.seconds
 
     /** Enables debug logs for time spent on various actions. */
     public var debugRenderingTime: Boolean = false

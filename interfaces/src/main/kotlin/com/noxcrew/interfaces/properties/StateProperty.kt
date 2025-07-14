@@ -29,7 +29,7 @@ public abstract class StateProperty(
     /** The player this property is for. */
     public val player: Player,
     /** The maximum time an update can take. */
-    private val updateTimeout: Duration = 2.5.seconds,
+    private val updateTimeout: Duration = 5.seconds,
     private val exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler(),
     private val delegate: DelegateTrigger = DelegateTrigger(),
 ) : Trigger by delegate {
@@ -69,11 +69,13 @@ public abstract class StateProperty(
             ) {
                 withTimeout(updateTimeout) {
                     update()
+
+                    // Only mark initialization done after we finish an update!
+                    initialized = true
                 }
             }
 
             // Start the timeout after we finish!
-            initialized = true
             lastRefresh = Instant.now()
             updateJob = null
         }

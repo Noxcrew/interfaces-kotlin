@@ -22,7 +22,7 @@ public abstract class LazyProperty<T : Any>(
     /** The player this property is for. */
     public val player: Player,
     /** The maximum time an update can take. */
-    private val updateTimeout: Duration = 2.5.seconds,
+    private val updateTimeout: Duration = 5.seconds,
     private val exceptionHandler: InterfacesExceptionHandler = StandardInterfacesExceptionHandler(),
 ) : DelegateTrigger() {
     private var updateJob: Deferred<Unit>? = null
@@ -33,7 +33,7 @@ public abstract class LazyProperty<T : Any>(
     /** A simple lazy property backed by [block]. */
     public class Simple<T : Any>(
         player: Player,
-        updateTimeout: Duration = 2.5.seconds,
+        updateTimeout: Duration = 5.seconds,
         exceptionHandler: StandardInterfacesExceptionHandler,
         private val block: suspend (Boolean) -> T,
     ) : LazyProperty<T>(player, updateTimeout, exceptionHandler) {
@@ -98,9 +98,11 @@ public abstract class LazyProperty<T : Any>(
                         trigger()
                         triggeringUpdate = false
                     }
+
+                    // Only mark initialization done after we finish an update!
+                    initialized = true
                 }
             }
-            initialized = true
             lastRefresh = Instant.now()
             updateJob = null
         }
