@@ -97,6 +97,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     /** Whether all properties should be fully reloaded. */
     protected var fullyReload: Boolean = false
 
+    /** Whether all refresh type transforms should be reloaded. */
+    protected var reloadRefresh: Boolean = false
+
     /** Whether a click is being processed. */
     public var isProcessingClick: Boolean = false
 
@@ -322,6 +325,11 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             fullyReload = true
         }
 
+        // Trigger a refresh for RELOAD type transforms as long as reload is specified
+        if (reload) {
+            reloadRefresh = true
+        }
+
         // If we want to redraw the title we use a new inventory always
         if (backing.builder.redrawTitleOnReopen) {
             refreshTitle = true
@@ -406,11 +414,13 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         } else {
             // Run any queued transforms while the menu was not shown if applicable, including any
             // transforms that always redraw
-            val queued = queuedTransforms.toSet() + builder.transforms.filter { it.refresh == RefreshMode.ALWAYS }
-                .onEach {
-                    // Reset any transforms that are not stale so they properly re-render!
-                    it.reset()
-                }
+            val queued =
+                queuedTransforms.toSet() +
+                    builder.transforms.filter { it.refresh == RefreshMode.ALWAYS || (it.refresh == RefreshMode.RELOAD && reloadRefresh) }
+                        .onEach {
+                            // Reset any transforms that are not stale so they properly re-render!
+                            it.reset()
+                        }
             if (queued.isNotEmpty()) {
                 queuedTransforms = ConcurrentHashMap.newKeySet()
                 applyTransforms(queued, initial = false, renderIfEmpty = true)
@@ -418,6 +428,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 triggerRerender()
             }
         }
+
+        // Mark that we did a reload!
+        reloadRefresh = false
     }
 
     /** Triggers a re-render of the inventory based on all currently completed panes. */

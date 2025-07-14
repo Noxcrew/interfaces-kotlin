@@ -10,4 +10,7 @@ public enum class RefreshMode {
 
     /** The transform is refreshed any time the menu is opened. */
     ALWAYS,
+
+    /** The transform is refreshed only when opened with reload = true. */
+    RELOAD,
 }
