@@ -52,7 +52,7 @@ public abstract class LazyProperty<T : Any>(
     public abstract suspend fun load(reload: Boolean = true): T
 
     /** Initializes this property if it hasn't already. */
-    public suspend fun initialize(view: InterfaceView? = null) {
+    public suspend fun initialize(view: InterfaceView?) {
         if (!initialized || value == null) {
             reevaluate(reload = !initialized, view = view)
         }
@@ -63,10 +63,10 @@ public abstract class LazyProperty<T : Any>(
      * If [reload] is given, all data should be fully reloaded.
      */
     public suspend fun reevaluate(
+        view: InterfaceView?,
         reload: Boolean = true,
         trigger: Boolean = true,
         debounce: Duration = 200.milliseconds,
-        view: InterfaceView? = null
     ): T {
         // Mark down if we want an update to happen
         if (trigger) {
