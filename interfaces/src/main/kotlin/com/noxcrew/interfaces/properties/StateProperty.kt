@@ -41,7 +41,7 @@ public abstract class StateProperty(
     /** Initializes this property if it hasn't already. */
     public suspend fun initialize(view: InterfaceView?) {
         if (!initialized) {
-            refresh(view = view)
+            refresh(view)
         }
     }
 
@@ -49,7 +49,7 @@ public abstract class StateProperty(
      * Refreshes this property, updating before triggering the state.
      * Ignored if last refresh was within [debounce].
      */
-    public suspend fun refresh(debounce: Duration = 200.milliseconds, view: InterfaceView?) {
+    public suspend fun refresh(view: InterfaceView?, debounce: Duration = 200.milliseconds) {
         // Await any existing job if one is running
         if (updateJob != null) {
             updateJob?.await()
