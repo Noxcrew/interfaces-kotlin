@@ -92,6 +92,9 @@ public abstract class LazyProperty<T : Any>(
                     view,
                 ),
             ) {
+                // Make any failed reload of the value cause it to be refreshed again later!
+                initialized = false
+
                 withTimeout(updateTimeout) {
                     value = load(reload)
                     if (triggeringUpdate) {
