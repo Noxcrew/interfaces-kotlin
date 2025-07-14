@@ -277,7 +277,13 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     override fun redrawComplete() {
-        applyTransforms(builder.transforms.filter { it.refresh != RefreshMode.TRIGGER_ONLY && (it.refresh != RefreshMode.RELOAD || reloadRefresh) }, initial = true, renderIfEmpty = true)
+        applyTransforms(
+            builder.transforms.filter {
+                it.refresh != RefreshMode.TRIGGER_ONLY &&
+                    (it.refresh != RefreshMode.RELOAD || reloadRefresh)
+            },
+            initial = true, renderIfEmpty = true
+        )
     }
 
     override suspend fun reopen(newParent: InterfaceView?, reload: Boolean): Boolean {
