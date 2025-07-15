@@ -17,7 +17,7 @@ val javaVersion: Int = 21
 
 allprojects {
     group = "com.noxcrew.interfaces"
-    version = "2.0.1-SNAPSHOT"
+    version = "2.0.1"
 
     tasks.withType<JavaCompile> {
         sourceCompatibility = javaVersion.toString()
