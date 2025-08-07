@@ -294,7 +294,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 it.refresh != RefreshMode.TRIGGER_ONLY &&
                     (it.refresh != RefreshMode.RELOAD || reloadRefresh)
             },
-            initial = true, renderIfEmpty = true
+            initial = true,
+            renderIfEmpty = true,
         )
     }
 
@@ -339,12 +340,12 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // Only fully re-evaluate all properties if this menu wants to, or if this menu is the first
         // in a chain (parent is not there or this is the first non-player interface)
-        if (reload && (builder.alwaysReloadProperties || parent == null || parent is PlayerInterfaceView)) {
+        if ((reload || firstPaint) && (builder.alwaysReloadProperties || parent == null || parent is PlayerInterfaceView)) {
             fullyReload = true
         }
 
         // Trigger a refresh for RELOAD type transforms as long as reload is specified
-        if (reload) {
+        if (reload || firstPaint) {
             reloadRefresh = true
         }
 
