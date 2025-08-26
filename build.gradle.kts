@@ -54,7 +54,7 @@ subprojects {
 
     // Configure any existing RunServerTasks
     tasks.withType<RunServer> {
-        minecraftVersion("1.21.5")
+        minecraftVersion("1.21.8")
         jvmArgs("-Dio.papermc.paper.suppress.sout.nags=true")
     }
 

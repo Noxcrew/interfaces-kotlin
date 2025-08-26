@@ -283,7 +283,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         saveInventoryContentsIfOpened(event.player)
 
         val holder = event.inventory.getHolder(false)
-        val view = convertHolderToInterfaceView(holder) ?: return
+        val view = convertHolderToInterfaceView(holder)
 
         // Close the previous view first with open new as the reason, unless we
         // are currently opening this view!
@@ -309,17 +309,19 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             }
         }
 
-        // Set the new open inventory
-        openInventory[event.player] = view
-
-        // If there is an open view left, destroy it as something went wrong!
-        withoutReopen {
-            openPlayerInterfaceViews.remove(event.player.uniqueId)?.markClosed(SCOPE, Reason.OPEN_NEW)
+        // If the view is not owned by interfaces, deal with that properly!
+        if (view == null) {
+            openInventory -= event.player
+        } else {
+            // Set the new open inventory
+            openInventory[event.player] = view
         }
 
         // Abort any previous query the player had
         abortQuery(event.player.uniqueId, null)
-        view.onOpen()
+
+        // Handle opening the new view
+        view?.onOpen()
     }
 
     @EventHandler
@@ -344,16 +346,23 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         if (opened != null) {
             opened.markClosed(SCOPE, reason)
         } else if (reason in REOPEN_REASONS && !event.player.isDead) {
-            // If the opened menu didn't trigger a re-open, do it manually!
+            // If the opened menu didn't trigger a re-open, do it manually! This is necessary if it wasn't
+            // an interfaces inventory but instead a crafting table, furnace, horse, etc.
             reopenInventory(event.player as Player)
         }
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public fun onClick(event: InventoryClickEvent) {
-        val holder = event.inventory.getHolder(false)
-        val view = convertHolderToInterfaceView(holder) ?: return
-        val clickedPoint = view.backing.mapper.toGridPoint(event.rawSlot) ?: return
+        // Try to get the view of the top inventory first but fall back to the clicked inventory in specific
+        val mainView = convertHolderToInterfaceView(event.inventory.getHolder(false))
+        val view = mainView ?: convertHolderToInterfaceView(
+            (event.clickedInventory ?: event.inventory).getHolder(false),
+        ) ?: return
+
+        // If we are using a fallback player view we need to adjust the raw slot to include the 9 regular player inventory top slots
+        val clickedPoint =
+            view.backing.mapper.toGridPoint(if (mainView == null) (event.rawSlot - event.inventory.size + 9) else event.rawSlot) ?: return
         val isPlayerInventory = (event.clickedInventory ?: event.inventory).getHolder(false) is Player
 
         // Run base click handling
@@ -396,7 +405,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             val bottomInventory = event.view.bottomInventory
             if (event.click == ClickType.DOUBLE_CLICK) {
                 val clickedItem = event.cursor
-                val isInPlayerInventory = holder is Player
+                val isInPlayerInventory = event.inventory.getHolder(false) is Player
 
                 // Don't check top inventory if we're in the player inventory!
                 if (
@@ -666,14 +675,6 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         event.isCancelled = true
     }
 
-    /** Extracts the clicked point from an inventory click event. */
-    private fun clickedPoint(view: AbstractInterfaceView<*, *, *>, event: InventoryClickEvent): GridPoint? {
-        if (event.inventory.getHolder(false) is Player) {
-            return GridPoint.fromBukkitPlayerSlot(event.slot)?.let { view.backing.relativizePlayerInventorySlot(it) }
-        }
-        return GridPoint.fromBukkitChestSlot(event.rawSlot)
-    }
-
     /**
      * Converts an inventory holder to an [AbstractInterfaceView] if possible. If the holder is a player
      * their currently open player interface is returned.
@@ -684,8 +685,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // If it's an abstract view use that one
         if (holder is AbstractInterfaceView<*, *, *>) return holder
 
-        // If it's the player's own inventory use the held one
-        if (holder is HumanEntity) return getOpenPlayerInterface(holder.uniqueId)
+        // If it's the player's own inventory use the held one, it might be the background one if
+        // this is the bottom of a combined inventory
+        if (holder is HumanEntity) return getOpenPlayerInterface(holder.uniqueId) ?: getBackgroundPlayerInterface(holder.uniqueId)
 
         return null
     }
