@@ -25,14 +25,14 @@ public open class StandardInterfacesExceptionHandler(
                     // When building a player menu we absolutely do not want to fail as
                     // it results in nothing being drawn. We retry up to 3 times!
                     logger.error(
-                        "Failed `${context.operation.description}` for ${context.player.name}, retrying (${context.retries + 1}/3)!",
+                        "Failed `${context.operation.description}` for ${context.player.name}, retrying (${context.retries + 1}/3)!", exception
                     )
                     InterfacesExceptionResolution.RETRY
                 } else {
                     // Ignore the drawing but kick the player off the server
                     logger.error(
                         "Failed `${context.operation.description}` for ${context.player.name} 3 times, " +
-                            "kicking player to prevent invalid state",
+                            "kicking player to prevent invalid state", exception
                     )
                     InterfacesListeners.INSTANCE.runSync {
                         context.player.kick(Component.text("Unknown exception occurred while rendering GUI menus"))
