@@ -268,8 +268,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     public fun saveInventoryContentsIfOpened(player: HumanEntity) {
         // Saves any persistent items stored in the main inventory whenever we are currently
         // showing a combined or player inventory before we draw the new one over-top
-        val currentlyShown = convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false))
-            ?: getBackgroundPlayerInterface(player.uniqueId)
+        val currentlyShown = openInventory[player]
         if (currentlyShown != null && currentlyShown !is ChestInterfaceView) {
             if (currentlyShown.builder.persistAddedItems) {
                 currentlyShown.savePersistentItems(player.inventory)
