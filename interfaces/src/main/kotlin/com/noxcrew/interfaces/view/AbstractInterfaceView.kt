@@ -154,10 +154,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     override val isTreeOpened: Boolean
         get() = shouldStillBeOpened || children.keys.any { it.isTreeOpened }
 
-    /** Whether this menu type overlaps the player inventory. */
-    public open val overlapsPlayerInventory: Boolean
-        get() = false
-
     /** The pane of this view. */
     public val completedPane: CompletedPane?
         get() = if (::pane.isInitialized) pane else null
@@ -479,12 +475,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                     pane = panes.collapse(backing.mapper, builder.allowClickingEmptySlots)
 
                     // Render the completed panes
-                    renderToInventory { createdNewInventory ->
-                        // send an update packet if necessary
-                        if (!createdNewInventory && requiresPlayerUpdate()) {
-                            player.updateInventory()
-                        }
-                    }
+                    renderToInventory()
                 }
             }
         } finally {
@@ -813,9 +804,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     protected open fun requiresNewInventory(): Boolean = firstPaint
 
-    protected open fun requiresPlayerUpdate(): Boolean = false
-
-    protected open suspend fun renderToInventory(callback: (Boolean) -> Unit) {
+    protected open suspend fun renderToInventory() {
         // If the menu has since been requested to close we ignore all this
         if (!shouldBeOpened.get()) return
 
@@ -866,7 +855,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 // ended up being opened.
                 val isOpen = isOpen()
                 drawPaneToInventory(drawNormalInventory = true, drawPlayerInventory = isOpen)
-                callback(createdInventory)
                 InterfacesProfiler.log(this, "finished rendering to inventory")
 
                 if (this is PlayerInterfaceView) {

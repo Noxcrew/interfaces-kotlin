@@ -24,8 +24,6 @@ public class CombinedInterfaceView internal constructor(
 
     private val titleState = TitleState()
 
-    override val overlapsPlayerInventory: Boolean = true
-
     override fun title(value: Component) {
         titleState.current = value
     }
@@ -46,8 +44,6 @@ public class CombinedInterfaceView internal constructor(
     override suspend fun updateTitle() {
         titleState.current = backing.titleSupplier?.invoke(player)
     }
-
-    override fun requiresPlayerUpdate(): Boolean = false
 
     override fun requiresNewInventory(): Boolean = super.requiresNewInventory() || titleState.hasChanged
 

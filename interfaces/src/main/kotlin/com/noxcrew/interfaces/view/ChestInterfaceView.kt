@@ -44,8 +44,6 @@ public class ChestInterfaceView internal constructor(
         titleState.current = backing.titleSupplier?.invoke(player)
     }
 
-    override fun requiresPlayerUpdate(): Boolean = false
-
     override fun requiresNewInventory(): Boolean = super.requiresNewInventory() || titleState.hasChanged
 
     override fun getInventory(): Inventory = currentInventory.chestInventory

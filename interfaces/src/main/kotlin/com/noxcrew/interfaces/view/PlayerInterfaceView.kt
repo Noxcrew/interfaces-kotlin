@@ -21,8 +21,6 @@ public class PlayerInterfaceView internal constructor(
     null
 ) {
 
-    override val overlapsPlayerInventory: Boolean = true
-
     override fun title(value: Component) {
         error("PlayerInventoryView's cannot have a title")
     }
