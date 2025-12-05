@@ -36,10 +36,10 @@ public interface InterfaceView {
     /** Opens up this view. */
     public suspend fun open(reload: Boolean = true)
 
-    /** Re-opens only if this menu should still be. */
-    public suspend fun reopenIfIntended(): Boolean {
+    /** Re-opens only if this menu should still be, even if already open if `force` is set. */
+    public suspend fun reopenIfIntended(force: Boolean = false): Boolean {
         if (!shouldStillBeOpened) return false
-        if (isOpen()) return false
+        if (isOpen() && !force) return false
         return reopen(null)
     }
 

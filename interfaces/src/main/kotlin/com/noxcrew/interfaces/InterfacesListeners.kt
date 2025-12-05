@@ -177,12 +177,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     }
 
     /** Re-opens the current background interface of [player]. */
-    public fun reopenInventory(player: Player) {
+    public fun reopenInventory(player: Player, force: Boolean = false) {
         // Don't re-open the background inventory when we're coming from the open event.
         if (dontReopen) return
         (getOpenPlayerInterface(player.uniqueId) ?: getBackgroundPlayerInterface(player.uniqueId))?.also {
             SCOPE.launch(InterfacesCoroutineDetails(player.uniqueId, "reopening background interface")) {
-                it.reopenIfIntended()
+                it.reopenIfIntended(force)
             }
         }
     }
@@ -644,7 +644,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     @EventHandler
     public fun onRespawn(event: PlayerRespawnEvent) {
-        reopenInventory(event.player)
+        reopenInventory(event.player, force = true)
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
