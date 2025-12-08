@@ -13,7 +13,7 @@ internal class CollapsablePaneMap private constructor(
 
     internal companion object {
         /** Creates a new collapsable map of panes. */
-        internal fun create() = CollapsablePaneMap(sortedMapOf(Comparator.reverseOrder()))
+        internal fun create() = CollapsablePaneMap(sortedMapOf(Comparator.naturalOrder()))
     }
 
     private var cachedPane: CompletedPane? = null
