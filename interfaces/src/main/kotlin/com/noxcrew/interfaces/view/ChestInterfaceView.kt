@@ -28,6 +28,8 @@ public class ChestInterfaceView internal constructor(
         titleState.current = value
     }
 
+    public fun title(): Component? = titleState.current
+
     override fun createInventory(): ChestInterfacesInventory = ChestInterfacesInventory(
         holder = this,
         title = titleState.current,
