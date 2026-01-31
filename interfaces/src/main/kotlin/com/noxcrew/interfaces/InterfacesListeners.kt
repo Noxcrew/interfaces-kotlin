@@ -365,7 +365,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val isPlayerInventory = (event.clickedInventory ?: event.inventory).getHolder(false) is Player
 
         // Run base click handling
-        if (handleClick(view, clickedPoint, event.click, event.hotbarButton, isPlayerInventory, false)) {
+        if (handleClick(view, clickedPoint, event.click, isPlayerInventory, false)) {
             event.isCancelled = true
         }
 
@@ -573,7 +573,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             return
         }
 
-        if (handleClick(view, clickedPoint, click, -1, isPlayerInventory = true, interact = true)) {
+        if (handleClick(view, clickedPoint, click, isPlayerInventory = true, interact = true)) {
             // Support modern behavior where we don't interfere with block interactions
             if (view.builder.onlyCancelItemInteraction) {
                 event.setUseItemInHand(Event.Result.DENY)
@@ -709,12 +709,11 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         return view.completedPane?.getRaw(clickedPoint)?.itemStack == null
     }
 
-    /** Handles a [view] being clicked at [clickedPoint] through some [event]. */
+    /** Handles a [view] being clicked at [clickedPoint]. */
     private fun handleClick(
         view: AbstractInterfaceView<*, *, *>,
         clickedPoint: GridPoint,
         click: ClickType,
-        slot: Int,
         isPlayerInventory: Boolean,
         interact: Boolean,
     ): Boolean {
@@ -742,7 +741,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         view.isProcessingClick = true
 
         // Forward this click to all pre-processors
-        val clickContext = ClickContext(view.player, view, click, slot, interact)
+        val clickContext = ClickContext(view.player, view, click, clickedPoint, interact)
 
         // Run the click handler and deal with its result
         val completedClickHandler = view.executeSync(

@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.click
 
+import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.view.InterfaceView
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
@@ -12,8 +13,8 @@ public data class ClickContext(
     public val view: InterfaceView,
     /** The type of click that was performed. */
     public val type: ClickType,
-    /** The hot bar slot pressed between 0-8 if [type] is [ClickType.NUMBER_KEY], or `-1` otherwise. */
-    public val slot: Int,
+    /** The slot being clicked on. */
+    public val slot: GridPoint,
     /** Whether the click was fired from an interact event (not from an open inventory). */
-    public val interact: Boolean
+    public val interact: Boolean,
 )
