@@ -3,6 +3,7 @@
 shadow = "9.0.0-beta4"
 run-paper = "2.3.1"
 spotless = "7.0.0.BETA4"
+paper-userdev = "2.0.0-beta.18"
 
 # Tooling
 kotlin-coroutines = "1.10.1"
@@ -14,12 +15,12 @@ cloud-minecraft = "2.0.0-beta.10"
 
 # Misc
 adventure-core = "4.18.0"
-paper-api = "1.21.4-R0.1-SNAPSHOT"
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+paper-userdev = { id = "io.papermc.paperweight.userdev", version.ref = "paper-userdev" }
 
 [libraries]
 # Tooling
@@ -33,4 +34,3 @@ cloud-kotlin-coroutines = { group = "org.incendo", name = "cloud-kotlin-coroutin
 
 # Misc
 adventure-api = { group = "net.kyori", name = "adventure-api", version.ref = "adventure-core" }
-paper-api = { group = "io.papermc.paper", name = "paper-api", version.ref = "paper-api" }

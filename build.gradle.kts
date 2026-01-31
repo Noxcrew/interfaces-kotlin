@@ -4,12 +4,16 @@ import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import xyz.jpenilla.runpaper.task.RunServer
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import io.papermc.paperweight.userdev.PaperweightUser
+import io.papermc.paperweight.userdev.PaperweightUserDependenciesExtension
 
 plugins {
     alias(libs.plugins.run.paper) apply false
+    alias(libs.plugins.paper.userdev) apply false
 
     // Kotlin plugin prefers to be applied to parent when it's used in multiple sub-modules.
     kotlin("jvm") version "2.1.10" apply false
+
     alias(libs.plugins.spotless)
 }
 
@@ -28,10 +32,15 @@ allprojects {
 subprojects {
     apply(plugin = "kotlin")
     apply<SpotlessPlugin>()
+    apply<PaperweightUser>()
 
     repositories {
         mavenCentral()
         maven("https://repo.papermc.io/repository/maven-public/")
+    }
+
+    dependencies {
+        extensions.findByType<PaperweightUserDependenciesExtension>()?.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
     }
 
     configure<SpotlessExtension> {

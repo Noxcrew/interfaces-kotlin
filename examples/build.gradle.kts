@@ -8,6 +8,4 @@ dependencies {
     implementation(libs.cloud.paper)
     implementation(libs.cloud.kotlin.extensions)
     implementation(libs.cloud.kotlin.coroutines)
-
-    compileOnly(libs.paper.api)
 }
