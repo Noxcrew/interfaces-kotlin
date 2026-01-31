@@ -2,7 +2,6 @@ package com.noxcrew.interfaces.grid.mapping
 
 import com.noxcrew.interfaces.grid.mapping.GridMapper.PlayerInventory.Companion.PLAYER_INV_PLUS_HOTBAR_ROWS
 import com.noxcrew.interfaces.grid.mapping.GridMapper.PlayerInventory.Companion.PLAYER_INV_ROWS
-import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.gridPointToBukkitIndex
 import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
 import kotlin.times
