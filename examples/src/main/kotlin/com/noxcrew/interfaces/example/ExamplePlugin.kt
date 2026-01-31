@@ -6,6 +6,7 @@ import com.noxcrew.interfaces.element.StaticElement
 import com.noxcrew.interfaces.interfaces.buildChestInterface
 import com.noxcrew.interfaces.interfaces.buildCombinedInterface
 import com.noxcrew.interfaces.interfaces.buildPlayerInterface
+import com.noxcrew.interfaces.inventory.clearInventory
 import com.noxcrew.interfaces.properties.interfaceProperty
 import com.noxcrew.interfaces.utilities.forEachInGrid
 import kotlinx.coroutines.runBlocking
@@ -46,7 +47,7 @@ public class ExamplePlugin : JavaPlugin(), Listener {
                 suspendingHandler {
                     val player = it.sender() as Player
                     InterfacesListeners.INSTANCE.getOpenPlayerInterface(player.uniqueId)?.close()
-                    player.inventory.clear()
+                    player.clearInventory()
                 }
             }
 

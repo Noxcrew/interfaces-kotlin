@@ -11,6 +11,7 @@ import com.noxcrew.interfaces.click.CompletableClickHandler
 import com.noxcrew.interfaces.exception.InterfacesExceptionContext
 import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.grid.GridPoint
+import com.noxcrew.interfaces.inventory.clearInventory
 import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.view.AbstractInterfaceView
@@ -283,6 +284,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         val holder = event.inventory.getHolder(false)
         val view = convertHolderToInterfaceView(holder)
+
+        // Don't open if the view is not meant to be open!
+        if (view?.shouldStillBeOpened == false) {
+            event.isCancelled = true
+            return
+        }
 
         // Close the previous view first with open new as the reason, unless we
         // are currently opening this view!
@@ -833,7 +840,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             }
 
             // Clear the inventory
-            view.player.inventory.clear()
+            view.player.clearInventory()
         }
 
         // Set up the query
