@@ -372,7 +372,17 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         val isPlayerInventory = (event.clickedInventory ?: event.inventory).getHolder(false) is Player
 
         // Run base click handling
-        if (handleClick(view, clickedPoint, event.click, isPlayerInventory, false)) {
+        if (handleClick(
+                view, clickedPoint, event.click, isPlayerInventory, false,
+                if (event.click ==
+                    ClickType.NUMBER_KEY
+                ) {
+                    event.hotbarButton
+                } else {
+                    null
+                }
+            )
+        ) {
             event.isCancelled = true
         }
 
@@ -723,6 +733,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         click: ClickType,
         isPlayerInventory: Boolean,
         interact: Boolean,
+        numberKey: Int? = null,
     ): Boolean {
         // Determine the type of click, if nothing was clicked we allow it
         val raw = view.completedPane?.getRaw(clickedPoint)
@@ -748,7 +759,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         view.isProcessingClick = true
 
         // Forward this click to all pre-processors
-        val clickContext = ClickContext(view.player, view, click, clickedPoint, interact)
+        val clickContext = ClickContext(view.player, view, click, clickedPoint, interact, numberKey)
 
         // Run the click handler and deal with its result
         val completedClickHandler = view.executeSync(

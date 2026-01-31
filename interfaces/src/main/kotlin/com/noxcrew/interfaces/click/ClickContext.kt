@@ -17,4 +17,6 @@ public data class ClickContext(
     public val slot: GridPoint,
     /** Whether the click was fired from an interact event (not from an open inventory). */
     public val interact: Boolean,
+    /** The number key pressed if [type] is [ClickType.NUMBER_KEY]. */
+    public val numberKey: Int? = null,
 )
