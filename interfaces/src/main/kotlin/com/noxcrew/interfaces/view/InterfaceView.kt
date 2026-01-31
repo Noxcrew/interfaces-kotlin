@@ -79,6 +79,9 @@ public interface InterfaceView {
     /** Re-opens the [parent] view, or closes this menu if it has no parent. */
     public suspend fun back()
 
+    /** Returns the current title of this view. */
+    public fun title(): Component?
+
     /** Sets the title fo this view to [value]. */
     public fun title(value: Component)
 

@@ -24,11 +24,11 @@ public class ChestInterfaceView internal constructor(
 
     private val titleState = TitleState()
 
+    override fun title(): Component? = titleState.current
+
     override fun title(value: Component) {
         titleState.current = value
     }
-
-    public fun title(): Component? = titleState.current
 
     override fun createInventory(): ChestInterfacesInventory = ChestInterfacesInventory(
         holder = this,

@@ -21,6 +21,8 @@ public class PlayerInterfaceView internal constructor(
     null
 ) {
 
+    override fun title(): Component = error("PlayerInventoryView's do not have a title")
+
     override fun title(value: Component) {
         error("PlayerInventoryView's cannot have a title")
     }
