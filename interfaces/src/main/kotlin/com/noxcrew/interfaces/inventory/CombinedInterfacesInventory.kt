@@ -1,6 +1,7 @@
 package com.noxcrew.interfaces.inventory
 
 import com.noxcrew.interfaces.grid.mapping.CombinedGridMapper
+import com.noxcrew.interfaces.grid.mapping.GridMapper.PlayerInventory.Companion.PLAYER_INV_PLUS_HOTBAR_ROWS
 import com.noxcrew.interfaces.utilities.createBukkitInventory
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
@@ -24,6 +25,10 @@ public class CombinedInterfacesInventory(
     public val chestInventory: Inventory = createBukkitInventory(holder, rows, title)
 
     override fun get(row: Int, column: Int): ItemStack? {
+        if (row == rows + PLAYER_INV_PLUS_HOTBAR_ROWS) {
+            return playerInventory.itemInOffHand
+        }
+
         if (mapper.isPlayerInventory(row, column)) {
             return playerInventory.getItem(mapper.toPlayerInventorySlot(row, column))
         }
@@ -32,6 +37,11 @@ public class CombinedInterfacesInventory(
     }
 
     override fun setInternal(row: Int, column: Int, item: ItemStack?) {
+        if (row == rows + PLAYER_INV_PLUS_HOTBAR_ROWS) {
+            playerInventory.setItemInOffHand(item)
+            return
+        }
+
         if (mapper.isPlayerInventory(row, column)) {
             playerInventory.setItem(mapper.toPlayerInventorySlot(row, column), item)
             return
