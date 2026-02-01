@@ -15,7 +15,6 @@ import com.noxcrew.interfaces.inventory.clearInventory
 import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.view.AbstractInterfaceView
-import com.noxcrew.interfaces.view.ChestInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
 import com.noxcrew.interfaces.view.PlayerInterfaceView
 import io.papermc.paper.event.player.AsyncChatEvent
@@ -269,8 +268,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     public fun saveInventoryContentsIfOpened(player: HumanEntity) {
         // Saves any persistent items stored in the main inventory whenever we are currently
         // showing a combined or player inventory before we draw the new one over-top
+        if (dontReopen) return
         val currentlyShown = openInventory[player]
-        if (currentlyShown != null && currentlyShown !is ChestInterfaceView) {
+        if (currentlyShown != null && currentlyShown is PlayerInterfaceView) {
             if (currentlyShown.builder.persistAddedItems) {
                 currentlyShown.savePersistentItems(player.inventory)
             }

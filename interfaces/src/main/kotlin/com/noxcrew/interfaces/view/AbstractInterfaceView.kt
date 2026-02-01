@@ -40,7 +40,6 @@ import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
-import org.slf4j.LoggerFactory
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -73,7 +72,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         public const val COLUMNS_IN_CHEST: Int = 9
     }
 
-    private val logger = LoggerFactory.getLogger(AbstractInterfaceView::class.java)
     private val paneMutex = Mutex()
     private val debouncedRender = AtomicBoolean(false)
 
@@ -764,6 +762,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     public fun savePersistentItems(inventory: Inventory) {
         // We can only save items added to the player interface!
         if (this !is PlayerInterfaceView) return
+
+        // Don't save if closed!
+        if (!shouldStillBeOpened) return
 
         addedItems.clear()
         val contents = inventory.contents

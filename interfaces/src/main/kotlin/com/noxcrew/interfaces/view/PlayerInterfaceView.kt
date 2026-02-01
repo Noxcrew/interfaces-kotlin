@@ -14,11 +14,11 @@ import kotlin.time.Duration
 /** Implements a player interface view. */
 public class PlayerInterfaceView internal constructor(
     player: Player,
-    backing: PlayerInterface
+    backing: PlayerInterface,
 ) : AbstractInterfaceView<PlayerInterfacesInventory, PlayerInterface, PlayerPane>(
     player,
     backing,
-    null
+    null,
 ) {
 
     override fun title(): Component = error("PlayerInventoryView's do not have a title")
@@ -59,6 +59,11 @@ public class PlayerInterfaceView internal constructor(
     }
 
     override fun close(coroutineScope: CoroutineScope, reason: InventoryCloseEvent.Reason, changingView: Boolean) {
+        // If the menu is currently open save its items!
+        if (isOpen() && builder.persistAddedItems) {
+            savePersistentItems(player.inventory)
+        }
+
         markClosed(coroutineScope, reason, changingView)
     }
 
