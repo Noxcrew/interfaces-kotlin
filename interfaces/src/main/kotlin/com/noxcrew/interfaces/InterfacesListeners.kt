@@ -15,6 +15,7 @@ import com.noxcrew.interfaces.inventory.clearInventory
 import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.view.AbstractInterfaceView
+import com.noxcrew.interfaces.view.CombinedInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
 import com.noxcrew.interfaces.view.PlayerInterfaceView
 import io.papermc.paper.event.player.AsyncChatEvent
@@ -24,6 +25,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.block.Block
+import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.HumanEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
@@ -337,6 +339,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         // Save previous inventory contents before we open the new one (only if we have one open!)
         if (openInventory.containsKey(event.player)) {
             saveInventoryContentsIfOpened(event.player)
+
+            // If the opened menu was a combined inventory we have to re-sync the inventory
+            // before opening the next menu!
+            if (openInventory[event.player] is CombinedInterfaceView) {
+                (event.player as CraftPlayer).handle.inventoryMenu.sendAllDataToRemote()
+            }
         }
 
         // When opening a new inventory we ignore the close event as it wrongly
