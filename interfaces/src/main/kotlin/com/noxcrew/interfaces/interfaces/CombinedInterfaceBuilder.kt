@@ -11,12 +11,16 @@ public class CombinedInterfaceBuilder :
     /** Sets the amount of rows for this interface to use. */
     public var rows: Int = 0
 
+    /** Whether the inventory should be a fake inventory only known to the client. */
+    public var fake: Boolean = false
+
     /** Supplies the title of this interface. */
     public var titleSupplier: (suspend (Player) -> Component?)? = null
 
     override fun build(): CombinedInterface = CombinedInterface(
         rows,
         titleSupplier,
-        this
+        this,
+        fake,
     )
 }

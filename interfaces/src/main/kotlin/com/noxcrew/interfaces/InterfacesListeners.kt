@@ -342,7 +342,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
             // If the opened menu was a combined inventory we have to re-sync the inventory
             // before opening the next menu!
-            if (openInventory[event.player] is CombinedInterfaceView) {
+            if ((openInventory[event.player] as? CombinedInterfaceView)?.backing?.fake == true) {
                 (event.player as CraftPlayer).handle.inventoryMenu.sendAllDataToRemote()
             }
         }

@@ -12,6 +12,8 @@ public class CombinedInterface internal constructor(
     override val rows: Int,
     override val titleSupplier: (suspend (Player) -> Component?)?,
     override val builder: CombinedInterfaceBuilder,
+    /** Whether the interface should be fake on the server. */
+    public val fake: Boolean,
 ) : Interface<CombinedInterface, CombinedPane>, TitledInterface {
 
     override val includesPlayerInventory: Boolean = true

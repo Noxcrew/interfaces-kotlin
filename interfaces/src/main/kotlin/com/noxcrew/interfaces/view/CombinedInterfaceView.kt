@@ -2,7 +2,9 @@ package com.noxcrew.interfaces.view
 
 import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.interfaces.CombinedInterface
+import com.noxcrew.interfaces.inventory.CachedInterfacesInventory
 import com.noxcrew.interfaces.inventory.CombinedInterfacesInventory
+import com.noxcrew.interfaces.inventory.FakeCombinedInterfacesInventory
 import com.noxcrew.interfaces.pane.CombinedPane
 import com.noxcrew.interfaces.utilities.TitleState
 import io.papermc.paper.adventure.PaperAdventure
@@ -25,7 +27,7 @@ public class CombinedInterfaceView internal constructor(
     player: Player,
     backing: CombinedInterface,
     parent: InterfaceView?,
-) : AbstractInterfaceView<CombinedInterfacesInventory, CombinedInterface, CombinedPane>(
+) : AbstractInterfaceView<CachedInterfacesInventory, CombinedInterface, CombinedPane>(
     player,
     backing,
     parent,
@@ -51,53 +53,68 @@ public class CombinedInterfaceView internal constructor(
         titleState.current = value
     }
 
-    override fun createInventory(): CombinedInterfacesInventory = CombinedInterfacesInventory(
-        holder = this,
-        player = player,
-        rows = backing.rows,
-        mapper = backing.mapper,
-    )
+    override fun createInventory(): CachedInterfacesInventory = if (backing.fake) {
+        FakeCombinedInterfacesInventory(
+            holder = this,
+            player = player,
+            rows = backing.rows,
+            mapper = backing.mapper,
+        )
+    } else {
+        CombinedInterfacesInventory(
+            holder = this,
+            player = player,
+            title = titleState.current,
+            rows = backing.rows,
+            mapper = backing.mapper,
+        )
+    }
 
     override fun openInventory() {
-        val nmsPlayer = (player as CraftPlayer).handle
-        if (nmsPlayer.containerMenu !== nmsPlayer.inventoryMenu) {
-            nmsPlayer.connection.handleContainerClose(
-                ServerboundContainerClosePacket(nmsPlayer.containerMenu.containerId),
-                org.bukkit.event.inventory.InventoryCloseEvent.Reason.OPEN_NEW,
+        if (backing.fake) {
+            val inventory = currentInventory as FakeCombinedInterfacesInventory
+            val nmsPlayer = (player as CraftPlayer).handle
+            if (nmsPlayer.containerMenu !== nmsPlayer.inventoryMenu) {
+                nmsPlayer.connection.handleContainerClose(
+                    ServerboundContainerClosePacket(nmsPlayer.containerMenu.containerId),
+                    org.bukkit.event.inventory.InventoryCloseEvent.Reason.OPEN_NEW,
+                )
+            }
+            var container: AbstractContainerMenu = ChestMenu(
+                TYPES[backing.rows - 1],
+                nmsPlayer.nextContainerCounter(),
+                inventory.playerInventory,
+                inventory.chestInventory,
+                backing.rows,
             )
-        }
-        var container: AbstractContainerMenu = ChestMenu(
-            TYPES[backing.rows - 1],
-            nmsPlayer.nextContainerCounter(),
-            currentInventory.playerInventory,
-            currentInventory.chestInventory,
-            backing.rows,
-        )
-        val result = CraftEventFactory.callInventoryOpenEventWithTitle(nmsPlayer, container)
-        container = result.second ?: return
+            val result = CraftEventFactory.callInventoryOpenEventWithTitle(nmsPlayer, container)
+            container = result.second ?: return
 
-        // Inform the client to open up the screen, then initialize the container!
-        if (!nmsPlayer.isImmobile) {
+            // Inform the client to open up the screen, then initialize the container!
+            if (!nmsPlayer.isImmobile) {
+                nmsPlayer.connection.send(
+                    ClientboundOpenScreenPacket(
+                        container.containerId,
+                        container.type,
+                        PaperAdventure.asVanilla(result.first ?: title() ?: Component.empty()),
+                    ),
+                )
+            }
+            nmsPlayer.containerMenu = container
+            nmsPlayer.initMenu(container)
+
+            // Send the off-hand item in the custom inventory
             nmsPlayer.connection.send(
-                ClientboundOpenScreenPacket(
-                    container.containerId,
-                    container.type,
-                    PaperAdventure.asVanilla(result.first ?: title() ?: Component.empty()),
+                ClientboundContainerSetSlotPacket(
+                    nmsPlayer.inventoryMenu.containerId,
+                    nmsPlayer.inventoryMenu.incrementStateId(),
+                    net.minecraft.world.inventory.InventoryMenu.SHIELD_SLOT,
+                    inventory.playerInventory.equipment.get(EquipmentSlot.OFFHAND),
                 ),
             )
+        } else {
+            player.openInventory(inventory)
         }
-        nmsPlayer.containerMenu = container
-        nmsPlayer.initMenu(container)
-
-        // Send the off-hand item in the custom inventory
-        nmsPlayer.connection.send(
-            ClientboundContainerSetSlotPacket(
-                nmsPlayer.inventoryMenu.containerId,
-                nmsPlayer.inventoryMenu.incrementStateId(),
-                net.minecraft.world.inventory.InventoryMenu.SHIELD_SLOT,
-                currentInventory.playerInventory.equipment.get(EquipmentSlot.OFFHAND),
-            ),
-        )
 
         // Mark down that we've finished rendering this menu
         InterfacesListeners.INSTANCE.completeRendering(player.uniqueId, this)
@@ -109,7 +126,19 @@ public class CombinedInterfaceView internal constructor(
 
     override fun requiresNewInventory(): Boolean = super.requiresNewInventory() || titleState.hasChanged
 
-    override fun getInventory(): Inventory = currentInventory.bukkitInventory
+    override fun getInventory(): Inventory = when (currentInventory) {
+        is FakeCombinedInterfacesInventory -> {
+            (currentInventory as FakeCombinedInterfacesInventory).bukkitInventory
+        }
+
+        is CombinedInterfacesInventory -> {
+            (currentInventory as CombinedInterfacesInventory).chestInventory
+        }
+
+        else -> {
+            throw IllegalStateException("Illegal inventory type ${currentInventory::class.java}")
+        }
+    }
 
     override fun isOpen(): Boolean = player.openInventory.topInventory.getHolder(false) == this
 }
