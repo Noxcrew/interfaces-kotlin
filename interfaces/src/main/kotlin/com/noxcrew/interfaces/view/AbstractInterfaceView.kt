@@ -757,7 +757,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         if (madeChanges) {
             // Run any pre-processors
-            builder.getPostprocessors(segment).forEach { handler -> handler(currentInventory, this) }
+            builder.getPostprocessors(segment).forEach { handler -> handler(currentInventory, this, player) }
 
             Bukkit.getPluginManager().callEvent(DrawPaneEvent(player, this, segment))
         }
