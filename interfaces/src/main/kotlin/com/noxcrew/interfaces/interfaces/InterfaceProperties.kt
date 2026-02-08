@@ -1,11 +1,14 @@
 package com.noxcrew.interfaces.interfaces
 
+import com.google.common.collect.HashMultimap
+import com.google.common.collect.Multimap
 import com.noxcrew.interfaces.click.ClickHandler
 import com.noxcrew.interfaces.exception.InterfacesExceptionHandler
 import com.noxcrew.interfaces.exception.StandardInterfacesExceptionHandler
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.transform.BlockingMode
 import com.noxcrew.interfaces.transform.RefreshMode
+import com.noxcrew.interfaces.utilities.InventorySegment
 import org.bukkit.event.block.Action
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
@@ -24,6 +27,7 @@ public open class InterfaceProperties<P : Pane> {
     private val _closeHandlers: MutableMap<InventoryCloseEvent.Reason, MutableList<CloseHandler>> = mutableMapOf()
     private val _clickPreprocessors: MutableCollection<ClickHandler> = mutableListOf()
     private val _preventedInteractions: MutableCollection<Action> = mutableListOf()
+    private val postprocessors: Multimap<InventorySegment, InventoryPostprocessor> = HashMultimap.create()
 
     // --- GENERAL ---
     /** The exception handler to use for this interface. */
@@ -108,6 +112,9 @@ public open class InterfaceProperties<P : Pane> {
         useSimpleDefaults()
     }
 
+    /** Returns all registered post-processors for [segment]. */
+    public fun getPostprocessors(segment: InventorySegment): Collection<InventoryPostprocessor> = postprocessors[segment]
+
     /** Sets all values to their simple defaults. This is the default type! */
     public fun useSimpleDefaults() {
         redrawTitleOnReopen = true
@@ -139,5 +146,10 @@ public open class InterfaceProperties<P : Pane> {
     /** Adds [action] to be cancelled without triggering any click handlers on valid items in this pane. */
     public fun addPreventedAction(action: Action) {
         _preventedInteractions += action
+    }
+
+    /** Adds a new [postprocessor] to be called after [segment] was drawn. */
+    public fun withPostprocessor(segment: InventorySegment, postprocessor: InventoryPostprocessor) {
+        postprocessors.put(segment, postprocessor)
     }
 }

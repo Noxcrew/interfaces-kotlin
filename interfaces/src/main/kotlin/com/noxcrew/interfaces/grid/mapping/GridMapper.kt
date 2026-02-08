@@ -2,6 +2,7 @@ package com.noxcrew.interfaces.grid.mapping
 
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.grid.GridPoint.Companion.OUTSIDE_CHEST_INDEX
+import com.noxcrew.interfaces.utilities.InventorySegment
 
 /**
  * Responsible for mapping inventory slots into [GridPoint] and vice versa.
@@ -25,6 +26,10 @@ public interface GridMapper {
 
     /** Whether the [GridPoint] is in the player's inventory. */
     public fun isPlayerInventory(row: Int, column: Int): Boolean
+
+    /** Returns the inventory segment the [GridPoint] is in. */
+    public fun getSegment(row: Int, column: Int): InventorySegment =
+        if (isPlayerInventory(row, column)) InventorySegment.PLAYER else InventorySegment.CONTAINER
 
     /** Responsible for mapping [GridPoint] into top inventory slots. */
     public interface TopInventory : GridMapper {

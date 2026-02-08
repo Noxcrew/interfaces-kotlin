@@ -26,6 +26,7 @@ import com.noxcrew.interfaces.transform.RefreshMode
 import com.noxcrew.interfaces.utilities.CollapsablePaneMap
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.utilities.InterfacesProfiler
+import com.noxcrew.interfaces.utilities.InventorySegment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -689,7 +690,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
     }
 
-    protected open fun drawPaneToInventory(drawNormalInventory: Boolean, drawPlayerInventory: Boolean) {
+    /** Draws this inventory to the given [segment]. */
+    protected open fun drawPaneToInventory(segment: InventorySegment) {
         // Stop drawing if the player disconnected
         if (!player.isConnected) return
 
@@ -707,8 +709,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
             // We defer drawing of any elements in the player inventory itself
             // for later unless the inventory is already open.
-            val isPlayerInventory = mapper.isPlayerInventory(row, column)
-            if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) return@inner
+            val elementSegment = mapper.getSegment(row, column)
+            if (elementSegment != segment) return@inner
 
             currentInventory.set(
                 row,
@@ -733,8 +735,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         for ((point, item) in addedItems) {
             val row = point.x
             val column = point.y
-            val isPlayerInventory = mapper.isPlayerInventory(row, column)
-            if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
+            val elementSegment = mapper.getSegment(row, column)
+            if (elementSegment != segment) continue
 
             currentInventory.set(
                 row,
@@ -747,14 +749,17 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // Empty any slots that are not otherwise edited
         for ((row, column) in leftovers) {
-            val isPlayerInventory = mapper.isPlayerInventory(row, column)
-            if ((!drawNormalInventory && !isPlayerInventory) || (!drawPlayerInventory && isPlayerInventory)) continue
+            val elementSegment = mapper.getSegment(row, column)
+            if (elementSegment != segment) continue
             currentInventory.set(row, column, null)
             madeChanges = true
         }
 
         if (madeChanges) {
-            Bukkit.getPluginManager().callEvent(DrawPaneEvent(player, this, drawNormalInventory, drawPlayerInventory))
+            // Run any pre-processors
+            builder.getPostprocessors(segment).forEach { handler -> handler(currentInventory, this) }
+
+            Bukkit.getPluginManager().callEvent(DrawPaneEvent(player, this, segment))
         }
     }
 
@@ -796,7 +801,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Whenever we open the inventory we draw all elements in the player inventory
         // itself. We do this in this hook because it runs after InventoryCloseEvent so
         // it properly happens as the last possible action.
-        drawPaneToInventory(drawNormalInventory = false, drawPlayerInventory = true)
+        drawPaneToInventory(InventorySegment.PLAYER)
     }
 
     /** Hook for updating the title of the inventory. */
@@ -855,7 +860,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 // updates on menus that have closed do not affect future menus that actually
                 // ended up being opened.
                 val isOpen = isOpen()
-                drawPaneToInventory(drawNormalInventory = true, drawPlayerInventory = isOpen)
+                drawPaneToInventory(InventorySegment.CONTAINER)
+                if (isOpen) {
+                    drawPaneToInventory(InventorySegment.PLAYER)
+                }
                 InterfacesProfiler.log(this, "finished rendering to inventory")
 
                 if (this is PlayerInterfaceView) {
