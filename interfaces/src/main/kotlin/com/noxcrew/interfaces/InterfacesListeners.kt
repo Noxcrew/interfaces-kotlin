@@ -53,6 +53,7 @@ import org.bukkit.plugin.Plugin
 import org.slf4j.LoggerFactory
 import java.util.EnumSet
 import java.util.UUID
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
@@ -388,7 +389,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                     event.hotbarButton
                 } else {
                     null
-                }
+                },
             )
         ) {
             event.isCancelled = true
@@ -786,7 +787,11 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 .run { CompletableClickHandler().apply { handle(clickContext) } }
                 .onComplete { ex ->
                     if (ex != null) {
-                        logger.error("Failed to run click handler for ${view.player.name}", ex)
+                        if (ex !is CancellationException) {
+                            logger.warn("Timed out while running click handler on ${raw.itemStack} for ${view.player.name}")
+                        } else {
+                            logger.error("Failed to run click handler on ${raw.itemStack} for ${view.player.name}", ex)
+                        }
                     }
                     view.isProcessingClick = false
                 }
