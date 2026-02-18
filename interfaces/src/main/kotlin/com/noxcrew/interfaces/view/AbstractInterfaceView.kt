@@ -695,6 +695,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         // Stop drawing if the player disconnected
         if (!player.isConnected) return
 
+        // Start by running pre-processors so they can handle change
+        // before we make any edits to the inventory!
+        builder.getPreprocessors(segment).forEach { handler -> handler(currentInventory, this, player) }
+
         // Determine all slots we need to clear if unused
         val leftovers = mutableListOf<Pair<Int, Int>>()
         backing.mapper.forEachInGrid { row, column ->
@@ -756,9 +760,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
 
         if (madeChanges) {
-            // Run any pre-processors
             builder.getPostprocessors(segment).forEach { handler -> handler(currentInventory, this, player) }
-
             Bukkit.getPluginManager().callEvent(DrawPaneEvent(player, this, segment))
         }
     }

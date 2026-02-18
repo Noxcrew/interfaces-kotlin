@@ -15,7 +15,7 @@ public interface BaseInventoryMenu {
     public suspend fun openOrThrow(
         player: Player,
         parent: InterfaceView? =
-            InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false)),
+            InterfacesListeners.INSTANCE.determineInventoryHolder(player.openInventory.topInventory),
         reload: Boolean = true,
     ): InterfaceView = open(player, parent, reload)
         ?: throw RuntimeException(
@@ -35,7 +35,7 @@ public interface BaseInventoryMenu {
     public suspend fun open(
         player: Player,
         parent: InterfaceView? =
-            InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false)),
+            InterfacesListeners.INSTANCE.determineInventoryHolder(player.openInventory.topInventory),
         reload: Boolean = true,
     ): InterfaceView?
 

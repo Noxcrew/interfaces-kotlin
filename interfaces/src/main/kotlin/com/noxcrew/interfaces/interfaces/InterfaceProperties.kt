@@ -27,7 +27,8 @@ public open class InterfaceProperties<P : Pane> {
     private val _closeHandlers: MutableMap<InventoryCloseEvent.Reason, MutableList<CloseHandler>> = mutableMapOf()
     private val _clickPreprocessors: MutableCollection<ClickHandler> = mutableListOf()
     private val _preventedInteractions: MutableCollection<Action> = mutableListOf()
-    private val postprocessors: Multimap<InventorySegment, InventoryPostprocessor> = HashMultimap.create()
+    private val preprocessors: Multimap<InventorySegment, InventoryProcessor> = HashMultimap.create()
+    private val postprocessors: Multimap<InventorySegment, InventoryProcessor> = HashMultimap.create()
 
     // --- GENERAL ---
     /** The exception handler to use for this interface. */
@@ -112,8 +113,11 @@ public open class InterfaceProperties<P : Pane> {
         useSimpleDefaults()
     }
 
+    /** Returns all registered pre-processors for [segment]. */
+    public fun getPreprocessors(segment: InventorySegment): Collection<InventoryProcessor> = preprocessors[segment]
+
     /** Returns all registered post-processors for [segment]. */
-    public fun getPostprocessors(segment: InventorySegment): Collection<InventoryPostprocessor> = postprocessors[segment]
+    public fun getPostprocessors(segment: InventorySegment): Collection<InventoryProcessor> = postprocessors[segment]
 
     /** Sets all values to their simple defaults. This is the default type! */
     public fun useSimpleDefaults() {
@@ -148,8 +152,13 @@ public open class InterfaceProperties<P : Pane> {
         _preventedInteractions += action
     }
 
+    /** Adds a new [preprocessor] to be called before [segment] is drawn to. */
+    public fun withPreprocessor(segment: InventorySegment, preprocessor: InventoryProcessor) {
+        preprocessors.put(segment, preprocessor)
+    }
+
     /** Adds a new [postprocessor] to be called after [segment] was drawn. */
-    public fun withPostprocessor(segment: InventorySegment, postprocessor: InventoryPostprocessor) {
+    public fun withPostprocessor(segment: InventorySegment, postprocessor: InventoryProcessor) {
         postprocessors.put(segment, postprocessor)
     }
 }

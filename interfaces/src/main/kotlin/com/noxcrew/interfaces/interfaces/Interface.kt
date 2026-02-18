@@ -33,7 +33,7 @@ public interface Interface<I : Interface<I, P>, P : Pane> {
     public suspend fun open(
         player: Player,
         parent: InterfaceView? =
-            InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false)),
+            InterfacesListeners.INSTANCE.determineInventoryHolder(player.openInventory.topInventory),
         reload: Boolean = true,
     ): InterfaceView
 

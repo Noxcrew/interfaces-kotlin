@@ -51,7 +51,7 @@ public interface InterfaceView {
      */
     public suspend fun reopen(
         newParent: InterfaceView? =
-            InterfacesListeners.INSTANCE.convertHolderToInterfaceView(player.openInventory.topInventory.getHolder(false)),
+            InterfacesListeners.INSTANCE.determineInventoryHolder(player.openInventory.topInventory),
         reload: Boolean = true,
     ): Boolean
 
