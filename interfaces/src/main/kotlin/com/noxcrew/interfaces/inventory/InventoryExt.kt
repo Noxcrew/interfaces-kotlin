@@ -1,8 +1,10 @@
 package com.noxcrew.interfaces.inventory
 
+import com.noxcrew.interfaces.event.PlayerInventoryClearedEvent
 import org.bukkit.craftbukkit.entity.CraftHumanEntity
 import org.bukkit.craftbukkit.inventory.CraftInventory
 import org.bukkit.entity.HumanEntity
+import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.Inventory
 
@@ -22,6 +24,11 @@ public fun Inventory.fastClear() {
  * Optimized to only remove items instead of setting empty slots to empty again.
  */
 public fun HumanEntity.clearInventory() {
+    // call an event for hooking into to save before a clear
+    (this as? Player)?.also { player ->
+        PlayerInventoryClearedEvent(player).callEvent()
+    }
+
     // clear the player's own inventory
     inventory.fastClear()
 
