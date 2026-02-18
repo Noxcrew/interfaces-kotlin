@@ -2,6 +2,7 @@ package com.noxcrew.interfaces.event
 
 import com.noxcrew.interfaces.utilities.InventorySegment
 import com.noxcrew.interfaces.view.InterfaceView
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.HandlerList
 import org.bukkit.event.player.PlayerEvent
@@ -17,7 +18,7 @@ public class DrawPaneEvent(
     public val view: InterfaceView,
     /** The segment being drawn to. */
     public val segment: InventorySegment,
-) : PlayerEvent(player) {
+) : PlayerEvent(player, !Bukkit.isPrimaryThread()) {
 
     public companion object {
         @JvmStatic
