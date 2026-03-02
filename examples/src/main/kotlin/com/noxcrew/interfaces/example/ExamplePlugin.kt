@@ -3,6 +3,7 @@ package com.noxcrew.interfaces.example
 import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.drawable.Drawable.Companion.drawable
 import com.noxcrew.interfaces.element.StaticElement
+import com.noxcrew.interfaces.interfaces.PlayerInventoryType
 import com.noxcrew.interfaces.interfaces.buildChestInterface
 import com.noxcrew.interfaces.interfaces.buildCombinedInterface
 import com.noxcrew.interfaces.interfaces.buildPlayerInterface
@@ -69,7 +70,16 @@ public class ExamplePlugin : JavaPlugin(), Listener {
                 suspendingHandler {
                     val player = it.sender() as Player
                     val combinedInterface = combinedInterface()
+                    combinedInterface.open(player)
+                }
+            }
 
+            registerCopy {
+                literal("fake")
+
+                suspendingHandler {
+                    val player = it.sender() as Player
+                    val combinedInterface = combinedInterface(PlayerInventoryType.FAKE)
                     combinedInterface.open(player)
                 }
             }
@@ -202,8 +212,9 @@ public class ExamplePlugin : JavaPlugin(), Listener {
         }
     }
 
-    private fun combinedInterface() = buildCombinedInterface {
+    private fun combinedInterface(type: PlayerInventoryType = PlayerInventoryType.OVERRIDE) = buildCombinedInterface {
         rows = 6
+        playerInventoryType = type
 
         withTransform { pane, _ ->
             forEachInGrid(10, 9) { row, column ->

@@ -18,7 +18,7 @@ public abstract class ContainerInterfaceBuilder<P : ContainerPane, I : Container
     }
 
     /** Sets the amount of rows for this interface to use. */
-    public var rows: Int = 0
+    public var rows: Int = 1
 
     /** The type of player inventory being included. */
     public var playerInventoryType: PlayerInventoryType = PlayerInventoryType.DEFAULT

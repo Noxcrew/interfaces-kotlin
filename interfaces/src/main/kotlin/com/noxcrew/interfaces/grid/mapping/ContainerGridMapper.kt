@@ -15,10 +15,11 @@ public open class ContainerGridMapper(private val rows: Int, private val include
     private val containerSize = rows * COLUMNS_IN_CHEST - COLUMNS_IN_CHEST
 
     override fun forEachInGrid(function: (row: Int, column: Int) -> Unit) {
-        com.noxcrew.interfaces.utilities.forEachInGrid(rows, COLUMNS_IN_CHEST, function)
         if (includesPlayerInventory) {
             com.noxcrew.interfaces.utilities.forEachInGrid(rows + PLAYER_INV_PLUS_HOTBAR_ROWS, COLUMNS_IN_CHEST, function)
             function(rows + 4, 0)
+        } else {
+            com.noxcrew.interfaces.utilities.forEachInGrid(rows, COLUMNS_IN_CHEST, function)
         }
     }
 
