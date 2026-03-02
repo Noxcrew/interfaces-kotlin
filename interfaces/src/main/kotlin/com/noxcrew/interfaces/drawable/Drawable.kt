@@ -8,6 +8,9 @@ import org.bukkit.inventory.ItemStack
 public fun interface Drawable {
 
     public companion object {
+        /** Creates a new empty drawable. */
+        public fun empty(): Drawable = drawable(ItemStack.empty())
+
         /** Creates a new [Drawable] out of a given [item]. */
         public fun drawable(item: ItemStack): Drawable = Drawable { item }
 

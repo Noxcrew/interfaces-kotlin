@@ -31,7 +31,8 @@ public class ExamplePlugin : JavaPlugin(), Listener {
             ChangingTitleExampleInterface(),
             CatalogueExampleInterface(),
             MovingExampleInterface(),
-            TabbedExampleInterface()
+            TabbedExampleInterface(),
+            ModifableAreaExampleInterface()
         )
     }
 

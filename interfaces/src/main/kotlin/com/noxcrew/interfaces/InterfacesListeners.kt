@@ -749,7 +749,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         }
 
         // If there is no item here we allow editing
-        return view.completedPane?.getRaw(clickedPoint)?.itemStack == null
+        val raw = view.completedPane?.getRaw(clickedPoint) ?: return true
+        return raw.isSlotModifiable
     }
 
     /** Handles a [view] being clicked at [clickedPoint]. */
@@ -824,12 +825,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
                 120,
             )
         }
-
-        // Update the cancellation state of the event
-        if (completedClickHandler.cancelled) {
-            return true
-        }
-        return false
+        return !raw.isSlotModifiable
     }
 
     /** Converts a bukkit [action] to a [ClickType]. */

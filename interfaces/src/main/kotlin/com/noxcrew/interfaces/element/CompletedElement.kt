@@ -9,11 +9,13 @@ public data class CompletedElement(
     public var itemStack: ItemStack?,
     public val clickHandler: ClickHandler? = null,
     public var pendingLazy: LazyElement? = null,
+    public val isSlotModifiable: Boolean,
 )
 
 /** Completes drawing this element for [player]. */
 public suspend fun Element.complete(player: Player): CompletedElement = CompletedElement(
-    drawable().draw(player),
+    drawable().draw(player).takeUnless { it.isEmpty },
     clickHandler(),
-    this as? LazyElement
+    this as? LazyElement,
+    isSlotModifiable,
 )

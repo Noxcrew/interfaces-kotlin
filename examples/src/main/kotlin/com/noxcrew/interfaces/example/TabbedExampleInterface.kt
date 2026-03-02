@@ -2,7 +2,7 @@ package com.noxcrew.interfaces.example
 
 import com.noxcrew.interfaces.drawable.Drawable.Companion.drawable
 import com.noxcrew.interfaces.element.StaticElement
-import com.noxcrew.interfaces.interfaces.CombinedInterfaceBuilder
+import com.noxcrew.interfaces.interfaces.ContainerInterfaceBuilder
 import com.noxcrew.interfaces.interfaces.Interface
 import com.noxcrew.interfaces.interfaces.buildCombinedInterface
 import kotlinx.coroutines.delay
@@ -22,7 +22,7 @@ public class TabbedExampleInterface : RegistrableInterface {
 
     override fun create(): Interface<*, *> = first
 
-    private fun CombinedInterfaceBuilder.defaults() {
+    private fun ContainerInterfaceBuilder.Simple.defaults() {
         rows = 6
 
         withTransform { pane, _ ->

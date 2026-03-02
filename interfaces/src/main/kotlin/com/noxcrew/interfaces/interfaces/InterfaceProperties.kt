@@ -9,6 +9,7 @@ import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.transform.BlockingMode
 import com.noxcrew.interfaces.transform.RefreshMode
 import com.noxcrew.interfaces.utilities.InventorySegment
+import com.noxcrew.interfaces.view.AbstractInterfaceView
 import org.bukkit.event.block.Action
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
@@ -19,9 +20,13 @@ import kotlin.time.Duration.Companion.seconds
 public open class InterfaceProperties<P : Pane> {
 
     public companion object {
+        /** All reasons for a close handler. */
+        public val ALL_REASONS: List<InventoryCloseEvent.Reason> =
+            InventoryCloseEvent.Reason.entries
+
         /** All default reasons used for a new close handler. */
         public val DEFAULT_REASONS: List<InventoryCloseEvent.Reason> =
-            InventoryCloseEvent.Reason.entries.minus(InventoryCloseEvent.Reason.PLUGIN)
+            ALL_REASONS.minus(InventoryCloseEvent.Reason.PLUGIN).minus(InventoryCloseEvent.Reason.OPEN_NEW)
     }
 
     private val _closeHandlers: MutableMap<InventoryCloseEvent.Reason, MutableList<CloseHandler>> = mutableMapOf()
@@ -63,14 +68,14 @@ public open class InterfaceProperties<P : Pane> {
     /** Whether to trigger click events on all empty slots. */
     public var allowClickingEmptySlots: Boolean = false
 
-    /** Whether clicking on empty slots should be cancelled. */
+    /** Whether items can be moved into empty slots. */
+    public var allowMovingEmptySlots: Boolean = false
+
+    /** Whether clicking on empty slots should be fully cancelled. */
     public var preventClickingEmptySlots: Boolean = true
 
     /** Whether the player's own inventory should be editable if [preventClickingEmptySlots] is `true`. */
     public var allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented: Boolean = false
-        set(value) {
-            field = value
-        }
 
     // --- ITEM PERSISTENCE ---
     /**
@@ -84,9 +89,6 @@ public open class InterfaceProperties<P : Pane> {
     public var inheritExistingItems: Boolean = false
 
     // --- CUSTOM HANDLER ---
-    /** Whether close handlers should be called when switching to a different view. */
-    public var callCloseHandlerOnViewSwitch: Boolean = false
-
     /** All close handlers on this interface mapped by closing reason. */
     public val closeHandlers: Map<InventoryCloseEvent.Reason, List<CloseHandler>>
         get() = _closeHandlers
@@ -104,6 +106,17 @@ public open class InterfaceProperties<P : Pane> {
 
     init {
         useSimpleDefaults()
+    }
+
+    /** Gives all items in modifiable slots back to players when closed, unless they were already present. */
+    public fun returnPlacedIntoInventoryOnClose() {
+        addUnconditionalCloseHandler { _, view, inventory ->
+            (view as? AbstractInterfaceView<*, *, *>)?.completedPane?.forEach { row, column, element ->
+                if (!element.isSlotModifiable || element.itemStack != null) return@forEach
+                val item = inventory.get(row, column) ?: return@forEach
+                view.player.inventory.addItem(item)
+            }
+        }
     }
 
     /** Returns all registered pre-processors for [segment]. */
@@ -127,6 +140,9 @@ public open class InterfaceProperties<P : Pane> {
         defaultRefreshMode = RefreshMode.INITIAL
         defaultBlockMode = BlockingMode.INITIAL
     }
+
+    /** Adds a new close handler [closeHandler] that triggers whenever the inventory is closed for any reason. */
+    public fun addUnconditionalCloseHandler(closeHandler: CloseHandler): Unit = addCloseHandler(ALL_REASONS, closeHandler)
 
     /** Adds a new close handler [closeHandler] that triggers whenever the inventory is closed for any of the given [reasons]. */
     public fun addCloseHandler(reasons: Collection<InventoryCloseEvent.Reason> = DEFAULT_REASONS, closeHandler: CloseHandler) {

@@ -1,6 +1,8 @@
 package com.noxcrew.interfaces.view
 
 import com.noxcrew.interfaces.InterfacesListeners
+import com.noxcrew.interfaces.grid.GridPoint
+import com.noxcrew.interfaces.grid.mapping.GridMapper
 import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
@@ -32,6 +34,9 @@ public interface InterfaceView {
      * a parent view is still valid based on whether any of its children are open.
      */
     public val isTreeOpened: Boolean
+
+    /** The [GridMapper] to convert from and to [GridPoint]. */
+    public val mapper: GridMapper
 
     /** Opens up this view. */
     public suspend fun open(reload: Boolean = true)

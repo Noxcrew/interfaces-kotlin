@@ -11,6 +11,7 @@ import com.noxcrew.interfaces.exception.InterfacesExceptionHandler
 import com.noxcrew.interfaces.exception.InterfacesExceptionResolution
 import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.grid.GridPoint
+import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.interfaces.Interface
 import com.noxcrew.interfaces.interfaces.InterfaceBuilder
 import com.noxcrew.interfaces.inventory.InterfacesInventory
@@ -75,8 +76,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     private val paneMutex = Mutex()
     private val debouncedRender = AtomicBoolean(false)
-
-    private val mapper = backing.mapper
 
     private val children = WeakHashMap<AbstractInterfaceView<*, *, *>, Unit>()
 
@@ -153,6 +152,8 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     override val isTreeOpened: Boolean
         get() = shouldStillBeOpened || children.keys.any { it.isTreeOpened }
 
+    override val mapper: GridMapper = backing.mapper
+
     /** The pane of this view. */
     public val completedPane: CompletedPane?
         get() = if (::pane.isInitialized) pane else null
@@ -221,7 +222,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
             // Run a generic close handler if it's still opened and if the inventory was actually opened at any point
             if (shouldBeOpened.compareAndSet(true, false) &&
-                (!changingView || builder.callCloseHandlerOnViewSwitch) &&
                 ::currentInventory.isInitialized
             ) {
                 builder.closeHandlers[reason]?.forEach {
@@ -235,7 +235,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                             ),
                         ) {
                             withTimeout(builder.defaultTimeout) {
-                                it.invoke(reason, this@AbstractInterfaceView)
+                                it.invoke(reason, this@AbstractInterfaceView, currentInventory)
                             }
                         }
                     }
@@ -471,7 +471,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             ) {
                 withTimeout(builder.defaultTimeout) {
                     // Collect the panes together and add air where necessary
-                    pane = panes.collapse(backing.mapper, builder.allowClickingEmptySlots)
+                    pane = panes.collapse(backing.mapper, builder.allowClickingEmptySlots, builder.allowMovingEmptySlots)
 
                     // Render the completed panes
                     renderToInventory()
@@ -719,7 +719,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             currentInventory.set(
                 row,
                 column,
-                element.itemStack?.takeUnless { it.isEmpty }?.also { builder.itemPostProcessor?.invoke(it) },
+                element.itemStack?.also { builder.itemPostProcessor?.invoke(it) },
             )
             leftovers -= row to column
             madeChanges = true

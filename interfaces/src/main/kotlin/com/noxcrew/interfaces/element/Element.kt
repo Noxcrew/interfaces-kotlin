@@ -10,6 +10,10 @@ public interface Element {
     /** An empty element that shows as air and has no function. */
     public companion object EMPTY : Element by StaticElement(Drawable.drawable(Material.AIR))
 
+    /** Whether the slot of this element can be modified. */
+    public val isSlotModifiable: Boolean
+        get() = false
+
     /** Returns the drawable for this element. */
     public fun drawable(): Drawable
 
