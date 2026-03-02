@@ -7,7 +7,7 @@ import com.noxcrew.interfaces.utilities.InventorySegment
 /**
  * Responsible for mapping inventory slots into [GridPoint] and vice versa.
  * @see AbstractGridMapper for the default [toGridPoint] implementation.
- * @see ChestGridMapper for the [TopInventory] only implementation.
+ * @see ContainerGridMapper for the [TopInventory] only implementation.
  * @see CombinedGridMapper for a combined [TopInventory] and [PlayerInventory] implementation.
  * @see PlayerInventoryGridMapper for the [PlayerInventory] only implementation.
  */

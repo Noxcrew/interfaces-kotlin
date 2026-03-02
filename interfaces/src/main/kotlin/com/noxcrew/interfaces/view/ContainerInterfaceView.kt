@@ -1,11 +1,12 @@
 package com.noxcrew.interfaces.view
 
 import com.noxcrew.interfaces.InterfacesListeners
-import com.noxcrew.interfaces.interfaces.CombinedInterface
+import com.noxcrew.interfaces.interfaces.ContainerInterface
+import com.noxcrew.interfaces.interfaces.PlayerInventoryType
 import com.noxcrew.interfaces.inventory.CachedInterfacesInventory
-import com.noxcrew.interfaces.inventory.CombinedInterfacesInventory
-import com.noxcrew.interfaces.inventory.FakeCombinedInterfacesInventory
-import com.noxcrew.interfaces.pane.CombinedPane
+import com.noxcrew.interfaces.inventory.ContainerInterfacesInventory
+import com.noxcrew.interfaces.inventory.FakedContainerInterfacesInventory
+import com.noxcrew.interfaces.pane.ContainerPane
 import com.noxcrew.interfaces.utilities.TitleState
 import io.papermc.paper.adventure.PaperAdventure
 import net.kyori.adventure.text.Component
@@ -22,12 +23,12 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 
-/** Implements a combined view. */
-public class CombinedInterfaceView internal constructor(
+/** Implements a container view. */
+public class ContainerInterfaceView<I : ContainerInterface<I, P>, P : ContainerPane> internal constructor(
     player: Player,
-    backing: CombinedInterface,
+    backing: I,
     parent: InterfaceView?,
-) : AbstractInterfaceView<CachedInterfacesInventory, CombinedInterface, CombinedPane>(
+) : AbstractInterfaceView<CachedInterfacesInventory, I, P>(
     player,
     backing,
     parent,
@@ -53,26 +54,27 @@ public class CombinedInterfaceView internal constructor(
         titleState.current = value
     }
 
-    override fun createInventory(): CachedInterfacesInventory = if (backing.fake) {
-        FakeCombinedInterfacesInventory(
+    override fun createInventory(): CachedInterfacesInventory = if (backing.builder.playerInventoryType == PlayerInventoryType.FAKE) {
+        FakedContainerInterfacesInventory(
             holder = this,
             player = player,
             rows = backing.rows,
             mapper = backing.mapper,
         )
     } else {
-        CombinedInterfacesInventory(
+        ContainerInterfacesInventory(
             holder = this,
             player = player,
             title = titleState.current,
             rows = backing.rows,
+            includesPlayerInventory = backing.includesPlayerInventory,
             mapper = backing.mapper,
         )
     }
 
     override fun openInventory() {
-        if (backing.fake) {
-            val inventory = currentInventory as FakeCombinedInterfacesInventory
+        if (backing.builder.playerInventoryType == PlayerInventoryType.FAKE) {
+            val inventory = currentInventory as FakedContainerInterfacesInventory
             val nmsPlayer = (player as CraftPlayer).handle
             if (nmsPlayer.containerMenu !== nmsPlayer.inventoryMenu) {
                 nmsPlayer.connection.handleContainerClose(
@@ -127,12 +129,12 @@ public class CombinedInterfaceView internal constructor(
     override fun requiresNewInventory(): Boolean = super.requiresNewInventory() || titleState.hasChanged
 
     override fun getInventory(): Inventory = when (currentInventory) {
-        is FakeCombinedInterfacesInventory -> {
-            (currentInventory as FakeCombinedInterfacesInventory).bukkitInventory
+        is FakedContainerInterfacesInventory -> {
+            (currentInventory as FakedContainerInterfacesInventory).bukkitInventory
         }
 
-        is CombinedInterfacesInventory -> {
-            (currentInventory as CombinedInterfacesInventory).chestInventory
+        is ContainerInterfacesInventory -> {
+            (currentInventory as ContainerInterfacesInventory).chestInventory
         }
 
         else -> {

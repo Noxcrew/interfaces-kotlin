@@ -3,7 +3,7 @@ package com.noxcrew.interfaces.interfaces
 import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.grid.mapping.GridMapper
-import com.noxcrew.interfaces.pane.CombinedPane
+import com.noxcrew.interfaces.pane.ContainerPane
 import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.view.InterfaceView
 import org.bukkit.entity.Player
@@ -42,8 +42,8 @@ public interface Interface<I : Interface<I, P>, P : Pane> {
         // If it's a combined pane we offset by the chest size in rows to push the player
         // inventory slots to the bottom!
         val pane = createPane()
-        if (pane is CombinedPane) {
-            return GridPoint.at(pane.chestRows + gridPoint.x, gridPoint.y)
+        if (pane is ContainerPane) {
+            return GridPoint.at(pane.rows + gridPoint.x, gridPoint.y)
         }
         return gridPoint
     }

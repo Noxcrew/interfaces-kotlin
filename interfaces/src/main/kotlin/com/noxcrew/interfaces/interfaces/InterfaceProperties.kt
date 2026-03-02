@@ -66,17 +66,10 @@ public open class InterfaceProperties<P : Pane> {
     /** Whether clicking on empty slots should be cancelled. */
     public var preventClickingEmptySlots: Boolean = true
 
-    /**
-     * Whether the player's own inventory should be editable if [preventClickingEmptySlots] is `true`. Only allowed for
-     * [ChestInterfaceBuilder].
-     */
+    /** Whether the player's own inventory should be editable if [preventClickingEmptySlots] is `true`. */
     public var allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented: Boolean = false
         set(value) {
-            field = if (this !is ChestInterfaceBuilder) {
-                false
-            } else {
-                value
-            }
+            field = value
         }
 
     // --- ITEM PERSISTENCE ---

@@ -11,11 +11,12 @@ import com.noxcrew.interfaces.click.CompletableClickHandler
 import com.noxcrew.interfaces.exception.InterfacesExceptionContext
 import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.grid.GridPoint
+import com.noxcrew.interfaces.interfaces.PlayerInventoryType
 import com.noxcrew.interfaces.inventory.clearInventory
 import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.view.AbstractInterfaceView
-import com.noxcrew.interfaces.view.CombinedInterfaceView
+import com.noxcrew.interfaces.view.ContainerInterfaceView
 import com.noxcrew.interfaces.view.InterfaceView
 import com.noxcrew.interfaces.view.PlayerInterfaceView
 import io.papermc.paper.event.player.AsyncChatEvent
@@ -349,7 +350,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
             // If the opened menu was a combined inventory we have to re-sync the inventory
             // before opening the next menu!
-            if ((openInventory[event.player] as? CombinedInterfaceView)?.backing?.fake == true) {
+            if ((openInventory[event.player] as? ContainerInterfaceView)?.backing?.builder?.playerInventoryType ==
+                PlayerInventoryType.FAKE
+            ) {
                 (event.player as CraftPlayer).handle.inventoryMenu.sendAllDataToRemote()
             }
         }

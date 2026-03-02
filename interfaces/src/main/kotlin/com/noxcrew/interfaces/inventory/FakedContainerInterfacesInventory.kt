@@ -1,6 +1,6 @@
 package com.noxcrew.interfaces.inventory
 
-import com.noxcrew.interfaces.grid.mapping.CombinedGridMapper
+import com.noxcrew.interfaces.grid.mapping.ContainerGridMapper
 import com.noxcrew.interfaces.grid.mapping.GridMapper.PlayerInventory.Companion.PLAYER_INV_PLUS_HOTBAR_ROWS
 import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
 import net.minecraft.world.SimpleContainer
@@ -14,11 +14,11 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 
 /** A wrapper around an inventory for a chest and a fake player inventory. */
-public class FakeCombinedInterfacesInventory(
+public class FakedContainerInterfacesInventory(
     holder: InventoryHolder,
     player: Player,
     private val rows: Int,
-    private val mapper: CombinedGridMapper,
+    private val mapper: ContainerGridMapper,
 ) : CachedInterfacesInventory() {
 
     /** The [playerInventory] to place lower items in without editing the player's current equipment. */
