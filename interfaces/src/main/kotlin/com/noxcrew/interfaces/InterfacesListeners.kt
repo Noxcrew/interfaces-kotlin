@@ -598,8 +598,8 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Check if the action is prevented if this slot is not freely
         // movable
-        if (!canFreelyMove(view, clickedPoint, true) &&
-            event.action in view.builder.preventedInteractions
+        if (event.action in view.builder.preventedInteractions &&
+            !canFreelyMove(view, clickedPoint, true)
         ) {
             event.isCancelled = true
             return
@@ -736,20 +736,13 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     /** Returns whether [clickedPoint] in [view] can be freely moved. */
     private fun canFreelyMove(view: AbstractInterfaceView<*, *, *>, clickedPoint: GridPoint, isPlayerInventory: Boolean): Boolean {
-        // If we don't allow clicking empty slots we never allow freely moving
-        if (view.builder.preventClickingEmptySlots &&
-            !(view.builder.allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented && isPlayerInventory)
-        ) {
-            return false
-        }
-
         // If this inventory has no player inventory then the player inventory is always allowed to be edited
         if (!view.backing.includesPlayerInventory && isPlayerInventory) {
             return true
         }
 
         // If there is no item here we allow editing
-        val raw = view.completedPane?.getRaw(clickedPoint) ?: return true
+        val raw = view.completedPane?.getRaw(clickedPoint) ?: return !view.builder.preventClickingEmptySlots
         return raw.isSlotModifiable
     }
 
@@ -767,8 +760,10 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
         // Determine if there is a click handler on this item
         val handler = raw?.clickHandler
-            ?: return view.builder.preventClickingEmptySlots &&
-                !(view.builder.allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented && isPlayerInventory)
+        if (handler == null) {
+            // If there's no click handler, use canFreelyMove logic!
+            return !canFreelyMove(view, clickedPoint, isPlayerInventory)
+        }
 
         // Prevent clicking on a decoration that is still loading!
         if (raw.pendingLazy?.requireDecorationToClick == true) {

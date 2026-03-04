@@ -115,7 +115,7 @@ public class ContainerInterfaceView<I : ContainerInterface<I, P>, P : ContainerP
                 ),
             )
         } else {
-            player.openInventory(inventory)
+            player.openInventory(getInventory())
         }
 
         // Mark down that we've finished rendering this menu

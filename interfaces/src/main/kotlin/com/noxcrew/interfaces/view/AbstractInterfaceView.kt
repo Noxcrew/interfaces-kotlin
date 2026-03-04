@@ -154,8 +154,10 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
     override val mapper: GridMapper = backing.mapper
 
-    /** The pane of this view. */
-    public val completedPane: CompletedPane?
+    override val inventory: InterfacesInventory?
+        get() = if (::currentInventory.isInitialized) currentInventory else null
+
+    override val completedPane: CompletedPane?
         get() = if (::pane.isInitialized) pane else null
 
     init {
@@ -235,7 +237,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                             ),
                         ) {
                             withTimeout(builder.defaultTimeout) {
-                                it.invoke(reason, this@AbstractInterfaceView, currentInventory)
+                                it.invoke(reason, this@AbstractInterfaceView)
                             }
                         }
                     }

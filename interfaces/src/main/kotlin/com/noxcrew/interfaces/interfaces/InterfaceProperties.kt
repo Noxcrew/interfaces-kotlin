@@ -74,9 +74,6 @@ public open class InterfaceProperties<P : Pane> {
     /** Whether clicking on empty slots should be fully cancelled. */
     public var preventClickingEmptySlots: Boolean = true
 
-    /** Whether the player's own inventory should be editable if [preventClickingEmptySlots] is `true`. */
-    public var allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented: Boolean = false
-
     // --- ITEM PERSISTENCE ---
     /**
      * Persists items added to this pane in a previous instance.
@@ -110,10 +107,10 @@ public open class InterfaceProperties<P : Pane> {
 
     /** Gives all items in modifiable slots back to players when closed, unless they were already present. */
     public fun returnPlacedIntoInventoryOnClose() {
-        addUnconditionalCloseHandler { _, view, inventory ->
-            (view as? AbstractInterfaceView<*, *, *>)?.completedPane?.forEach { row, column, element ->
+        addUnconditionalCloseHandler { _, view ->
+            view.completedPane?.forEach { row, column, element ->
                 if (!element.isSlotModifiable || element.itemStack != null) return@forEach
-                val item = inventory.get(row, column) ?: return@forEach
+                val item = view.inventory?.get(row, column) ?: return@forEach
                 view.player.inventory.addItem(item)
             }
         }

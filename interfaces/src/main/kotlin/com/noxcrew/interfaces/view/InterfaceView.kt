@@ -3,6 +3,8 @@ package com.noxcrew.interfaces.view
 import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.grid.mapping.GridMapper
+import com.noxcrew.interfaces.inventory.InterfacesInventory
+import com.noxcrew.interfaces.pane.CompletedPane
 import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
@@ -37,6 +39,12 @@ public interface InterfaceView {
 
     /** The [GridMapper] to convert from and to [GridPoint]. */
     public val mapper: GridMapper
+
+    /** The final pane of the view, if created. */
+    public val completedPane: CompletedPane?
+
+    /** The inventory of this view. */
+    public val inventory: InterfacesInventory?
 
     /** Opens up this view. */
     public suspend fun open(reload: Boolean = true)

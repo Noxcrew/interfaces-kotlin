@@ -16,9 +16,6 @@ public class ChangingTitleExampleInterface : RegistrableInterface {
     override fun create(): Interface<*, *> = buildChestInterface {
         rows = 1
 
-        // Allow clicking the player inventory but not anything in the top inventory
-        allowClickingOwnInventoryIfClickingEmptySlotsIsPrevented = true
-
         val numberProperty = interfaceProperty(0)
         var number by numberProperty
 
