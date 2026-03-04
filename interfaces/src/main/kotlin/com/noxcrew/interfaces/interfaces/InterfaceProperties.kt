@@ -9,7 +9,6 @@ import com.noxcrew.interfaces.pane.Pane
 import com.noxcrew.interfaces.transform.BlockingMode
 import com.noxcrew.interfaces.transform.RefreshMode
 import com.noxcrew.interfaces.utilities.InventorySegment
-import com.noxcrew.interfaces.view.AbstractInterfaceView
 import org.bukkit.event.block.Action
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
