@@ -26,10 +26,10 @@ internal suspend fun Pane.complete(player: Player): CompletedPane {
 }
 
 /** Creates a completed pane with empty elements. */
-internal fun createEmptyPane(mapper: GridMapper, allowClickingEmptySlots: Boolean, allowMovingEmptySlots: Boolean): CompletedPane {
+internal fun createEmptyPane(mapper: GridMapper, triggerClickEventsForEmptySlots: Boolean, isEmptySlotModifiable: Boolean): CompletedPane {
     val pane = CompletedPane()
     val airElement =
-        CompletedElement(null, if (allowClickingEmptySlots) ClickHandler.EMPTY else null, isSlotModifiable = allowMovingEmptySlots)
+        CompletedElement(null, if (triggerClickEventsForEmptySlots) ClickHandler.EMPTY else null, isSlotModifiable = isEmptySlotModifiable)
     mapper.forEachInGrid { row, column ->
         pane[row, column] = airElement
     }

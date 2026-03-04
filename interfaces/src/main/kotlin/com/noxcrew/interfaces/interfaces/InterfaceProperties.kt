@@ -65,10 +65,7 @@ public open class InterfaceProperties<P : Pane> {
     public var onlyCancelItemInteraction: Boolean = false
 
     /** Whether to trigger click events on all empty slots. */
-    public var allowClickingEmptySlots: Boolean = false
-
-    /** Whether items can be moved into empty slots. */
-    public var allowMovingEmptySlots: Boolean = false
+    public var triggerClickEventsForEmptySlots: Boolean = false
 
     /** Whether clicking on empty slots should be fully cancelled. */
     public var preventClickingEmptySlots: Boolean = true

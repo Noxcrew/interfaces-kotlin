@@ -23,12 +23,12 @@ internal class CollapsablePaneMap private constructor(
         return internal.put(key, value)
     }
 
-    internal fun collapse(mapper: GridMapper, allowClickingEmptySlots: Boolean, allowMovingEmptySlots: Boolean): CompletedPane {
+    internal fun collapse(mapper: GridMapper, triggerClickEventsForEmptySlots: Boolean, isEmptySlotModifiable: Boolean): CompletedPane {
         cachedPane?.let { pane ->
             return pane
         }
 
-        val pane = createEmptyPane(mapper, allowClickingEmptySlots, allowMovingEmptySlots)
+        val pane = createEmptyPane(mapper, triggerClickEventsForEmptySlots, isEmptySlotModifiable)
         val current = internal.toMap().values
         current.forEach { layer ->
             layer.forEach { row, column, value ->

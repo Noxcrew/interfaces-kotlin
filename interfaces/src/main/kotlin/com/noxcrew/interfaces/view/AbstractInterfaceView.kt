@@ -473,7 +473,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             ) {
                 withTimeout(builder.defaultTimeout) {
                     // Collect the panes together and add air where necessary
-                    pane = panes.collapse(backing.mapper, builder.allowClickingEmptySlots, builder.allowMovingEmptySlots)
+                    pane = panes.collapse(backing.mapper, builder.triggerClickEventsForEmptySlots, !builder.preventClickingEmptySlots)
 
                     // Render the completed panes
                     renderToInventory()
