@@ -12,12 +12,12 @@ plugins {
     alias(libs.plugins.paper.userdev) apply false
 
     // Kotlin plugin prefers to be applied to parent when it's used in multiple sub-modules.
-    kotlin("jvm") version "2.1.10" apply false
+    kotlin("jvm") version "2.4.0" apply false
 
     alias(libs.plugins.spotless)
 }
 
-val javaVersion: Int = 21
+val javaVersion: Int = 25
 
 allprojects {
     group = "com.noxcrew.interfaces"
@@ -40,7 +40,7 @@ subprojects {
     }
 
     dependencies {
-        extensions.findByType<PaperweightUserDependenciesExtension>()?.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
+        extensions.findByType<PaperweightUserDependenciesExtension>()?.paperDevBundle("26.2.build.65-beta")
     }
 
     configure<SpotlessExtension> {
@@ -63,7 +63,7 @@ subprojects {
 
     // Configure any existing RunServerTasks
     tasks.withType<RunServer> {
-        minecraftVersion("1.21.11")
+        minecraftVersion("26.2")
         jvmArgs("-Dio.papermc.paper.suppress.sout.nags=true")
     }
 

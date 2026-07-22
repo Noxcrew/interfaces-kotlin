@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.event
 
+import com.noxcrew.interfaces.interfaces.PlayerInventoryType
 import com.noxcrew.interfaces.utilities.InventorySegment
 import com.noxcrew.interfaces.view.InterfaceView
 import org.bukkit.Bukkit
@@ -18,6 +19,8 @@ public class DrawPaneEvent(
     public val view: InterfaceView,
     /** The segment being drawn to. */
     public val segment: InventorySegment,
+    /** The player inventory type used by this view. */
+    public val playerInventoryType: PlayerInventoryType,
 ) : PlayerEvent(player, !Bukkit.isPrimaryThread()) {
 
     public companion object {
@@ -25,13 +28,9 @@ public class DrawPaneEvent(
         public val handlerList: HandlerList = HandlerList()
     }
 
-    /** Whether any slots in the regular inventory were drawn. */
-    public val isRegularInventory: Boolean
-        get() = segment == InventorySegment.CONTAINER
-
-    /** Whether any slots in the player inventory were drawn. */
+    /** Whether any slots in the player inventory were drawn. If the menu is fake this is false, this method returns `true` if the player's real inventory is modified. */
     public val isPlayerInventory: Boolean
-        get() = segment == InventorySegment.PLAYER
+        get() = segment == InventorySegment.PLAYER && playerInventoryType != PlayerInventoryType.FAKE
 
     override fun getHandlers(): HandlerList = handlerList
 }

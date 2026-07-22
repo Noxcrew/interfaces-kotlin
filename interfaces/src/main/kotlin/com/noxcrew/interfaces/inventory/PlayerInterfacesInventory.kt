@@ -53,10 +53,10 @@ public class PlayerInterfacesInventory(
         if (row == EXTRA_ROW) {
             when (column) {
                 // Armor slots.
-                HELMET_SLOT.y -> playerInventory.helmet = item
-                CHEST_SLOT.y -> playerInventory.chestplate = item
-                LEGGING_SLOT.y -> playerInventory.leggings = item
-                BOOTS_SLOT.y -> playerInventory.boots = item
+                HELMET_SLOT.y -> playerInventory.setHelmet(item)
+                CHEST_SLOT.y -> playerInventory.setChestplate(item)
+                LEGGING_SLOT.y -> playerInventory.setLeggings(item)
+                BOOTS_SLOT.y -> playerInventory.setBoots(item)
                 // Crafting grid slots.
                 else -> player.openInventory.topInventory.setItem(column, item)
             }

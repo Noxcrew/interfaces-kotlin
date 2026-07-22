@@ -12,8 +12,10 @@ import com.noxcrew.interfaces.exception.InterfacesExceptionResolution
 import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.grid.mapping.GridMapper
+import com.noxcrew.interfaces.interfaces.ContainerInterfaceBuilder
 import com.noxcrew.interfaces.interfaces.Interface
 import com.noxcrew.interfaces.interfaces.InterfaceBuilder
+import com.noxcrew.interfaces.interfaces.PlayerInventoryType
 import com.noxcrew.interfaces.inventory.InterfacesInventory
 import com.noxcrew.interfaces.pane.CompletedPane
 import com.noxcrew.interfaces.pane.Pane
@@ -768,7 +770,14 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         if (madeChanges) {
             builder.getPostprocessors(segment).forEach { handler -> handler(currentInventory, this, player) }
-            Bukkit.getPluginManager().callEvent(DrawPaneEvent(player, this, segment))
+            Bukkit.getPluginManager().callEvent(
+                DrawPaneEvent(
+                    player,
+                    this,
+                    segment,
+                    (backing.builder as? ContainerInterfaceBuilder<*, *>)?.playerInventoryType ?: PlayerInventoryType.DEFAULT,
+                ),
+            )
         }
     }
 
