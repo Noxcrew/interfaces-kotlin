@@ -353,7 +353,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             if ((openInventory[event.player] as? ContainerInterfaceView)?.backing?.builder?.playerInventoryType ==
                 PlayerInventoryType.FAKE
             ) {
-                (event.player as CraftPlayer).handle.inventoryMenu.sendAllDataToRemote()
+                // If we are currently rendering another fake inventory, skip this!
+                if ((renderingPlayerInterfaceViews[event.player.uniqueId] as? ContainerInterfaceView<*, *>)
+                        ?.backing?.builder?.playerInventoryType != PlayerInventoryType.FAKE
+                ) {
+                    (event.player as CraftPlayer).handle.inventoryMenu.sendAllDataToRemote()
+                }
             }
         }
 
