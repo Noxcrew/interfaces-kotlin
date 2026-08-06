@@ -13,6 +13,7 @@ import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.interfaces.PlayerInventoryType
 import com.noxcrew.interfaces.inventory.clearInventory
+import com.noxcrew.interfaces.menu.MenuOpenOperation
 import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.view.AbstractInterfaceView
@@ -178,6 +179,17 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
 
     /** A map of interfaces being rendered for each player. */
     private val renderingPlayerInterfaceViews = ConcurrentHashMap<UUID, InterfaceView>()
+
+    /** A map of all ongoing chat queries. */
+    private val lastOpenedMenu = ConcurrentHashMap<UUID, MenuOpenOperation>()
+
+    /** Stores the last menu opened by [player]. */
+    public fun submitMenuOpen(player: Player, operation: MenuOpenOperation) {
+        lastOpenedMenu[player.uniqueId] = operation
+    }
+
+    /** Returns the menu last opened by [player]. */
+    public fun getLastOpenedMenu(player: Player): MenuOpenOperation? = lastOpenedMenu[player.uniqueId]
 
     /** Runs [function] without reopening a new menu. */
     public fun withoutReopen(function: () -> Unit) {
@@ -572,6 +584,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         renderingPlayerInterfaceViews.remove(playerId)?.close(SCOPE, Reason.DISCONNECT)
         backgroundPlayerInterfaceViews.remove(playerId)?.close(SCOPE, Reason.DISCONNECT)
         openPlayerInterfaceViews.remove(playerId)?.close(SCOPE, Reason.DISCONNECT)
+        lastOpenedMenu.remove(playerId)
     }
 
     /** Returns whether [block] will trigger some interaction if clicked with [item]. */

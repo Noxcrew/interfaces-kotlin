@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.menu
 
+import com.noxcrew.interfaces.InterfacesListeners
 import com.noxcrew.interfaces.exception.InterfacesExceptionContext
 import com.noxcrew.interfaces.exception.InterfacesExceptionHandler
 import com.noxcrew.interfaces.exception.InterfacesOperation
@@ -32,6 +33,8 @@ public abstract class PlayerInventoryMenu : BaseInventoryMenu {
     }
 
     override suspend fun open(player: Player, parent: InterfaceView?, reload: Boolean): PlayerInterfaceView? {
+        InterfacesListeners.INSTANCE.submitMenuOpen(player, MenuOpenOperation(this, parent))
+
         val start = Instant.now()
         val menu = exceptionHandler.execute(
             InterfacesExceptionContext(
