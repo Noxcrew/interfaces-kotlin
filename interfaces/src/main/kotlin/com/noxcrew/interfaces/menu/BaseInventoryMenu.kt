@@ -35,10 +35,7 @@ public interface BaseInventoryMenu {
      * Re-opens this menu for the given [player]. It's recommended to
      * create a new instance of this menu and open it instead if relevant.
      */
-    public suspend fun reopen(
-        player: Player,
-        parent: InterfaceView?
-    ): InterfaceView? = open(player, parent, reload = true)
+    public suspend fun reopen(player: Player, parent: InterfaceView?): InterfaceView? = open(player, parent, reload = true)
 
     /** Opens this menu for the given [player]. */
     public suspend fun open(
