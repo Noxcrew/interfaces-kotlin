@@ -1,5 +1,6 @@
 package com.noxcrew.interfaces.element
 
+import com.noxcrew.interfaces.properties.Trigger
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 
@@ -9,6 +10,9 @@ public interface LazyElement : Element {
     /** Requires that the decoration function finishes before the click handler will work. */
     public val requireDecorationToClick: Boolean
         get() = false
+
+    /** Returns a list of triggers to re-decorate this element for. */
+    public suspend fun getRedecorationTriggers(player: Player): List<Trigger> = emptyList()
 
     /**
      * Decorates the given [itemStack] for [player] lazily.

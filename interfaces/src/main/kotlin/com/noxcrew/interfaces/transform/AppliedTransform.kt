@@ -53,7 +53,7 @@ public class AppliedTransform<P : Pane>(
             paneStates[value ?: return@let null]
         } ?: withTimeout(builder.defaultTimeout) {
             invoke(pane, view)
-            pane.complete(player)
+            pane.complete(player, view)
         }
 
         // Store stateful panes
@@ -61,7 +61,6 @@ public class AppliedTransform<P : Pane>(
             val value by property
             paneStates[value ?: return@also] = completedPane
         }
-
         return completedPane
     }
 }

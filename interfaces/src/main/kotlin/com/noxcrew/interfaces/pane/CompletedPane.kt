@@ -7,6 +7,7 @@ import com.noxcrew.interfaces.grid.GridMap
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.grid.HashGridMap
 import com.noxcrew.interfaces.grid.mapping.GridMapper
+import com.noxcrew.interfaces.view.InterfaceView
 import org.bukkit.entity.Player
 
 /** A grid map of completed elements. */
@@ -15,13 +16,11 @@ public open class CompletedPane : GridMap<CompletedElement> by HashGridMap() {
 }
 
 /** Completes a pane for [player] by drawing each element while suspending. */
-internal suspend fun Pane.complete(player: Player): CompletedPane {
+internal suspend fun Pane.complete(player: Player, view: InterfaceView): CompletedPane {
     val pane = CompletedPane()
-
     forEachSuspending { row, column, element ->
-        pane[row, column] = element.complete(player)
+        pane[row, column] = element.complete(player, view)
     }
-
     return pane
 }
 

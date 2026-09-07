@@ -1,6 +1,7 @@
 package com.noxcrew.interfaces.view
 
 import com.noxcrew.interfaces.InterfacesListeners
+import com.noxcrew.interfaces.element.CompletedElement
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.inventory.InterfacesInventory
@@ -105,7 +106,7 @@ public interface InterfaceView {
     public fun redrawComplete()
 
     /** Ensures the decoration task is running. */
-    public fun ensureDecorating()
+    public fun ensureDecorating(element: CompletedElement? = null)
 
     /**
      * Sends a chat query for this player. This view will temporarily close, allowing the player

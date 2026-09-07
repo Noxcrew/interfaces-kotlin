@@ -599,13 +599,17 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         }
     }
 
-    override fun ensureDecorating() {
-        // Updates the current list of lazy elements to mirror all currently lazy elements
-        val lazyElements = ConcurrentLinkedQueue<CompletedElement>()
-        completedPane?.forEach { _, _, element ->
-            element.pendingLazy?.also { lazyElements += element }
+    override fun ensureDecorating(element: CompletedElement?) {
+        if (element != null) {
+            this.lazyElements += element
+        } else {
+            // Updates the current list of lazy elements to mirror all currently lazy elements
+            val lazyElements = ConcurrentLinkedQueue<CompletedElement>()
+            completedPane?.forEach { _, _, element ->
+                element.pendingLazy?.also { lazyElements += element }
+            }
+            this.lazyElements = lazyElements
         }
-        this.lazyElements = lazyElements
 
         // Start the task!
         scheduleSingletonTask(decorationMutex, decoratingJob, ::lazilyDecorateItems)
