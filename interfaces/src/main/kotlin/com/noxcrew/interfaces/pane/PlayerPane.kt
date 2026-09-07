@@ -1,30 +1,15 @@
 package com.noxcrew.interfaces.pane
 
 import com.noxcrew.interfaces.element.Element
-import com.noxcrew.interfaces.grid.GridPoint
+import com.noxcrew.interfaces.grid.mapping.PlayerInventoryGridMapper.BOOTS_SLOT
+import com.noxcrew.interfaces.grid.mapping.PlayerInventoryGridMapper.CHEST_SLOT
+import com.noxcrew.interfaces.grid.mapping.PlayerInventoryGridMapper.HELMET_SLOT
+import com.noxcrew.interfaces.grid.mapping.PlayerInventoryGridMapper.HOT_BAR_ROW
+import com.noxcrew.interfaces.grid.mapping.PlayerInventoryGridMapper.LEGGING_SLOT
+import com.noxcrew.interfaces.grid.mapping.PlayerInventoryGridMapper.OFF_HAND_SLOT
 
 /** An ordered pane that wraps the player inventory. */
 public class PlayerPane : Pane() {
-
-    internal companion object {
-        /** The row used for the hot bar slots. */
-        internal const val HOT_BAR_ROW = 3
-
-        /** The row used for armor and crafting slots. */
-        internal const val EXTRA_ROW = 4
-
-        /** The row used for the offhand slot. */
-        internal const val OFFHAND_ROW = 5
-
-        /** The location of the off-hand slot. */
-        internal val OFF_HAND_SLOT = GridPoint.at(OFFHAND_ROW, 0)
-
-        internal val HELMET_SLOT = GridPoint.at(EXTRA_ROW, 5)
-        internal val CHEST_SLOT = GridPoint.at(EXTRA_ROW, 6)
-        internal val LEGGING_SLOT = GridPoint.at(EXTRA_ROW, 7)
-        internal val BOOTS_SLOT = GridPoint.at(EXTRA_ROW, 8)
-    }
-
     /** The hotbar of the player inventory. */
     public val hotbar: Hotbar = Hotbar()
 

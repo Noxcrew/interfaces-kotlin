@@ -6,7 +6,7 @@ import com.noxcrew.interfaces.element.StaticElement
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.interfaces.Interface
 import com.noxcrew.interfaces.interfaces.buildChestInterface
-import com.noxcrew.interfaces.utilities.forEachInGrid
+import com.noxcrew.interfaces.utilities.iterateForEachInGrid
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
@@ -28,7 +28,7 @@ public class ModifableAreaExampleInterface : RegistrableInterface {
         }
 
         withTransform { pane, _ ->
-            forEachInGrid(5, 9) { row, column ->
+            iterateForEachInGrid(5, 9) { row, column ->
                 val item = ItemStack(Material.DIRT)
                     .name("magical circle of dirt that allows modification")
 

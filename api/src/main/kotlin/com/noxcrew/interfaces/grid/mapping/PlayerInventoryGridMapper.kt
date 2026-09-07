@@ -1,16 +1,39 @@
 package com.noxcrew.interfaces.grid.mapping
 
 import com.noxcrew.interfaces.grid.GridPoint
+import com.noxcrew.interfaces.grid.mapping.ContainerGridMapper.Companion.COLUMNS_IN_CHEST
 import com.noxcrew.interfaces.grid.mapping.GridMapper.PlayerInventory.Companion.PLAYER_INV_ROWS
-import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.gridPointToBukkitIndex
-import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
+import com.noxcrew.interfaces.utilities.iterateForEachInGrid
 
 /**
  * Handles [GridPoint] mapping for the player's own inventory.
  * Including armor slots and offhand.
  */
 public object PlayerInventoryGridMapper : AbstractGridMapper(), GridMapper.PlayerInventory {
+    /** The row used for the hot bar slots. */
+    public const val HOT_BAR_ROW: Int = 3
+
+    /** The row used for armor and crafting slots. */
+    public const val EXTRA_ROW: Int = 4
+
+    /** The row used for the offhand slot. */
+    public const val OFFHAND_ROW: Int = 5
+
+    /** The location of the off-hand slot. */
+    public val OFF_HAND_SLOT: GridPoint = GridPoint.at(OFFHAND_ROW, 0)
+
+    /** The location of the helmet slot. */
+    public val HELMET_SLOT: GridPoint = GridPoint.at(EXTRA_ROW, 5)
+
+    /** The location of the chestplate slot. */
+    public val CHEST_SLOT: GridPoint = GridPoint.at(EXTRA_ROW, 6)
+
+    /** The location of the leggings slot. */
+    public val LEGGING_SLOT: GridPoint = GridPoint.at(EXTRA_ROW, 7)
+
+    /** The location of the boots slot. */
+    public val BOOTS_SLOT: GridPoint = GridPoint.at(EXTRA_ROW, 8)
 
     private const val PLAYER_INV_SIZE = PLAYER_INV_ROWS * COLUMNS_IN_CHEST // 27
     private const val PLAYER_INV_HOT_BAR_SIZE = PLAYER_INV_SIZE + COLUMNS_IN_CHEST // 36
@@ -18,8 +41,8 @@ public object PlayerInventoryGridMapper : AbstractGridMapper(), GridMapper.Playe
 
     override fun forEachInGrid(function: (row: Int, column: Int) -> Unit) {
         // Include the crafting rid & armor in row 5, off hand is separate
-        com.noxcrew.interfaces.utilities.forEachInGrid(5, COLUMNS_IN_CHEST, function)
-        function(PlayerPane.OFFHAND_ROW, 0)
+        iterateForEachInGrid(5, COLUMNS_IN_CHEST, function)
+        function(OFFHAND_ROW, 0)
     }
 
     override fun toGridPoint(slot: Int): GridPoint? {

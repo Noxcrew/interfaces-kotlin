@@ -1,8 +1,8 @@
 package com.noxcrew.interfaces.inventory
 
 import com.noxcrew.interfaces.grid.mapping.ContainerGridMapper
+import com.noxcrew.interfaces.grid.mapping.ContainerGridMapper.Companion.COLUMNS_IN_CHEST
 import com.noxcrew.interfaces.grid.mapping.GridMapper.PlayerInventory.Companion.PLAYER_INV_PLUS_HOTBAR_ROWS
-import com.noxcrew.interfaces.view.AbstractInterfaceView.Companion.COLUMNS_IN_CHEST
 import net.minecraft.world.SimpleContainer
 import net.minecraft.world.entity.EntityEquipment
 import net.minecraft.world.entity.EquipmentSlot

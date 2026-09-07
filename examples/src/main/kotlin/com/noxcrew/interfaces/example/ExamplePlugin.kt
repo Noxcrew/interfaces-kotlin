@@ -9,7 +9,7 @@ import com.noxcrew.interfaces.interfaces.buildCombinedInterface
 import com.noxcrew.interfaces.interfaces.buildPlayerInterface
 import com.noxcrew.interfaces.inventory.clearInventory
 import com.noxcrew.interfaces.properties.interfaceProperty
-import com.noxcrew.interfaces.utilities.forEachInGrid
+import com.noxcrew.interfaces.utilities.iterateForEachInGrid
 import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -153,8 +153,8 @@ public class ExamplePlugin : JavaPlugin(), Listener {
         }
 
         withTransform { pane, _ ->
-            forEachInGrid(6, 9) { row, column ->
-                if (pane.has(row, column)) return@forEachInGrid
+            iterateForEachInGrid(6, 9) { row, column ->
+                if (pane.has(row, column)) return@iterateForEachInGrid
 
                 val item = ItemStack(Material.WHITE_STAINED_GLASS_PANE)
                     .name("row: $row, column: $column")
@@ -175,7 +175,7 @@ public class ExamplePlugin : JavaPlugin(), Listener {
         withTransform { pane, _ ->
             val item = ItemStack(Material.COMPASS).name("interfaces example")
 
-            forEachInGrid(3, 9) { row, column ->
+            iterateForEachInGrid(3, 9) { row, column ->
                 val item = ItemStack(Material.WHITE_STAINED_GLASS_PANE)
                     .name("row: $row, column: $column")
 
@@ -183,7 +183,7 @@ public class ExamplePlugin : JavaPlugin(), Listener {
                     player.sendMessage("row: $row, column: $column")
                 }
             }
-            forEachInGrid(1, 9) { _, column ->
+            iterateForEachInGrid(1, 9) { _, column ->
                 val item = ItemStack(Material.WHITE_STAINED_GLASS_PANE)
                     .name("hotbar, column: $column")
 
@@ -217,7 +217,7 @@ public class ExamplePlugin : JavaPlugin(), Listener {
         playerInventoryType = type
 
         withTransform { pane, _ ->
-            forEachInGrid(10, 9) { row, column ->
+            iterateForEachInGrid(10, 9) { row, column ->
                 val item = ItemStack(Material.WHITE_STAINED_GLASS_PANE)
                     .name("row: $row, column: $column")
 

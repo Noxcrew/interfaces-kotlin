@@ -12,6 +12,8 @@ import com.noxcrew.interfaces.exception.InterfacesExceptionResolution
 import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.grid.mapping.GridMapper
+import com.noxcrew.interfaces.grid.mapping.PlayerInventoryGridMapper.EXTRA_ROW
+import com.noxcrew.interfaces.grid.mapping.PlayerInventoryGridMapper.OFF_HAND_SLOT
 import com.noxcrew.interfaces.interfaces.ContainerInterfaceBuilder
 import com.noxcrew.interfaces.interfaces.Interface
 import com.noxcrew.interfaces.interfaces.InterfaceBuilder
@@ -19,7 +21,6 @@ import com.noxcrew.interfaces.interfaces.PlayerInventoryType
 import com.noxcrew.interfaces.inventory.InterfacesInventory
 import com.noxcrew.interfaces.pane.CompletedPane
 import com.noxcrew.interfaces.pane.Pane
-import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.properties.LazyProperty
 import com.noxcrew.interfaces.properties.StateProperty
 import com.noxcrew.interfaces.properties.Trigger
@@ -70,12 +71,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     public val backing: T,
     birthParent: InterfaceView?,
 ) : InterfaceView, InterfacesExceptionHandler by backing.builder.exceptionHandler {
-
-    public companion object {
-        /** The amount of columns a chest inventory has. */
-        public const val COLUMNS_IN_CHEST: Int = 9
-    }
-
     private val paneMutex = Mutex()
     private val debouncedRender = AtomicBoolean(false)
 
@@ -798,9 +793,9 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
             // Find the slot that this item is in
             val point = if (index == 40) {
-                PlayerPane.OFF_HAND_SLOT
+                OFF_HAND_SLOT
             } else if (index >= 36) {
-                GridPoint(PlayerPane.EXTRA_ROW, 5 + (39 - index))
+                GridPoint(EXTRA_ROW, 5 + (39 - index))
             } else if (index < 9) {
                 GridPoint(3, index)
             } else {

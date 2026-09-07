@@ -11,10 +11,10 @@ import com.noxcrew.interfaces.click.CompletableClickHandler
 import com.noxcrew.interfaces.exception.InterfacesExceptionContext
 import com.noxcrew.interfaces.exception.InterfacesOperation
 import com.noxcrew.interfaces.grid.GridPoint
+import com.noxcrew.interfaces.grid.mapping.PlayerInventoryGridMapper
 import com.noxcrew.interfaces.interfaces.PlayerInventoryType
 import com.noxcrew.interfaces.inventory.clearInventory
 import com.noxcrew.interfaces.menu.MenuOpenOperation
-import com.noxcrew.interfaces.pane.PlayerPane
 import com.noxcrew.interfaces.utilities.InterfacesCoroutineDetails
 import com.noxcrew.interfaces.view.AbstractInterfaceView
 import com.noxcrew.interfaces.view.ContainerInterfaceView
@@ -609,7 +609,7 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
             if (event.hand == EquipmentSlot.HAND) {
                 GridPoint.at(3, player.inventory.heldItemSlot)
             } else {
-                PlayerPane.OFF_HAND_SLOT
+                PlayerInventoryGridMapper.OFF_HAND_SLOT
             },
         )
         val click = convertAction(event.action, player.isSneaking)
