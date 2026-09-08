@@ -49,7 +49,8 @@ public interface InterfaceView {
     public val inventory: InterfacesInventory?
 
     /** The title of this inventory. */
-    public val titleState: TitleState
+    public val titleState: TitleState?
+        get() = null
 
     /** Opens up this view. */
     public suspend fun open(reload: Boolean = true)
@@ -98,11 +99,11 @@ public interface InterfaceView {
     public suspend fun back()
 
     /** Returns the current title of this view. */
-    public fun title(): Component? = titleState.current
+    public fun title(): Component? = titleState?.current
 
     /** Sets the title fo this view to [value]. */
     public fun title(value: Component) {
-        titleState.current = value
+        titleState?.current = value
     }
 
     /** Called whenever a view is opened. */

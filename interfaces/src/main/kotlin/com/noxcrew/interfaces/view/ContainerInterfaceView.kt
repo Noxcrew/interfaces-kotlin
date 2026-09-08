@@ -116,13 +116,6 @@ public class ContainerInterfaceView<I : ContainerInterface<I, P>, P : ContainerP
         InterfacesListeners.INSTANCE.completeRendering(player.uniqueId, this)
     }
 
-    override suspend fun updateTitle() {
-        titleState.current = titleState.supplier?.invoke(player) ?: titleState.current
-        titleState.clean()
-    }
-
-    override fun requiresNewInventory(): Boolean = super.requiresNewInventory() || titleState.dirty
-
     override fun getInventory(): Inventory = when (currentInventory) {
         is FakedContainerInterfacesInventory -> {
             (currentInventory as FakedContainerInterfacesInventory).bukkitInventory

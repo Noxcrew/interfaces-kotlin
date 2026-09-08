@@ -342,7 +342,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // If we want to redraw the title we use a new inventory always
         if (backing.builder.redrawTitleOnReopen) {
-            titleState.markDirty()
+            titleState?.markDirty()
         }
 
         // Start by triggering all valid properties
@@ -818,25 +818,20 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         drawPaneToInventory(InventorySegment.PLAYER)
     }
 
-    /** Hook for updating the title of the inventory. */
-    protected open suspend fun updateTitle() {
-    }
-
-    protected open fun requiresNewInventory(): Boolean = firstPaint
-
     protected open suspend fun renderToInventory() {
         // If the menu has since been requested to close we ignore all this
         if (!shouldBeOpened.get()) return
 
-        // Try to update the title
-        if (firstPaint || titleState.dirty) {
-            updateTitle()
+        // Try to update the title if it has a supplier
+        if ((firstPaint || titleState?.dirty == true) && titleState?.supplier != null) {
+            titleState?.current = titleState?.supplier?.invoke(player) ?: titleState?.current
         }
 
         // If a new inventory is required we create one
         // and mark that the current one is not to be used!
-        val createdInventory = if (requiresNewInventory()) {
+        val createdInventory = if (firstPaint || titleState?.dirty == true) {
             currentInventory = createInventory()
+            titleState?.clean()
 
             // Whenever we create a new inventory we have to re-mark this interface
             // as the one being rendered!
