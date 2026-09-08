@@ -86,9 +86,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     /** Whether the view is being painted for the first time. */
     protected var firstPaint: Boolean = true
 
-    /** Whether the title of the inventory should be re-painted. */
-    protected var refreshTitle: Boolean = true
-
     /** Whether all properties should be fully reloaded. */
     protected var fullyReload: Boolean = false
 
@@ -345,7 +342,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // If we want to redraw the title we use a new inventory always
         if (backing.builder.redrawTitleOnReopen) {
-            refreshTitle = true
+            titleState.markDirty()
         }
 
         // Start by triggering all valid properties
@@ -832,7 +829,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
         if (!shouldBeOpened.get()) return
 
         // Try to update the title
-        if (firstPaint || refreshTitle) {
+        if (firstPaint || titleState.dirty) {
             updateTitle()
         }
 
@@ -898,7 +895,6 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                 }
                 openIfClosed.set(false)
                 firstPaint = false
-                refreshTitle = false
             }
         }
     }

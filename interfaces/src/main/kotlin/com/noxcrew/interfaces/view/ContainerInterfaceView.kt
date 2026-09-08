@@ -46,13 +46,7 @@ public class ContainerInterfaceView<I : ContainerInterface<I, P>, P : ContainerP
         )
     }
 
-    private val titleState = TitleState()
-
-    override fun title(): Component? = titleState.current
-
-    override fun title(value: Component) {
-        titleState.current = value
-    }
+    override val titleState: TitleState = TitleState(initialSupplier = backing.titleSupplier)
 
     override fun createInventory(): CachedInterfacesInventory = if (backing.builder.playerInventoryType == PlayerInventoryType.FAKE) {
         FakedContainerInterfacesInventory(
@@ -123,10 +117,11 @@ public class ContainerInterfaceView<I : ContainerInterface<I, P>, P : ContainerP
     }
 
     override suspend fun updateTitle() {
-        titleState.current = backing.titleSupplier?.invoke(player)
+        titleState.current = titleState.supplier?.invoke(player) ?: titleState.current
+        titleState.clean()
     }
 
-    override fun requiresNewInventory(): Boolean = super.requiresNewInventory() || titleState.hasChanged
+    override fun requiresNewInventory(): Boolean = super.requiresNewInventory() || titleState.dirty
 
     override fun getInventory(): Inventory = when (currentInventory) {
         is FakedContainerInterfacesInventory -> {

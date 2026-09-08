@@ -6,6 +6,7 @@ import com.noxcrew.interfaces.grid.GridPoint
 import com.noxcrew.interfaces.grid.mapping.GridMapper
 import com.noxcrew.interfaces.inventory.InterfacesInventory
 import com.noxcrew.interfaces.pane.CompletedPane
+import com.noxcrew.interfaces.utilities.TitleState
 import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
@@ -46,6 +47,9 @@ public interface InterfaceView {
 
     /** The inventory of this view. */
     public val inventory: InterfacesInventory?
+
+    /** The title of this inventory. */
+    public val titleState: TitleState
 
     /** Opens up this view. */
     public suspend fun open(reload: Boolean = true)
@@ -94,10 +98,12 @@ public interface InterfaceView {
     public suspend fun back()
 
     /** Returns the current title of this view. */
-    public fun title(): Component?
+    public fun title(): Component? = titleState.current
 
     /** Sets the title fo this view to [value]. */
-    public fun title(value: Component)
+    public fun title(value: Component) {
+        titleState.current = value
+    }
 
     /** Called whenever a view is opened. */
     public fun onOpen()

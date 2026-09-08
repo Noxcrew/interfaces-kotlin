@@ -5,6 +5,7 @@ import com.noxcrew.interfaces.interfaces.PlayerInterface
 import com.noxcrew.interfaces.inventory.PlayerInterfacesInventory
 import com.noxcrew.interfaces.inventory.clearInventory
 import com.noxcrew.interfaces.pane.PlayerPane
+import com.noxcrew.interfaces.utilities.TitleState
 import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
@@ -20,12 +21,8 @@ public class PlayerInterfaceView internal constructor(
     backing,
     null,
 ) {
-
-    override fun title(): Component = error("PlayerInventoryView's do not have a title")
-
-    override fun title(value: Component) {
-        error("PlayerInventoryView's cannot have a title")
-    }
+    override val titleState: TitleState
+        get() = error("PlayerInventoryView's do not have a title")
 
     override fun runChatQuery(timeout: Duration, onCancel: suspend () -> Unit, onComplete: suspend (Component) -> Boolean) {
         error("PlayerInventoryView does not support chat queries")
