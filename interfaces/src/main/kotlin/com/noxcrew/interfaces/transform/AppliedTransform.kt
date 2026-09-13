@@ -16,7 +16,8 @@ public class AppliedTransform<P : Pane>(
     internal val refresh: RefreshMode,
     internal val priority: Int,
     internal val triggers: Set<Trigger>,
-    internal val backing: Transform<P>,
+    /** The backing transform of this applied transform. */
+    public val backing: Transform<P>,
 ) : Transform<P> by backing {
 
     /** Stores different pre-completed states of this pane for different values of a stateful transform. */
