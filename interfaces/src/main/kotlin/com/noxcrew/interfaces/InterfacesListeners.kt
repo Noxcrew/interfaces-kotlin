@@ -183,6 +183,9 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
     /** A map of all ongoing chat queries. */
     private val lastOpenedMenu = ConcurrentHashMap<UUID, MenuOpenOperation>()
 
+    /** Returns whether [playerId] is in a chat query. */
+    public fun hasChatQuery(playerId: UUID): Boolean = queries.containsKey(playerId)
+
     /** Stores the last menu opened by [player]. */
     public fun submitMenuOpen(player: Player, operation: MenuOpenOperation) {
         lastOpenedMenu[player.uniqueId] = operation
