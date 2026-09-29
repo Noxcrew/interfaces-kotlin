@@ -58,9 +58,11 @@ public class AppliedTransform<P : Pane>(
         }
 
         // Store stateful panes
-        property?.also {
-            val value by property
-            paneStates[value ?: return@also] = completedPane
+        if ((backing as? StatefulTransform<*, *>)?.supportsReusingStates != false) {
+            property?.also {
+                val value by property
+                paneStates[value ?: return@also] = completedPane
+            }
         }
         return completedPane
     }

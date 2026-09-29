@@ -16,11 +16,14 @@ import com.noxcrew.interfaces.properties.InterfaceProperty
  * re-opening the menu.
  */
 public interface StatefulTransform<P : Pane, T> : ReactiveTransform<P> {
-
     /**
      * The property this transform where each distinct value
      * is cached. This property should NEVER be used to trigger
      * a redraw of the menu.
      */
     public val property: InterfaceProperty<T>
+
+    /** Whether this transform supports re-using previous states. */
+    public val supportsReusingStates: Boolean
+        get() = true
 }
