@@ -37,7 +37,7 @@ public abstract class PaginationTransformation<P : Pane, E>(
     /** The values this transformation is displaying. */
     protected var values: List<E> by Delegates.observable(default.toList()) { _, _, _ ->
         boundPage.max = maxPages()
-        if (initialized) refreshTrigger.trigger()
+        refreshTrigger.trigger()
     }
 
     /** The number of entries that need pages available to them. */
