@@ -819,13 +819,14 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
     }
 
     protected open suspend fun renderToInventory() {
+        // Try to update the title if it has a supplier
+        if (titleState?.supplier != null && titleState?.refresh == true) {
+            titleState?.current = titleState?.supplier?.invoke(player) ?: titleState?.current
+            titleState?.refresh = false
+        }
+
         // If the menu has since been requested to close we ignore all this
         if (!shouldBeOpened.get()) return
-
-        // Try to update the title if it has a supplier
-        if ((firstPaint || titleState?.dirty == true) && titleState?.supplier != null) {
-            titleState?.current = titleState?.supplier?.invoke(player) ?: titleState?.current
-        }
 
         // If a new inventory is required we create one
         // and mark that the current one is not to be used!

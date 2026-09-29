@@ -21,13 +21,16 @@ public class TitleState(
             field = value
         }
 
-    /** Whether the title should be updated from its supplier. */
+    /** Whether the title has recently changed. */
     public var dirty: Boolean = false
         private set
 
+    /** Whether the title should be updated from its supplier. */
+    public var refresh: Boolean = true
+
     /** Refreshes the title, re-running [supplier]. */
     public fun markDirty() {
-        dirty = true
+        refresh = true
     }
 
     /** Cleans up this title state. */
