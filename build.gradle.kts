@@ -39,7 +39,7 @@ subprojects {
         apply<PaperweightUser>()
 
         dependencies {
-            extensions.findByType<PaperweightUserDependenciesExtension>()?.paperDevBundle("26.2.build.65-beta")
+            extensions.findByType<PaperweightUserDependenciesExtension>()?.paperDevBundle("26.3.build.+")
         }
     }
     if (name != "examples") {
@@ -70,7 +70,7 @@ subprojects {
     }
 
     tasks.withType<RunServer> {
-        minecraftVersion("26.2")
+        minecraftVersion("26.3")
         jvmArgs("-Dio.papermc.paper.suppress.sout.nags=true")
     }
 

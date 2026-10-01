@@ -33,14 +33,14 @@ public class FakedContainerInterfacesInventory(
 
     override fun get(row: Int, column: Int): ItemStack? {
         if (row == rows + PLAYER_INV_PLUS_HOTBAR_ROWS) {
-            return playerInventory.equipment.get(EquipmentSlot.OFFHAND).asBukkitMirror()
+            return CraftItemStack.asBukkitMirror(playerInventory.equipment.get(EquipmentSlot.OFFHAND))
         }
 
         if (mapper.isPlayerInventory(row, column)) {
-            return playerInventory.getItem(mapper.toPlayerInventorySlot(row, column)).asBukkitMirror()
+            return CraftItemStack.asBukkitMirror(playerInventory.getItem(mapper.toPlayerInventorySlot(row, column)))
         }
 
-        return chestInventory.getItem(mapper.toTopInventorySlot(row, column)).asBukkitMirror()
+        return CraftItemStack.asBukkitMirror(chestInventory.getItem(mapper.toTopInventorySlot(row, column)))
     }
 
     override fun setInternal(row: Int, column: Int, item: ItemStack?) {
