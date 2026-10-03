@@ -830,9 +830,14 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // If a new inventory is required we create one
         // and mark that the current one is not to be used!
-        val createdInventory = if (firstPaint || titleState?.dirty == true) {
+        val open = isOpen()
+        val createdInventory = if (firstPaint || (open && titleState?.dirty == true)) {
             currentInventory = createInventory()
-            titleState?.clean()
+            if (open) {
+                // We only re-create the inventory based on the title state if it's
+                // open so a title update can't interrupt an inventory open.
+                titleState?.clean()
+            }
 
             // Whenever we create a new inventory we have to re-mark this interface
             // as the one being rendered!
