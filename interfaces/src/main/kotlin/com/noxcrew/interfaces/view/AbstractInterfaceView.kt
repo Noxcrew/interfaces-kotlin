@@ -830,14 +830,18 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
 
         // If a new inventory is required we create one
         // and mark that the current one is not to be used!
-        val open = isOpen()
-        val createdInventory = if (firstPaint || (open && titleState?.dirty == true)) {
+        val createdInventory = if (firstPaint ||
+            (
+                titleState?.dirty == true &&
+                    // You can only re-render the title of an open view
+                    isOpen() &&
+                    // We can only re-render the title of the current render view so a title
+                    // render cannot override a new menu being rendered
+                    InterfacesListeners.INSTANCE.canReRender(player.uniqueId, this)
+                )
+        ) {
             currentInventory = createInventory()
-            if (open) {
-                // We only re-create the inventory based on the title state if it's
-                // open so a title update can't interrupt an inventory open.
-                titleState?.clean()
-            }
+            titleState?.clean()
 
             // Whenever we create a new inventory we have to re-mark this interface
             // as the one being rendered!
@@ -888,7 +892,7 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
                         openInventory()
                     }
                 } else {
-                    if ((openIfClosed.get() && !isOpen) || createdInventory) {
+                    if ((openIfClosed.get() && !isOpen) || firstPaint || (createdInventory && isOpen)) {
                         if (player.isConnected) {
                             openInventory()
                         }

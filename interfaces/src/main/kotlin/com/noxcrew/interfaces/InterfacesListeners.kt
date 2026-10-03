@@ -236,6 +236,12 @@ public class InterfacesListeners private constructor(private val plugin: Plugin)
         return null
     }
 
+    /** Returns whether we can re-render [view] or not. */
+    public fun canReRender(playerId: UUID, view: InterfaceView): Boolean {
+        val current = renderingPlayerInterfaceViews[playerId]
+        return current == null || current == view
+    }
+
     /** Sets the view currently being rendered for [playerId] to [view], returns `false` if this view is already being rendered. */
     public suspend fun setRenderView(playerId: UUID, view: InterfaceView): Boolean {
         // Close any view previously being rendered when opening a new one!
