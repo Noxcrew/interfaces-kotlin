@@ -37,6 +37,7 @@ public abstract class PaginationTransformation<P : Pane, E>(
     /** The values this transformation is displaying. */
     protected var values: List<E> by Delegates.observable(default.toList()) { _, _, _ ->
         boundPage.max = maxPages()
+        boundPage.value = page
         refreshTrigger.trigger()
     }
 
@@ -48,6 +49,7 @@ public abstract class PaginationTransformation<P : Pane, E>(
     protected fun initialize() {
         if (!initialized) {
             boundPage.max = maxPages()
+            boundPage.value = page
             initialized = true
         }
     }
