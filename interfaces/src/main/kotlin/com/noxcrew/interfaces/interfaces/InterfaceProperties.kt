@@ -81,6 +81,9 @@ public open class InterfaceProperties<P : Pane> {
     /** Keeps items that were previously in the inventory before opening this. */
     public var inheritExistingItems: Boolean = false
 
+    /** Keeps items placed by any pre-processor unchanged. */
+    public var dontOverrideItems: Boolean = false
+
     // --- CUSTOM HANDLER ---
     /** All close handlers on this interface mapped by closing reason. */
     public val closeHandlers: Map<InventoryCloseEvent.Reason, List<CloseHandler>>

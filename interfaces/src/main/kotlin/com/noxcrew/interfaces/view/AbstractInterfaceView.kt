@@ -721,11 +721,14 @@ public abstract class AbstractInterfaceView<I : InterfacesInventory, T : Interfa
             val elementSegment = mapper.getSegment(row, column)
             if (elementSegment != segment) return@inner
 
-            currentInventory.set(
-                row,
-                column,
-                element.itemStack?.also { builder.itemPostProcessor?.invoke(it) },
-            )
+            val newItem = element.itemStack?.also { builder.itemPostProcessor?.invoke(it) }
+            if (!builder.dontOverrideItems || newItem != null) {
+                currentInventory.set(
+                    row,
+                    column,
+                    newItem,
+                )
+            }
             leftovers -= row to column
             madeChanges = true
         }
